@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import DailySession
-from ..base.admin import BaseAdmin
+from apps.base.admin import BaseAdmin
 
 
 @admin.register(DailySession)

@@ -1,3 +1,8 @@
 from django.contrib import admin
+from .models import DailySession
+from ..base.admin import BaseAdmin
 
-# Register your models here.
+
+@admin.register(DailySession)
+class DailySessionAdmin(BaseAdmin):
+    pass

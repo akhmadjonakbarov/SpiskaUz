@@ -32,6 +32,7 @@ api_urls = [
     path("", include("apps.shops.urls")),
     path("", include("apps.supplier.urls")),
     path("documents/", include("apps.document.urls")),
+    path("day/", include("apps.daily_session.urls")),
     path("store/", include("apps.store.urls")),
     path("", include("apps.transactions.urls")),
     path("auth/", include("apps.users.urls"), name="auth"),

@@ -34,8 +34,7 @@ class CloseDayView(GenericAPIView):
         today = timezone.localdate()
         shop = Shop.objects.get(id=shop_id)
         session = DailySession.objects.get(shop=shop, date=today)
-        session.is_open = False
-        session.save()
+        session.close()
         return Response(
             data={
                 'detail': 'Shop is closed'

@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ shop.name }} | Shop</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body>
+    <div class="container">
+        {% if shop.image %}
+        <img src="{{ shop.image.url }}" alt="Shop Image" class="shop-image">
+        {% endif %}
+        <h1 class="shop-title">{{ shop.name }}</h1>
+        <p class="shop-desc">{{ shop.description }}</p>
+        <p class="shop-address">📍 {{ shop.address }}</p>
+        <a href="{{ shop.link }}" class="shop-link">Tashrif buyurish</a>
+    </div>
+</body>
+
+</html>

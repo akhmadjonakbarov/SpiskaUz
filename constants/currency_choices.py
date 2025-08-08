@@ -1,0 +1,7 @@
+CURRENCY_USD = "usd"
+CURRENCY_UZS = "uzs"
+
+CURRENCY_CHOICES = [
+    (CURRENCY_USD, "USD"),
+    (CURRENCY_UZS, "UZS"),
+]

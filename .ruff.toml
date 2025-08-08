@@ -1,0 +1,12 @@
+line-length = 240
+target-version = "py313"
+exclude = ["migrations", "venv", "__pycache__", "manage.py"]
+
+[lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501", "B008"]
+fixable = ["ALL"]
+
+[format]
+quote-style = "double"
+indent-style = "space"

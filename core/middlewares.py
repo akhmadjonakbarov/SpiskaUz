@@ -13,7 +13,8 @@ SKIP_PATHS = (
     add_api('units'),
     add_api('shop'),
     add_api('day'),
-    '/swagger'
+    '/swagger',
+    '/admin'
 )
 
 

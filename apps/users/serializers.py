@@ -51,7 +51,6 @@ class SimpleUserSerializer(serializers.ModelSerializer):
         ]
 
     def get_role(self, obj):
-        # Get the first role for this user (or None if no role exists)
         role_user = RoleUser.objects.filter(user=obj).first()
         return role_user.role if role_user else None
 

@@ -16,8 +16,11 @@ SKIP_PATHS = (
     '/swagger',
     '/admin',
     add_api('currency-rates'),
-    add_api('supplier')
-
+    add_api('supplier'),
+    '/api/v1/advertisement-category/',
+    '/api/v1/product/favorite/',
+    '/api/v1/advertisement/favorite/',
+    '/api/v1/cart-item/',
 )
 
 

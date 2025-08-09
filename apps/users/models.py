@@ -1,9 +1,9 @@
 import uuid
 from datetime import timedelta
-
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils.timezone import now
+from apps.base.models import BaseModel
 
 
 class CustomUserManager(BaseUserManager):
@@ -34,7 +34,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=150, blank=True, null=True)
     last_name = models.CharField(max_length=150, blank=True, null=True)
     phone = models.CharField(max_length=20, unique=True)
-    avatar = models.ImageField(upload_to="profile-images/", blank=True, null=True, default="profile-images/default-user-image.png")
+    avatar = models.ImageField(upload_to="profile-images/", blank=True, null=True,
+                               default="profile-images/default-user-image.png")
 
     favorite_products = models.ManyToManyField("products.Product", related_name="favorited_by")
     favorite_advertisements = models.ManyToManyField("advertisements.Advertisement", related_name="favorited_by")
@@ -52,6 +53,22 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
+
+
+class RoleUser(BaseModel):
+    ROLES = (
+        ('cashier_admin', 'CASHIER_ADMIN'),
+        ('owner', 'OWNER'),
+        ('main_admin', 'MAIN_ADMIN')
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    shop = models.ForeignKey("shops.Shop", on_delete=models.CASCADE)
+    role = models.CharField(
+        choices=ROLES, max_length=20
+    )
+
+    def __str__(self):
+        return f"{self.role} - {self.user}"
 
 
 class OTP(models.Model):

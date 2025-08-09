@@ -24,6 +24,7 @@ from .mixins import (
     SubscriptionActionMixin,
 )
 from ...currency_rate.models import CurrencyRate
+from ...users.models import RoleUser
 
 
 class ShopViewSet(
@@ -93,6 +94,11 @@ class ShopViewSet(
         # Save the Shop
         shop = serializer.save(owner=self.request.user)
         shop.members.add(self.request.user)
+
+        RoleUser.objects.create(
+            user=self.request.user,
+            role='owner', shop=shop
+        )
 
         ShopCategory.objects.create(
             user=self.request.user,

@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from apps.notifications.models import NotificationType
 
-from .models import User
+from .models import User, RoleUser
 from ..shops.models import Shop
 
 
@@ -28,16 +28,27 @@ class UserSerializer(BaseUserSerializer):
     pass
 
 
+class RoleUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RoleUser
+        fields = ('role', 'user', 'shop')
+
+
 class SimpleUserSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField()
     last_name = serializers.CharField()
     avatar = serializers.ImageField(required=False)
     phone = serializers.CharField(required=False, read_only=True)
     shops = ShopSerializerForUser(many=True)
+    role = RoleUserSerializer()
 
     class Meta:
         model = User
-        fields = ["id", "first_name", "last_name", "phone", "avatar", 'shops']
+        fields = [
+            "id", "first_name", "last_name",
+            "phone", "avatar", 'shops',
+            "role"
+        ]
 
 
 class AdminMemberSerializer(BaseUserSerializer):

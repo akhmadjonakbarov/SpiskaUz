@@ -61,10 +61,10 @@ class RoleUser(BaseModel):
         ('owner', 'OWNER'),
         ('main_admin', 'MAIN_ADMIN')
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    shop = models.ForeignKey("shops.Shop", on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    shop = models.ForeignKey("shops.Shop", on_delete=models.CASCADE, )
     role = models.CharField(
-        choices=ROLES, max_length=20
+        choices=ROLES, max_length=20, unique=True
     )
 
     def __str__(self):

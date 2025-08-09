@@ -4,7 +4,7 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from unfold.admin import ModelAdmin
 
-from .models import OTP, User
+from .models import OTP, User, RoleUser
 
 
 @admin.register(User)
@@ -18,7 +18,9 @@ class CustomUserAdmin(ModelAdmin, UserAdmin, ImportExportModelAdmin):
         ("Important dates", {"fields": ("last_login",)}),
         ("Favorite", {"fields": ("favorite_products", "favorite_advertisements")}),
     )
-    add_fieldsets = ((None, {"classes": ("wide",), "fields": ("first_name", "last_name", "phone", "password1", "password2", "is_staff", "is_active")}),)
+    add_fieldsets = ((None, {"classes": ("wide",),
+                             "fields": ("first_name", "last_name", "phone", "password1", "password2", "is_staff",
+                                        "is_active")}),)
     search_fields = ("phone",)
     ordering = ("phone",)
 
@@ -33,3 +35,8 @@ class OTPAdmin(ModelAdmin, ImportExportModelAdmin, GuardedModelAdmin):
         return not obj.is_expired()
 
     is_available.boolean = True
+
+
+@admin.register(RoleUser)
+class RoleUserAdmin(ModelAdmin):
+    pass

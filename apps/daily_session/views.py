@@ -12,10 +12,10 @@ class StartDayView(GenericAPIView):
     def post(self, request, shop_id):
         today = timezone.localdate()
         shop = Shop.objects.get(id=shop_id)
-        session = DailySession.objects.get(
+        session = DailySession.objects.filter(
             shop=shop, date=today
-        )
-        if session:
+        ).first()
+        if session and session.is_open:
             return Response(data={
                 'detail': 'Shop is already opened'
             })

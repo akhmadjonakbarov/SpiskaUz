@@ -14,7 +14,10 @@ SKIP_PATHS = (
     add_api('shop'),
     add_api('day'),
     '/swagger',
-    '/admin'
+    '/admin',
+    add_api('currency-rates'),
+    add_api('supplier')
+
 )
 
 

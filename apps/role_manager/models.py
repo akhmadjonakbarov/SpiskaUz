@@ -15,7 +15,7 @@ class Role(BaseModel):
         "shops.Shop", on_delete=models.CASCADE,
     )
     salary = models.DecimalField(
-        max_digits=30, decimal_places=5
+        max_digits=30, decimal_places=5, blank=True, null=True
     )
     role = models.CharField(
         choices=ROLES, max_length=20, unique=True

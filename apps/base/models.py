@@ -15,6 +15,10 @@ class BaseModel(models.Model):
         self.deleted_at = timezone.now()
         self.save()
 
+    def reset(self):
+        self.deleted_at = None
+        self.save()
+
     def hard_delete(self):
         self.delete()
 

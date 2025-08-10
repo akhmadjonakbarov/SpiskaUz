@@ -55,20 +55,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.first_name} {self.last_name}".strip()
 
 
-class RoleUser(BaseModel):
-    ROLES = (
-        ('cashier_admin', 'CASHIER_ADMIN'),
-        ('owner', 'OWNER'),
-        ('main_admin', 'MAIN_ADMIN')
-    )
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    shop = models.ForeignKey("shops.Shop", on_delete=models.CASCADE, )
-    role = models.CharField(
-        choices=ROLES, max_length=20, unique=True
-    )
 
-    def __str__(self):
-        return f"{self.role} - {self.user}"
 
 
 class OTP(models.Model):

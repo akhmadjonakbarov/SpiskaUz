@@ -4,7 +4,7 @@ from guardian.admin import GuardedModelAdmin
 from import_export.admin import ImportExportModelAdmin
 from unfold.admin import ModelAdmin
 
-from .models import OTP, User, RoleUser
+from .models import OTP, User
 
 
 @admin.register(User)
@@ -37,6 +37,3 @@ class OTPAdmin(ModelAdmin, ImportExportModelAdmin, GuardedModelAdmin):
     is_available.boolean = True
 
 
-@admin.register(RoleUser)
-class RoleUserAdmin(ModelAdmin):
-    pass

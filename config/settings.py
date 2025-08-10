@@ -62,7 +62,8 @@ LOCAL_APPS = [
     'apps.product_part',
     'apps.store',
     'apps.supplier',
-    'apps.daily_session'
+    'apps.daily_session',
+    'apps.role_manager',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

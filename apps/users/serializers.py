@@ -3,7 +3,8 @@ from rest_framework import serializers
 
 from apps.notifications.models import NotificationType
 
-from .models import User, RoleUser
+from .models import User
+from ..role_manager.models import RoleUser
 from ..shops.models import Shop
 
 
@@ -26,12 +27,6 @@ class BaseUserSerializer(serializers.ModelSerializer):
 
 class UserSerializer(BaseUserSerializer):
     pass
-
-
-class RoleUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RoleUser
-        fields = ('role', 'user', 'shop')
 
 
 class SimpleUserSerializer(serializers.ModelSerializer):

@@ -23,8 +23,8 @@ from .mixins import (
     ShoppingCartActionMixin,
     SubscriptionActionMixin,
 )
-from ...currency_rate.models import CurrencyRate
-from ...users.models import RoleUser
+from apps.currency_rate.models import CurrencyRate
+from apps.role_manager.models import RoleUser
 
 
 class ShopViewSet(

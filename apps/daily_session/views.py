@@ -2,11 +2,13 @@ from rest_framework.generics import GenericAPIView
 from rest_framework import status
 from rest_framework.response import Response
 from django.utils import timezone
+from rest_framework.views import APIView
+
 from .models import DailySession
 from apps.shops.models import Shop
 
 
-class StartDayView(GenericAPIView):
+class StartDayView(APIView):
     queryset = DailySession.objects.all()
 
     def post(self, request, shop_id):
@@ -29,7 +31,7 @@ class StartDayView(GenericAPIView):
         )
 
 
-class CloseDayView(GenericAPIView):
+class CloseDayView(APIView):
     def post(self, request, shop_id):
         today = timezone.localdate()
         shop = Shop.objects.get(id=shop_id)

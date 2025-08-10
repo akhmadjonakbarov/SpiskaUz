@@ -97,7 +97,7 @@ class ShopViewSet(
 
         RoleUser.objects.create(
             user=self.request.user,
-            role='owner', shop=shop
+            role='owner', shop=shop, created_by=self.request.user
         )
 
         ShopCategory.objects.create(

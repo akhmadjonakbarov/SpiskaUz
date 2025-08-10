@@ -1,6 +1,7 @@
 from apps.shops.models import Shop
 from apps.users.models import User
 from common.permissions import BaseAddObjectPermission, BaseEditDeleteObjectPermission
+from rest_framework.permissions import BasePermission
 
 
 class CanEditDeleteShop(BaseEditDeleteObjectPermission):

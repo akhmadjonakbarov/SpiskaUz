@@ -1,15 +1,16 @@
 from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from apps.role_manager.models import RoleUser
-from apps.role_manager.serializer import CreateRoleSerializer, RoleUserSerializer
+from rest_framework.response import Response
+from apps.role_manager.models import Role
+from apps.role_manager.serializer import CreateRoleSerializer, RoleSerializer
 from apps.shops.models import Shop
 from apps.users.models import User
 
 
 class BaseRoleView(GenericAPIView):
-    serializer_class = RoleUserSerializer
-    queryset = RoleUser.objects.all()
+    serializer_class = RoleSerializer
+    queryset = Role.objects.all()
     permission_classes = (IsAuthenticated,)
 
 
@@ -28,10 +29,11 @@ class SetRoleView(BaseRoleView):
         role = request.data.get('role')
         user_id = request.data.get('user')
         shop_id = request.data.get('shop')
+        salary = request.data.get('salary')
         user = User.objects.get(id=user_id)
         shop = Shop.objects.get(id=shop_id)
-        RoleUser.objects.create(
-            user=user, shop=shop, role=role, created_by=request.user
+        Role.objects.create(
+            user=user, shop=shop, role=role, created_by=request.user, salary=salary
         )
         return Response(
             data={
@@ -50,7 +52,7 @@ class RemoveRoleView(BaseRoleView):
                     'detail': f'{role.role} was deleted successfully'
                 }, status=status.HTTP_201_CREATED
             )
-        except RoleUser.DoesNotExist:
+        except Role.DoesNotExist:
             return Response(
                 data={
                     'detail': 'role does not exist'

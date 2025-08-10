@@ -4,7 +4,7 @@ from rest_framework import serializers
 from apps.notifications.models import NotificationType
 
 from .models import User
-from ..role_manager.models import RoleUser
+from ..role_manager.models import Role
 from ..shops.models import Shop
 
 
@@ -46,7 +46,7 @@ class SimpleUserSerializer(serializers.ModelSerializer):
         ]
 
     def get_role(self, obj):
-        role_user = RoleUser.objects.filter(user=obj).first()
+        role_user = Role.objects.filter(user=obj).first()
         return role_user.role if role_user else None
 
 

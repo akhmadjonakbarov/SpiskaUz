@@ -147,6 +147,8 @@ class CreateProductSerializer(serializers.Serializer):
                 position=validated_data.get("position", 0)
             )
 
+
+
         product = Product.objects.create(
             shop=shop,
             user=request.user,

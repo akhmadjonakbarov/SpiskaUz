@@ -18,7 +18,7 @@ class Role(BaseModel):
         max_digits=30, decimal_places=5, blank=True, null=True
     )
     role = models.CharField(
-        choices=ROLES, max_length=20, unique=True
+        choices=ROLES, max_length=20
     )
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_by")
 

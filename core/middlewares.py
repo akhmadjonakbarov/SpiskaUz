@@ -22,7 +22,8 @@ SKIP_PATHS = (
     '/api/v1/advertisement/favorite/',
     '/api/v1/cart-item/',
     add_api('role-manager'),
-    '/api/v1/product/upload-image/'
+    '/api/v1/product/upload-image/',
+
 )
 
 

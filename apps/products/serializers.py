@@ -79,6 +79,64 @@ class ProductSerializer(serializers.ModelSerializer):
             return currency_serializer.data
 
 
+class ProductSerializerForUser(serializers.ModelSerializer):
+    images = ProductImageSerializer(many=True)
+    category = ShopCategorySerializer(read_only=True)
+    unit = UnitSerializer(read_only=True)
+    is_favorite = serializers.SerializerMethodField()
+    qty = serializers.SerializerMethodField()
+    promocode = serializers.SerializerMethodField()
+    profit_as_percent = serializers.SerializerMethodField()
+    currency = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+
+        exclude = ('updated_at', 'deleted_at')
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['discount'] = Convertor.to_float(instance.discount)
+        data['sale_price'] = Convertor.to_float(instance.sale_price)
+        return data
+
+    def get_is_favorite(self, obj):
+        request = self.context.get("request")
+
+        user = request.user if request and hasattr(request, "user") else None
+
+        if user:
+            return user in obj.favorited_by.all()
+        return False
+
+    def get_qty(self, obj: Product):
+        # Example filter: only consider active balances or a specific warehouse
+        qty = DocumentItemBalance.objects.filter(product=obj).aggregate(total_qty=Sum('qty'))['total_qty']
+        return qty or 0
+
+    def get_promocode(self, product):
+        from apps.promocodes.serializers import PromocodeForProduct, Promocode
+        promocode = Promocode.objects.filter(product=product).first()
+        if promocode:
+            return PromocodeForProduct(promocode, many=False).data
+        return None
+
+    def get_profit_as_percent(self, product: Product):
+        balance = DocumentItemBalance.objects.filter(
+            product=product, deleted_at=None,
+        ).first()
+        if balance:
+            return Convertor.to_float(balance.profit_as_percent)
+        return float(0.0)
+
+    def get_currency(self, product):
+        from apps.currency_rate.serializers import CurrencyRateSerializer, CurrencyRate
+        currency = CurrencyRate.objects.filter(shop=product.shop).order_by('-created_at').first()
+        currency_serializer = CurrencyRateSerializer(currency)
+        return currency_serializer.data
+
+
+
 class CreateProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage

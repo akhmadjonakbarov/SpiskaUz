@@ -21,7 +21,7 @@ from apps.orders.models import Order, OrderStatus
 from apps.orders.serializers import OrderSerializer
 from apps.products.models import Product, ProductGroup
 from apps.products.serializers import CreateProductsGroupSerializer, ProductPositionSerializer, ProductSerializer, \
-    SeparateProductsSerializer
+    SeparateProductsSerializer, ProductSerializerForUser
 from apps.promocodes.serializers import PromocodeSerializer
 from apps.shops.serializers import AdminSerializer, ChangeExchangeRateSerializer, ShopAdminSerializer, \
     ShopContactSerializer, ShopSerializer
@@ -410,7 +410,7 @@ class ProductActionsMixin:
         result = []
         for cat in category_map.values():
             for grp in cat["groups"]:
-                grp["products"] = ProductSerializer(grp["products"], many=True, context={"request": request}).data
+                grp["products"] = ProductSerializerForUser(grp["products"], many=True, context={"request": request}).data
             result.append(cat)
 
         return Response(result, status=status.HTTP_200_OK)

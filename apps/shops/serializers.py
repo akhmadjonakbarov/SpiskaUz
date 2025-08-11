@@ -46,7 +46,7 @@ class ShopSerializer(serializers.ModelSerializer):
     usd_exchange_rate = serializers.FloatField(write_only=True)  # or read_only=True if it's output only
     currency = serializers.SerializerMethodField()
     role = serializers.SerializerMethodField()
-    status = serializers.SerializerMethodField()
+    is_open = serializers.SerializerMethodField()
 
     class Meta:
         model = Shop
@@ -71,7 +71,7 @@ class ShopSerializer(serializers.ModelSerializer):
             "has_cart_item",
             "currency",
             "role",
-            "status"
+            "is_open"
         ]
 
     def create(self, validated_data):
@@ -79,14 +79,19 @@ class ShopSerializer(serializers.ModelSerializer):
         validated_data.pop('usd_exchange_rate', None)
         return super().create(validated_data)
 
-    def get_status(self, obj):
+    def get_is_open(self, obj):
         from apps.daily_session.models import DailySession
         today = timezone.now()
         session = DailySession.objects.filter(
             shop=obj, date=today
         ).first()
 
-        return 'active' if session.is_open and session is not None else 'deactive'
+        if session is None:
+            return False
+        if session.is_open:
+            return True
+        else:
+            return False
 
     def get_has_notifications(self, shop: Shop):
         user = self.context["request"].user

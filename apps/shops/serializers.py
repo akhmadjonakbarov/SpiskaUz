@@ -83,8 +83,9 @@ class ShopSerializer(serializers.ModelSerializer):
         from apps.daily_session.models import DailySession
         today = timezone.now()
         session = DailySession.objects.filter(
-            shop=obj, date=today
+            shop=obj, date__day=today.day
         ).first()
+        print(session)
 
         if session is None:
             return False

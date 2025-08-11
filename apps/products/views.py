@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from common.serializers import EmptyBodySerializer
 from .models import Product, ReportOption
 from .serializers import ProductSerializer, CreateProductSerializer, CreateProductImageSerializer, ReportSerializer, \
-    ReportOptionSerializer
+    ReportOptionSerializer, ProductSerializerForUser
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -101,7 +101,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(["GET"], detail=False, permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
         products = request.user.favorite_products.all()
-        serializer = self.get_serializer(products, many=True)
+        serializer = ProductSerializerForUser(products, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

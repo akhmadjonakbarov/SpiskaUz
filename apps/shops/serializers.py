@@ -83,7 +83,7 @@ class ShopSerializer(serializers.ModelSerializer):
         from apps.daily_session.models import DailySession
         today = timezone.now()
         session = DailySession.objects.filter(
-            shop=obj, date__day=today.day
+            shop=obj, date__day=today.day, date__year=today.year, date__month=today.month
         ).first()
         print(session)
 

@@ -7,7 +7,7 @@ from apps.base.models import BaseModelWithUserAndShop
 
 # Create your models here.
 class DailySession(BaseModelWithUserAndShop):
-    date = models.DateTimeField(default=timezone.now, unique=True)
+    date = models.DateTimeField(default=timezone.now)
     is_open = models.BooleanField(default=True)
     opened_at = models.DateTimeField(auto_now_add=True)
     closed_at = models.DateTimeField(blank=True, null=True)

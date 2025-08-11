@@ -85,7 +85,8 @@ class ShopSerializer(serializers.ModelSerializer):
         session = DailySession.objects.filter(
             shop=obj, date=today
         ).first()
-        return 'active' if session.is_open else 'deactive'
+
+        return 'active' if session.is_open and session is not None else 'deactive'
 
     def get_has_notifications(self, shop: Shop):
         user = self.context["request"].user

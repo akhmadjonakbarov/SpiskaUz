@@ -8,6 +8,7 @@ from apps.shops.models import Shop, ShopCategory, ShopContact
 from apps.users.serializers import UserSerializer
 
 from .models import Admin
+from ..role_manager.models import Role
 
 
 class ShopCategorySerializer(serializers.ModelSerializer):
@@ -43,6 +44,7 @@ class ShopSerializer(serializers.ModelSerializer):
     has_cart_item = serializers.SerializerMethodField()
     usd_exchange_rate = serializers.FloatField(write_only=True)  # or read_only=True if it's output only
     currency = serializers.SerializerMethodField()
+    role = serializers.SerializerMethodField()
 
     class Meta:
         model = Shop
@@ -65,7 +67,8 @@ class ShopSerializer(serializers.ModelSerializer):
             "is_member",
             "has_notifications",
             "has_cart_item",
-            "currency"
+            "currency",
+            "role"
         ]
 
     def create(self, validated_data):
@@ -112,6 +115,15 @@ class ShopSerializer(serializers.ModelSerializer):
             return user in obj.members.all()
 
         return False
+
+    def get_role(self, obj):
+        from apps.role_manager.serializer import RoleSerializer
+        request = self.context.get("request")
+
+        role = Role.objects.filter(
+            user=request.user, shop=obj
+        ).first()
+        return RoleSerializer(role, many=False).data
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

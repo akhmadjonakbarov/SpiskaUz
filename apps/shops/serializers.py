@@ -1,4 +1,5 @@
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
@@ -45,6 +46,7 @@ class ShopSerializer(serializers.ModelSerializer):
     usd_exchange_rate = serializers.FloatField(write_only=True)  # or read_only=True if it's output only
     currency = serializers.SerializerMethodField()
     role = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
     class Meta:
         model = Shop
@@ -68,13 +70,22 @@ class ShopSerializer(serializers.ModelSerializer):
             "has_notifications",
             "has_cart_item",
             "currency",
-            "role"
+            "role",
+            "status"
         ]
 
     def create(self, validated_data):
         # Remove the non-model field manually
         validated_data.pop('usd_exchange_rate', None)
         return super().create(validated_data)
+
+    def get_status(self, obj):
+        from apps.daily_session.models import DailySession
+        today = timezone.now()
+        session = DailySession.objects.filter(
+            shop=obj, date=today
+        ).first()
+        return 'active' if session.is_open else 'deactive'
 
     def get_has_notifications(self, shop: Shop):
         user = self.context["request"].user

@@ -35,7 +35,7 @@ class CloseDayView(APIView):
     def post(self, request, shop_id):
         today = timezone.localdate()
         shop = Shop.objects.get(id=shop_id)
-        session = DailySession.objects.get(shop=shop, date=today)
+        session = DailySession.objects.filter(shop=shop, date=today).order_by('-date').first()
         session.close()
         return Response(
             data={

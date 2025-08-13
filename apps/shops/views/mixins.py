@@ -485,7 +485,7 @@ class PromocodeActionsMixin:
     @action(methods=["GET"], detail=True, serializer_class=PromocodeSerializer)
     def promocodes(self, request, *args, **kwargs):
         """Do'kondagi promokodlarni olish."""
-        promocodes = self.get_object().shop_promocodes.filter(is_active=True)
+        promocodes = self.get_object().shop_promocodes.all()
         serializer = self.get_serializer(promocodes, many=True)
         return Response(serializer.data)
 

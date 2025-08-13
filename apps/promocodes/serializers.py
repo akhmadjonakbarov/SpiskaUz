@@ -43,7 +43,7 @@ class PromocodeItemSerializer(serializers.ModelSerializer):
 
 
 class PromocodeSerializer(serializers.ModelSerializer):
-    items = PromocodeItemSerializer(many=True, required=False)
+    # items = PromocodeItemSerializer(many=True, required=False)
 
     class Meta:
         model = Promocode

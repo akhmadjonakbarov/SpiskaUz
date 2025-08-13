@@ -23,6 +23,7 @@ SKIP_PATHS = (
     '/api/v1/cart-item',
     add_api('role-manager'),
     '/api/v1/product',
+    '/api/v1/documents/sell-product/'
 
 )
 

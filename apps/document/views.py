@@ -20,6 +20,7 @@ from apps.supplier.models import SupplierDebtBalance
 from apps.users.models import User
 from constants.currency_choices import CURRENCY_USD
 from core.permissions.is_session_open import IsSessionOpen
+from utils.convertor import Convertor
 
 
 class DocumentListView(GenericAPIView):
@@ -147,9 +148,9 @@ class BuyProductView(GenericAPIView):
             )
 
             if first_part.product.currency_type == CURRENCY_USD:
-                supplier_debt_balance.balance_usd += un_payed_money
+                supplier_debt_balance.balance_usd += Convertor.to_decimal(un_payed_money)
             else:
-                supplier_debt_balance.balance_usd += un_payed_money
+                supplier_debt_balance.balance_usd += Convertor.to_decimal(un_payed_money)
             supplier_debt_balance.save()
         except SupplierDebtBalance.DoesNotExist:
             if first_part.product.currency_type == CURRENCY_USD:

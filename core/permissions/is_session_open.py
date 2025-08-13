@@ -22,8 +22,7 @@ class IsSessionOpen(BasePermission):
         today = timezone.now().date()
         session = DailySession.objects.filter(
             shop=shop,
-            date=today,
-            is_open=True
+            date__day=today.day, date__month=today.month, date__year=today.year, is_open=True
         ).first()
 
         return session is not None

@@ -168,7 +168,7 @@ class BuyProductView(GenericAPIView):
 
 class SellProductView(GenericAPIView):
     serializer_class = SellProductSerializer
-    permission_classes = (IsAuthenticated, IsSessionOpen)
+    permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
         user = request.user

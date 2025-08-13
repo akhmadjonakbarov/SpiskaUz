@@ -14,7 +14,7 @@ class StartDayView(APIView):
         today = timezone.localdate()
         shop = Shop.objects.get(id=shop_id)
         session = DailySession.objects.filter(
-            shop=shop, date__day=today.day, date__month=today.month, date__year=today.year
+            shop=shop, date__day=today.day, date__month=today.month, date__year=today.year, is_open=True
         ).first()
         if session and session.is_open:
             return Response(data={

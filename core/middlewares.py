@@ -43,7 +43,7 @@ class IsDayOpenMiddleware:
         today = timezone.localdate()
         daily_session = DailySession.objects.filter(
             shop_id=shop_id,
-            date=today
+            date__day=today.day, date__month=today.month, date__year=today.year, is_open=True
         ).first()
 
         if not daily_session:

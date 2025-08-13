@@ -242,7 +242,7 @@ class SellProductView(GenericAPIView):
                             document=document,
                             product=product,
                             currency_rate=latest_currency if product.currency_type == 'usd' else None,
-                            currency_rate_value=latest_currency.rate if product.currency_type == 'usd' else None,
+                            currency_rate_value=latest_currency.rate if product.currency_type == 'usd' else Decimal('0.0'),
                             qty=deduct_qty,
                             income_price=balance.income_price,
                             profit_as_percent=balance.profit_as_percent,

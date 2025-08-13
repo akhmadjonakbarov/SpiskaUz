@@ -108,7 +108,7 @@ class BuyProductView(GenericAPIView):
                 profit_as_percent=Decimal(str(profit_percentage)),
                 income_price=product_part.income_price,
                 currency_rate=product_part.currency_rate if product_part.currency_rate else None,
-                currency_rate_value=product_part.currency_rate.rate if product_part.currency_rate else None,
+                currency_rate_value=product_part.currency_rate.rate if product_part.currency_rate else Decimal('0.0'),
                 shop=document.shop,
                 user=user,
                 sale_price=product_part.sale_price
@@ -129,7 +129,8 @@ class BuyProductView(GenericAPIView):
                 balance = DocumentItemBalance.objects.create(
                     qty=product_part.qty, income_price=product_part.income_price,
                     currency_rate=product_part.currency_rate if product_part.currency_rate else None,
-                    currency_rate_value=product_part.currency_rate.rate if product_part.currency_rate else None,
+                    currency_rate_value=product_part.currency_rate.rate if product_part.currency_rate else Decimal(
+                        '0.0'),
                     profit_as_percent=profit_percentage, document_item=document_item,
                     shop=document_item.shop, user=user,
                     document=document,

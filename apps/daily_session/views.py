@@ -14,7 +14,7 @@ class StartDayView(APIView):
         today = timezone.localdate()
         shop = Shop.objects.get(id=shop_id)
         session = DailySession.objects.filter(
-            shop=shop, date=today
+            shop=shop, date__day=today.day, date__month=today.month, date__year=today.year
         ).first()
         if session and session.is_open:
             return Response(data={
@@ -34,7 +34,10 @@ class CloseDayView(APIView):
     def post(self, request, shop_id):
         today = timezone.localdate()
         shop = Shop.objects.get(id=shop_id)
-        session = DailySession.objects.filter(shop=shop, date=today).order_by('-date').first()
+        session = DailySession.objects.filter(
+            shop=shop, date__day=today.day, date__month=today.month, date__year=today.year, is_open=True
+
+        ).order_by('-date').first()
         session.close()
         return Response(
             data={

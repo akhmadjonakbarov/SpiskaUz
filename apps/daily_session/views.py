@@ -36,7 +36,6 @@ class CloseDayView(APIView):
         shop = Shop.objects.get(id=shop_id)
         session = DailySession.objects.filter(
             shop=shop, date__day=today.day, date__month=today.month, date__year=today.year, is_open=True
-
         ).order_by('-date').first()
         session.close()
         return Response(

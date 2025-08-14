@@ -5,26 +5,17 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Promocode, PromocodeItem
-from .serializers import PromocodeItemSerializer, PromocodeSerializer, CreatePromoCodeSerializer
+from .models import PromoCode, PromocodeItem
+from .serializers import PromocodeItemSerializer, PromocodeSerializer
 
 
 class PromocodeViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
-    queryset = Promocode.objects.all()
+    queryset = PromoCode.objects.none()
     serializer_class = PromocodeSerializer
-
     permission_classes = [IsAuthenticated]
 
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return CreatePromoCodeSerializer
-        else:
-            return PromocodeSerializer
-
     def get_queryset(self):
-        return Promocode.objects.filter(
-            deleted_at=None
-        )
+        return PromoCode.objects.filter(is_active=True)
 
     def perform_destroy(self, instance):
         instance.is_active = False
@@ -32,10 +23,8 @@ class PromocodeViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, viewse
 
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter("shop", openapi.IN_QUERY, description="Shop name", type=openapi.TYPE_STRING,
-                              required=True),
-            openapi.Parameter("code", openapi.IN_QUERY, description="Promocode code", type=openapi.TYPE_STRING,
-                              required=True),
+            openapi.Parameter("shop", openapi.IN_QUERY, description="Shop name", type=openapi.TYPE_STRING, required=True),
+            openapi.Parameter("code", openapi.IN_QUERY, description="Promocode code", type=openapi.TYPE_STRING, required=True),
         ]
     )
     @action(detail=False, methods=["get"])
@@ -48,12 +37,11 @@ class PromocodeViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, viewse
 
         try:
             promocode = self.get_queryset().get(shop=shop, code=code)
-        except Promocode.DoesNotExist:
+        except PromoCode.DoesNotExist:
             return Response({"detail": "Promocode topilmadi."}, status=status.HTTP_404_NOT_FOUND)
 
         if not promocode.can_use_promocode(request.user):
-            return Response({"detail": "Siz ushbu promokodni allaqachon ishlatgansiz."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Siz ushbu promokodni allaqachon ishlatgansiz."}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(promocode)
 

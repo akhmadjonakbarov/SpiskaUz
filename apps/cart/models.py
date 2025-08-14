@@ -3,7 +3,7 @@ from functools import reduce
 from django.db import models
 
 from apps.products.models import Product
-from apps.promocodes.models import Promocode
+from apps.promocodes.models import PromoCode
 from apps.shops.models import Shop
 from apps.users.models import User
 
@@ -11,7 +11,7 @@ from apps.users.models import User
 class ShoppingCart(models.Model):
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="carts", verbose_name="Shop")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="carts", verbose_name="User")
-    promocode = models.ForeignKey(Promocode, on_delete=models.SET_NULL, null=True, blank=True, related_name="carts")
+    promocode = models.ForeignKey(PromoCode, on_delete=models.SET_NULL, null=True, blank=True, related_name="carts")
 
     def calc_total_price(self):
         return reduce(lambda prev, item: prev + item.amount * item.product.sale_price, self.items.all(), 0)

@@ -6,23 +6,25 @@ from apps.products.models import Product
 from apps.shops.models import Shop
 from apps.users.models import User
 
-
-class Promocode(BaseModel):
-    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="shop_promocodes")
-    user = models.ForeignKey(User, related_name="user_promocodes", on_delete=models.CASCADE)
-
-    product = models.OneToOneField(Product, related_name="promo_code", on_delete=models.CASCADE)
+class PromoCode(BaseModel):
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="promocodes")
     code = models.CharField(max_length=256, unique=True, editable=True, validators=[
         RegexValidator(regex=r"^[A-Za-z0-9]+$",
                        message="Code faqat harf va raqamlardan tashkil topishi kerak. Bo'sh joyga ruxsat yo'q.")])
-    value = models.FloatField(default=0.0)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self) -> str:
-        return f"Promocode({self.shop.name}, {self.code})"
+        return f"PromoCode({self.shop.id}, {self.code})"
+
+    class Meta:
+        unique_together = ["shop", "code"]
+
+    def can_use_promocode(self, user):
+        return not self.usages.filter(user=user).exists()
 
 
 class PromocodeItem(models.Model):
-    promocode = models.ForeignKey(Promocode, on_delete=models.CASCADE, related_name="items")
+    promocode = models.ForeignKey(PromoCode, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     discount = models.IntegerField(validators=[MinValueValidator(0)], default=0)
 
@@ -30,13 +32,13 @@ class PromocodeItem(models.Model):
         unique_together = ["promocode", "product"]
 
     def __str__(self):
-        return f"{self.product.name} - {self.discount}"
+        return f"PromocodeItem({self.product.name}, {self.discount})"
 
 
 class PromocodeUsage(models.Model):
-    promocode = models.ForeignKey(Promocode, on_delete=models.CASCADE, related_name="usages")
+    promocode = models.ForeignKey(PromoCode, on_delete=models.CASCADE, related_name="usages")
     user = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="promocode_usages")
     used_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.promocode.code}, {self.user.get_full_name()}"
+        return f"PromocodeUsage({self.promocode.code}, {self.user.get_full_name()})"

@@ -2,7 +2,7 @@ from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from unfold.admin import ModelAdmin, TabularInline
 
-from .models import Promocode, PromocodeItem, PromocodeUsage
+from .models import PromoCode, PromocodeItem, PromocodeUsage
 
 
 class PromocodeItemInline(TabularInline):
@@ -22,9 +22,9 @@ class PromocodeItemInline(TabularInline):
         return super().get_max_num(request, obj, **kwargs)
 
 
-@admin.register(Promocode)
+@admin.register(PromoCode)
 class PromocodeAdmin(ModelAdmin):
-    list_display = ["pk", "shop", "code", "value"]
+    # list_display = ["pk", "shop", "code", "value"]
     inlines = [PromocodeItemInline]
 
     def active(self, obj):

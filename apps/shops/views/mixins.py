@@ -410,7 +410,8 @@ class ProductActionsMixin:
         result = []
         for cat in category_map.values():
             for grp in cat["groups"]:
-                grp["products"] = ProductSerializerForUser(grp["products"], many=True, context={"request": request}).data
+                grp["products"] = ProductSerializerForUser(grp["products"], many=True,
+                                                           context={"request": request}).data
             result.append(cat)
 
         return Response(result, status=status.HTTP_200_OK)
@@ -485,7 +486,7 @@ class PromocodeActionsMixin:
     @action(methods=["GET"], detail=True, serializer_class=PromocodeSerializer)
     def promocodes(self, request, *args, **kwargs):
         """Do'kondagi promokodlarni olish."""
-        promocodes = self.get_object().shop_promocodes.all()
+        promocodes = self.get_object().promocodes.all()
         serializer = self.get_serializer(promocodes, many=True)
         return Response(serializer.data)
 

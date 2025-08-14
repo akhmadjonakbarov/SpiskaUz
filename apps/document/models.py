@@ -6,7 +6,7 @@ from django.db import models
 from apps.base.models import BaseModelWithUserAndShop, BaseModel, PriceAndQtyMixinWithPercentage, CurrencyType
 from apps.currency_rate.models import CurrencyRate
 from apps.products.models import Product
-from apps.promocodes.models import Promocode
+from apps.promocodes.models import PromoCode
 from constants.currency_choices import CURRENCY_CHOICES
 
 
@@ -49,7 +49,7 @@ class PaymentDetail(BaseModel):
     payment_method = models.CharField(choices=PAYMENT_METHODS, max_length=20)
     note = models.TextField(blank=True, null=True)
     promo_code = models.ForeignKey(
-        Promocode, on_delete=models.CASCADE, related_name='payment_details', blank=True,
+        PromoCode, on_delete=models.CASCADE, related_name='payment_details', blank=True,
         null=True,
     )
     promo_code_value = models.DecimalField(max_digits=15, decimal_places=5)

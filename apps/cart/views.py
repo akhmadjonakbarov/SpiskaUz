@@ -8,7 +8,7 @@ from apps.orders.serializers import OrderSerializer
 from apps.orders.services import OrderService
 from apps.promocodes.serializers import ApplyPromocodeSerializer
 
-from .models import Promocode, ShoppingCart, ShoppingCartItem
+from .models import PromoCode, ShoppingCart, ShoppingCartItem
 from .permissions import CanConfirmCartPermission, CanEditCartItemPermission
 from .serializers import ConfirmShoppingCartSerializer, ShoppingCartItemSerializer, ShoppingCartSerializer
 
@@ -74,7 +74,7 @@ class ShoppingCartViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, view
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        cart.promocode = Promocode.objects.get(code=serializer.validated_data["code"])
+        cart.promocode = PromoCode.objects.get(code=serializer.validated_data["code"])
         cart.save()
 
         return Response({"message": "Promocode savatga muvaffaqqiyatli biriktirildi"}, status=200)

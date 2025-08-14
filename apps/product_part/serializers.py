@@ -52,7 +52,6 @@ class CreateProductPartSerializer(serializers.Serializer):
     product_id = serializers.IntegerField()
     income_price = serializers.FloatField(min_value=0)
     qty = serializers.FloatField(min_value=0.01)
-    supplier = serializers.PrimaryKeyRelatedField(queryset=Supplier.objects.filter(deleted_at=None))
 
     def create(self, validated_data):
         request = self.context.get("request")

@@ -24,7 +24,10 @@ class ProductPart(BaseModelWithUserAndShop, PriceAndQtyMixinWithPercentage):
         default=False
     )
 
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name="product_parts")
+    supplier = models.ForeignKey(
+        Supplier, on_delete=models.CASCADE, related_name="product_parts", blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = "Product Part"
@@ -33,7 +36,8 @@ class ProductPart(BaseModelWithUserAndShop, PriceAndQtyMixinWithPercentage):
     def __str__(self) -> str:
         return f"{self.product.name} {self.qty}"
 
-    def confirm(self, user: User):
+    def confirm(self, user: User, supplier: Supplier):
+        self.supplier = supplier
         self.is_confirm = True
         self.confirmed_by = user
         self.confirmed_at = timezone.now()

@@ -9,18 +9,17 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from apps.currency_rate.models import CurrencyRate
 from apps.document.factories.document_factory import DocumentFactory, PaymentInfoData, PaymentDetailData
-from apps.document.models import Document, DocumentItem, DocumentItemBalance, PaymentInfo, PaymentDetail
+from apps.document.models import Document, DocumentItem, DocumentItemBalance
 from apps.document.serializers import DocumentSerializer, BuyProductSerializer, SellProductSerializer
 from apps.document.utils.calculator import Calculator
 from apps.product_part.models import ProductPart
 from apps.products.models import Product
-from apps.promocodes.models import Promocode
-
+from apps.promocodes.models import PromoCode
 from apps.supplier.models import SupplierDebtBalance
 from apps.users.models import User
 from constants.currency_choices import CURRENCY_USD
-from core.permissions.is_session_open import IsSessionOpen
 from utils.convertor import Convertor
+from apps.supplier.models import Supplier
 
 
 class DocumentListView(GenericAPIView):
@@ -66,6 +65,8 @@ class BuyProductView(GenericAPIView):
                 payed_money = request.data.get('payed_money')
                 un_payed_money = request.data.get('un_payed_money')
                 note = request.data.get('note', None)
+                supplier_id = request.data.get('supplier_id')
+                supplier = Supplier.objects.get(id=supplier_id)
                 first_part = ProductPart.objects.get(id=request.data.get("product_part_ids")[0])
                 shop = first_part.shop
 
@@ -84,13 +85,13 @@ class BuyProductView(GenericAPIView):
                 self.update_or_create_supplier_debt(first_part, un_payed_money)
 
                 # Process Product Parts
-                self.process_product_parts(request, user, document)
+                self.process_product_parts(request, user, document, supplier)
 
             return Response({"message": "Product bought successfully."}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-    def process_product_parts(self, request, user, document):
+    def process_product_parts(self, request, user, document, supplier):
         for item in request.data.get('product_part_ids'):
             product_part = ProductPart.objects.get(id=item)
 
@@ -139,7 +140,7 @@ class BuyProductView(GenericAPIView):
                 )
                 balance.save()
 
-            product_part.confirm(user)
+            product_part.confirm(user, supplier)
 
     def update_or_create_supplier_debt(self, first_part: ProductPart, un_payed_money):
 
@@ -180,7 +181,7 @@ class SellProductView(GenericAPIView):
         promo_code = None
 
         if promo_code_id:
-            promo_code = Promocode.objects.get(id=promo_code_id)
+            promo_code = PromoCode.objects.get(id=promo_code_id)
 
         if not products_data or not isinstance(products_data, list):
             return Response({"error": "Invalid or missing 'products' data."}, status=status.HTTP_400_BAD_REQUEST)
@@ -242,7 +243,8 @@ class SellProductView(GenericAPIView):
                             document=document,
                             product=product,
                             currency_rate=latest_currency if product.currency_type == 'usd' else None,
-                            currency_rate_value=latest_currency.rate if product.currency_type == 'usd' else Decimal('0.0'),
+                            currency_rate_value=latest_currency.rate if product.currency_type == 'usd' else Decimal(
+                                '0.0'),
                             qty=deduct_qty,
                             income_price=balance.income_price,
                             profit_as_percent=balance.profit_as_percent,

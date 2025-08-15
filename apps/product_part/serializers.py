@@ -3,15 +3,13 @@ from rest_framework import serializers
 
 from apps.currency_rate.models import CurrencyRate
 from apps.currency_rate.serializers import CurrencyRateSerializer
-from apps.document.utils.calculator import Calculator
 from apps.product_part.models import ProductPart
 from apps.products.models import Product
 from apps.products.serializers import ProductSerializer
-from apps.supplier.models import Supplier
 from apps.supplier.serializers import SupplierSerializer
 
 from apps.users.serializers import UserSerializer
-from utils.convertor import Convertor
+
 
 
 class ProductPartSerializer(serializers.ModelSerializer):

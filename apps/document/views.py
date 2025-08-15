@@ -3,10 +3,13 @@ from decimal import Decimal
 from django.db import transaction
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from pythonanywhereapiclient.file import client
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from apps.client.models import Client
 from apps.currency_rate.models import CurrencyRate
 from apps.document.factories.document_factory import DocumentFactory, PaymentInfoData, PaymentDetailData
 from apps.document.models import Document, DocumentItem, DocumentItemBalance
@@ -178,7 +181,13 @@ class SellProductView(GenericAPIView):
         note = request.data.get("note", None)
         promo_code_id = request.data.get('promo_code', None)
         payment_method = request.data.get('payment_method')
+        client_id = request.data.get('client', None)
+
         promo_code = None
+        client = None
+
+        if client_id:
+            client = Client.objects.get(id=client_id)
 
         if promo_code_id:
             promo_code = PromoCode.objects.get(id=promo_code_id)
@@ -206,6 +215,10 @@ class SellProductView(GenericAPIView):
                 )
 
                 document = document_factory.create()
+                if client:
+                    document.is_debt = True
+                    document.client = client
+                    document.save()
 
                 latest_currency = CurrencyRate.objects.order_by('-created_at').first()
                 if not latest_currency:

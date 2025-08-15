@@ -3,7 +3,8 @@ from decimal import Decimal
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from apps.base.models import BaseModelWithUserAndShop, BaseModel, PriceAndQtyMixinWithPercentage, CurrencyType
+from apps.base.models import BaseModelWithUserAndShop, BaseModel, PriceAndQtyMixinWithPercentage
+from apps.client.models import Client
 from apps.currency_rate.models import CurrencyRate
 from apps.products.models import Product
 from apps.promocodes.models import PromoCode
@@ -31,6 +32,12 @@ class Document(BaseModelWithUserAndShop):
         ('sell', 'Sell'),
     )
     doc_type = models.CharField(max_length=10, choices=DOC_TYPE)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, null=True, blank=True)
+    is_debt = models.BooleanField(default=False)
+    is_paid = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.doc_type} - {self.client.full_name if self.client else 'No Client'}"
 
     def __str__(self):
         return self.doc_type

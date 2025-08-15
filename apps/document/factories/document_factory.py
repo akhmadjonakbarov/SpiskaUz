@@ -4,7 +4,9 @@ from apps.document.models import Document, PaymentDetail, PaymentInfo
 
 
 class PaymentDetailData:
-    def __init__(self, payment_method, discount, promo_code, promo_code_value, note):
+    def __init__(
+            self, payment_method, discount, promo_code, promo_code_value, note,
+    ):
         self.payment_method = payment_method
         self.discount = discount
         self.promo_code = promo_code

@@ -83,3 +83,5 @@ class PriceAndQtyMixinWithPercentage(PriceAndQtyMixin):
 class CurrencyType(models.TextChoices):
     USD = 'usd', 'USD'
     UZS = 'uzs', 'UZS'
+
+

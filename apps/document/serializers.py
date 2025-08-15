@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from decimal import Decimal
 from .models import Document, PromoCode
+from ..client.models import Client
 
 
 class DocumentSerializer(serializers.ModelSerializer):
@@ -44,3 +45,9 @@ class SellProductSerializer(serializers.Serializer):
         allow_null=True
     )
     note = serializers.CharField(max_length=1500)
+    client = serializers.PrimaryKeyRelatedField(
+        queryset=Client.objects.all(),
+        required=False,
+        allow_null=True
+    )
+

@@ -10,7 +10,9 @@ class PaymentInfoAdmin(BaseAdmin):
 
 @admin.register(Document)
 class DocumentAdmin(BaseAdmin):
-    pass
+    list_display = (
+        'doc_type', 'is_debt', 'is_paid', 'client'
+    )
 
 
 @admin.register(DocumentItem)

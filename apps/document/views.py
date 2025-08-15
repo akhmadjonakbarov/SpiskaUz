@@ -82,7 +82,7 @@ class BuyProductView(GenericAPIView):
                 document = document_factory.create()
 
                 # Create Debt Balance
-                self.update_or_create_supplier_debt(first_part, un_payed_money)
+                self.update_or_create_supplier_debt(first_part, supplier, un_payed_money)
 
                 # Process Product Parts
                 self.process_product_parts(request, user, document, supplier)
@@ -142,11 +142,11 @@ class BuyProductView(GenericAPIView):
 
             product_part.confirm(user, supplier)
 
-    def update_or_create_supplier_debt(self, first_part: ProductPart, un_payed_money):
+    def update_or_create_supplier_debt(self, first_part: ProductPart, supplier: Supplier, un_payed_money):
 
         try:
             supplier_debt_balance = SupplierDebtBalance.objects.get(
-                supplier=first_part.supplier
+                supplier=supplier
             )
 
             if first_part.product.currency_type == CURRENCY_USD:
@@ -157,12 +157,12 @@ class BuyProductView(GenericAPIView):
         except SupplierDebtBalance.DoesNotExist:
             if first_part.product.currency_type == CURRENCY_USD:
                 SupplierDebtBalance.objects.create(
-                    supplier=first_part.supplier,
+                    supplier=supplier,
                     balance_usd=un_payed_money
                 )
             else:
                 SupplierDebtBalance.objects.create(
-                    supplier=first_part.supplier,
+                    supplier=supplier,
                     balance_uzs=un_payed_money
                 )
 

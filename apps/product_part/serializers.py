@@ -87,7 +87,6 @@ class CreateProductPartSerializer(serializers.Serializer):
             user=request.user,
             shop=product.shop,
             profit_as_percent=profit_percent,
-
             income_price=income_price,
             sale_price=product.sale_price,
             qty=Decimal(str(validated_data["qty"])),

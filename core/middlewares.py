@@ -17,6 +17,7 @@ SKIP_PATHS = (
     '/admin',
     add_api('currency-rates'),
     add_api('supplier'),
+    '/api/v1/advertisement/',
     '/api/v1/advertisement-category',
     '/api/v1/product/favorite',
     '/api/v1/advertisement/favorite',

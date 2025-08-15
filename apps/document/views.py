@@ -3,7 +3,6 @@ from decimal import Decimal
 from django.db import transaction
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from pythonanywhereapiclient.file import client
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated

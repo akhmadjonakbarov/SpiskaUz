@@ -85,7 +85,7 @@ class ProductSerializerForUser(serializers.ModelSerializer):
     unit = UnitSerializer(read_only=True)
     is_favorite = serializers.SerializerMethodField()
     qty = serializers.SerializerMethodField()
-    promocode = serializers.SerializerMethodField()
+
     profit_as_percent = serializers.SerializerMethodField()
     currency = serializers.SerializerMethodField()
 
@@ -114,13 +114,6 @@ class ProductSerializerForUser(serializers.ModelSerializer):
         qty = DocumentItemBalance.objects.filter(product=obj).aggregate(total_qty=Sum('qty'))['total_qty']
         return qty or 0
 
-    def get_promocode(self, product):
-        from apps.promocodes.serializers import PromocodeForProduct, Promocode
-        promocode = Promocode.objects.filter(product=product).first()
-        if promocode:
-            return PromocodeForProduct(promocode, many=False).data
-        return None
-
     def get_profit_as_percent(self, product: Product):
         balance = DocumentItemBalance.objects.filter(
             product=product, deleted_at=None,
@@ -134,7 +127,6 @@ class ProductSerializerForUser(serializers.ModelSerializer):
         currency = CurrencyRate.objects.filter(shop=product.shop).order_by('-created_at').first()
         currency_serializer = CurrencyRateSerializer(currency)
         return currency_serializer.data
-
 
 
 class CreateProductImageSerializer(serializers.ModelSerializer):
@@ -204,8 +196,6 @@ class CreateProductSerializer(serializers.Serializer):
                 shop=shop,
                 position=validated_data.get("position", 0)
             )
-
-
 
         product = Product.objects.create(
             shop=shop,

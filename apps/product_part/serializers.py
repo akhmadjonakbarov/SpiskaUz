@@ -11,7 +11,6 @@ from apps.supplier.serializers import SupplierSerializer
 from apps.users.serializers import UserSerializer
 
 
-
 class ProductPartSerializer(serializers.ModelSerializer):
     product = ProductSerializer(many=False)
     currency_rate = CurrencyRateSerializer()
@@ -57,7 +56,6 @@ class CreateProductPartSerializer(serializers.Serializer):
             raise ValueError("Request context is required to assign created_by or confirmed_by")
 
         product_id = validated_data.pop("product_id")
-        supplier = validated_data.pop("supplier")
 
         try:
             product = Product.objects.get(id=product_id)
@@ -89,7 +87,7 @@ class CreateProductPartSerializer(serializers.Serializer):
             user=request.user,
             shop=product.shop,
             profit_as_percent=profit_percent,
-            supplier=supplier,
+
             income_price=income_price,
             sale_price=product.sale_price,
             qty=Decimal(str(validated_data["qty"])),

@@ -38,22 +38,23 @@ class IsDayOpenMiddleware:
         print('[+] IsDayOpenMiddleware initialized')
 
     def __call__(self, request):
-        if request.path.startswith(SKIP_PATHS):
-            return self.get_response(request)
-        shop_id = request.headers.get('ShopId')  # Or your header name
-        if not shop_id:
-            return JsonResponse({'detail': 'Missing shop ID'}, status=400)
-
-        today = timezone.localdate()
-        daily_session = DailySession.objects.filter(
-            shop_id=shop_id,
-            date__day=today.day, date__month=today.month, date__year=today.year, is_open=True
-        ).first()
-
-        if not daily_session:
-            return JsonResponse({'detail': 'No session found for today'}, status=404)
-
-        if not daily_session.is_open:
-            return JsonResponse({'detail': 'Shop is closed'}, status=403)
-
-        return self.get_response(request)
+        pass
+        # if request.path.startswith(SKIP_PATHS):
+        #     return self.get_response(request)
+        # shop_id = request.headers.get('ShopId')  # Or your header name
+        # if not shop_id:
+        #     return JsonResponse({'detail': 'Missing shop ID'}, status=400)
+        #
+        # today = timezone.localdate()
+        # daily_session = DailySession.objects.filter(
+        #     shop_id=shop_id,
+        #     date__day=today.day, date__month=today.month, date__year=today.year, is_open=True
+        # ).first()
+        #
+        # if not daily_session:
+        #     return JsonResponse({'detail': 'No session found for today'}, status=404)
+        #
+        # if not daily_session.is_open:
+        #     return JsonResponse({'detail': 'Shop is closed'}, status=403)
+        #
+        # return self.get_response(request)

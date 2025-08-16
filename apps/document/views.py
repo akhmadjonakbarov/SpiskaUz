@@ -8,8 +8,8 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.client.models import Client
 from apps.currency_rate.models import CurrencyRate
+from apps.debt.models import Debt
 from apps.document.factories.document_factory import DocumentFactory, PaymentInfoData, PaymentDetailData
 from apps.document.models import Document, DocumentItem, DocumentItemBalance
 from apps.document.serializers import DocumentSerializer, BuyProductSerializer, SellProductSerializer
@@ -180,13 +180,14 @@ class SellProductView(GenericAPIView):
         note = request.data.get("note", None)
         promo_code_id = request.data.get('promo_code', None)
         payment_method = request.data.get('payment_method')
-        client_id = request.data.get('client', None)
+        client_id = request.data.get('debt')['client']
+        paid_money = request.data.get('debt')['paid_money']
 
         promo_code = None
         client = None
 
         if client_id:
-            client = Client.objects.get(id=client_id)
+            client = User.objects.get(id=user)
 
         if promo_code_id:
             promo_code = PromoCode.objects.get(id=promo_code_id)
@@ -215,9 +216,12 @@ class SellProductView(GenericAPIView):
 
                 document = document_factory.create()
                 if client:
-                    document.is_debt = True
-                    document.client = client
-                    document.save()
+                    Debt.objects.create(
+                        created_by=request.user,
+                        client=client,
+                        paid_money=paid_money if float(paid_money) > 0 else Decimal('0.0')
+                    )
+                    print(f'[+] Debt was created for {client}')
 
                 latest_currency = CurrencyRate.objects.order_by('-created_at').first()
                 if not latest_currency:

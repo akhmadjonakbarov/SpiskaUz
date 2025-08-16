@@ -1,6 +1,5 @@
 from rest_framework import serializers
-
-from .models import DebtConversion, DebtPayment
+from .models import DebtConversion, DebtPayment, Debt
 
 
 class DebtPaymentSerializer(serializers.ModelSerializer):
@@ -15,3 +14,9 @@ class DebtConversionSerializer(serializers.ModelSerializer):
         model = DebtConversion
         fields = ["id", "shop", "user", "amount_uzs", "amount_usd", "converted_at", "reverted"]
         read_only_fields = ["amount_usd", "converted_at", "reverted"]
+
+
+class DebtSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Debt
+        fields = '__all__'

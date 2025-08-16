@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from decimal import Decimal
 from .models import Document, PromoCode
-from ..client.models import Client
 
 
 class DocumentSerializer(serializers.ModelSerializer):
@@ -25,6 +24,14 @@ class BuyProductSerializer(serializers.Serializer):
     supplier_id = serializers.IntegerField()
 
 
+class ClientDebtSerializer(serializers.Serializer):
+    from apps.users.models import User
+    paid_money = serializers.DecimalField(max_digits=50, decimal_places=5, default=Decimal('0.0'))
+    client = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all()
+    )
+
+
 class SellProductSerializer(serializers.Serializer):
     """
     Serializer for handling product sales input.
@@ -45,9 +52,6 @@ class SellProductSerializer(serializers.Serializer):
         allow_null=True
     )
     note = serializers.CharField(max_length=1500)
-    client = serializers.PrimaryKeyRelatedField(
-        queryset=Client.objects.all(),
-        required=False,
-        allow_null=True
+    debt = ClientDebtSerializer(
+        required=False
     )
-

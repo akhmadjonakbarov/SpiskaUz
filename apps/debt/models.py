@@ -1,4 +1,7 @@
+from decimal import Decimal
 from django.db import models
+
+from apps.base.models import BaseModel
 
 
 class DebtConversion(models.Model):
@@ -40,3 +43,21 @@ class DebtPayment(models.Model):
             return self.amount
         # Kursni shop'dan olish
         return round(self.amount * self.shop.usd_exchange_rate, 2)
+
+
+class Debt(BaseModel):
+    created_by = models.ForeignKey(
+        "users.User", on_delete=models.CASCADE, related_name="debts_created"
+    )
+    document = models.OneToOneField(
+        "document.Document", on_delete=models.CASCADE
+    )
+    client = models.ForeignKey(
+        "users.User", on_delete=models.CASCADE, related_name="debts_as_client"
+    )
+    paid_money = models.DecimalField(
+        max_digits=50, decimal_places=5, default=Decimal('0.0')
+    )
+
+    def __str__(self):
+        return f"{self.client} - {self.document.doc_type}"

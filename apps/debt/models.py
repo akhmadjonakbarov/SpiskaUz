@@ -67,3 +67,8 @@ class Debt(BaseModel):
 
     def __str__(self):
         return f"{self.client} - {self.document.doc_type}"
+
+    def accept(self):
+        self.is_accepted = True
+        self.save()
+

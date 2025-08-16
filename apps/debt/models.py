@@ -58,6 +58,12 @@ class Debt(BaseModel):
     paid_money = models.DecimalField(
         max_digits=50, decimal_places=5, default=Decimal('0.0')
     )
+    is_accepted = models.BooleanField(
+        default=False
+    )
+    is_paid = models.BooleanField(
+        default=False
+    )
 
     def __str__(self):
         return f"{self.client} - {self.document.doc_type}"

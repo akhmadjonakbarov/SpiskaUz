@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Supplier, DebtPaymentHistory
+from apps.shops.models import Shop
 
 
 class SupplierSerializer(serializers.ModelSerializer):
@@ -11,9 +12,13 @@ class SupplierSerializer(serializers.ModelSerializer):
 
 
 class CreateSupplierSerializer(serializers.ModelSerializer):
+    shop = serializers.PrimaryKeyRelatedField(
+        queryset=Shop.objects.all()
+    )
+
     class Meta:
         model = Supplier
-        fields = ('name', 'phone_number')
+        fields = ('name', 'phone_number', 'shop')
 
 
 class PayDebtSerializer(serializers.Serializer):

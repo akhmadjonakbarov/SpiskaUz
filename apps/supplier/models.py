@@ -7,11 +7,18 @@ from apps.users.models import User
 
 
 class Supplier(BaseModel):
+    created_by = models.ForeignKey(
+        "users.User", on_delete=models.CASCADE, blank=True, null=True,
+        related_name="suppliers_created"
+    )
+    shops = models.ManyToManyField(
+        "shops.Shop", related_name="suppliers"
+    )
     name = models.CharField(max_length=250)
     phone_number = models.CharField(max_length=20, unique=True)
 
     def __str__(self):
-        return str(self.name)
+        return f'{str(self.name)} - {self.phone_number}'
 
 
 class SupplierDebtBalance(BaseModel):

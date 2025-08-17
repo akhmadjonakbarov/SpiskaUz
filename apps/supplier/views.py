@@ -1,17 +1,19 @@
 from decimal import Decimal
 
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from rest_framework import status
 from rest_framework.generics import GenericAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-
+from django.db import transaction, IntegrityError
+from rest_framework.exceptions import ValidationError
 from utils.convertor import Convertor
 from .serializers import SupplierSerializer, CreateSupplierSerializer, PayDebtSerializer, DebtPaymentHistorySerializer
 from .models import Supplier, SupplierDebtBalance, DebtPaymentHistory
 from ..currency_rate.models import CurrencyRate
+from ..shops.models import Shop
 
 
 class SupplierViewSet(ModelViewSet):
@@ -26,6 +28,39 @@ class SupplierViewSet(ModelViewSet):
             return CreateSupplierSerializer
 
         return SupplierSerializer
+
+    from django.db import transaction, IntegrityError
+    from rest_framework.exceptions import ValidationError
+
+    def create(self, request, *args, **kwargs):
+        phone_number = request.data.get("phone_number")
+        name = request.data.get("name")
+        shop_id = request.data.get("shop")
+
+        try:
+            shop = Shop.objects.get(id=shop_id)
+        except Shop.DoesNotExist:
+            raise ValidationError({"shop": "Invalid shop id"})
+
+        try:
+            with transaction.atomic():
+                supplier, created = Supplier.objects.get_or_create(
+                    phone_number=phone_number,
+                    defaults={"created_by": request.user, "name": name},
+                )
+                supplier.shops.add(shop)
+        except IntegrityError:
+            raise ValidationError({"phone_number": "This phone number already exists."})
+
+        return Response(
+            {
+                "id": supplier.id,
+                "name": supplier.name,
+                "phone_number": supplier.phone_number,
+                "shops": [s.id for s in supplier.shops.all()],
+                "created": created,
+            }
+        )
 
     def destroy(self, request, *args, **kwargs):
         supplier = self.get_object()

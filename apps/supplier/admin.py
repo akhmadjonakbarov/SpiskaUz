@@ -6,7 +6,7 @@ from ..base.admin import BaseAdmin
 
 @admin.register(Supplier)
 class SupplierAdmin(BaseAdmin):
-    list_display = ('name', 'phone_number')
+    list_display = ('id','name', 'phone_number')
 
 
 @admin.register(SupplierDebtBalance)

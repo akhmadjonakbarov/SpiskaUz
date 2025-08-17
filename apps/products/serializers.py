@@ -10,6 +10,12 @@ from apps.unit.serializers import UnitSerializer
 from utils.convertor import Convertor
 
 
+class ProductSerializerForDocumentItem(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage

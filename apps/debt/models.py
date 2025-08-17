@@ -49,8 +49,11 @@ class Debt(BaseModel):
     created_by = models.ForeignKey(
         "users.User", on_delete=models.CASCADE, related_name="debts_created"
     )
+    shop = models.ForeignKey(
+        "shops.Shop", on_delete=models.CASCADE, related_name="debts", blank=True, null=True
+    )
     document = models.OneToOneField(
-        "document.Document", on_delete=models.CASCADE
+        "document.Document", on_delete=models.CASCADE, related_name="document"
     )
     client = models.ForeignKey(
         "users.User", on_delete=models.CASCADE, related_name="debts_as_client"
@@ -71,4 +74,3 @@ class Debt(BaseModel):
     def accept(self):
         self.is_accepted = True
         self.save()
-

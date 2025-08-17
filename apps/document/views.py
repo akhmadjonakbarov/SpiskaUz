@@ -174,14 +174,18 @@ class SellProductView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
+        client_id = None
+        paid_money = None
         user = request.user
         products_data = request.data.get("products")
         discount = request.data.get("discount", 0.0)
         note = request.data.get("note", None)
         promo_code_id = request.data.get('promo_code', None)
         payment_method = request.data.get('payment_method')
-        client_id = request.data.get('debt')['client']
-        paid_money = request.data.get('debt')['paid_money']
+        debt = request.data.get('debt', None)
+        if debt is not None:
+            client_id = debt['client']
+            paid_money = debt['paid_money']
 
         promo_code = None
         client = None

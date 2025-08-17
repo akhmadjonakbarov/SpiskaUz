@@ -3,7 +3,6 @@ from datetime import timedelta
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils.timezone import now
-from apps.base.models import BaseModel
 
 
 class CustomUserManager(BaseUserManager):
@@ -49,13 +48,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     def __str__(self):
-        return f"User(full_name={self.get_full_name()}, phone={self.phone})"
+        return self.get_full_name()
 
     def get_full_name(self):
-        return f"{self.first_name} {self.last_name}".strip()
-
-
-
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}".strip()
+        if self.first_name:
+            return self.first_name
+        if self.last_name:
+            return self.last_name
+        if self.phone:
+            return self.phone
+        return None
 
 
 class OTP(models.Model):

@@ -11,7 +11,7 @@ env.read_env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DEBUG = env.bool("DEBUG", default=True)
+DEBUG = env.bool("DEBUG", default=False)
 TESTING = env.bool("TESTING", default=False)
 SECRET_KEY = env.str("SECRET_KEY")
 OTP_EMAIL = env.str("OTP_EMAIL")

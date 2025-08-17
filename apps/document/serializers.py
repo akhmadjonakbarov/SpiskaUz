@@ -1,6 +1,31 @@
 from rest_framework import serializers
 from decimal import Decimal
-from .models import Document, PromoCode
+from .models import Document, PromoCode, DocumentItem
+
+
+class DocumentItemSerializer(serializers.ModelSerializer):
+    product = serializers.SerializerMethodField()
+    currency_rate = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DocumentItem
+        exclude = (
+            'deleted_at'
+            ,)
+
+    def get_product(self, obj: DocumentItem):
+        product = obj.product
+        return {
+            'name': product.name,
+            'unit': product.unit.name,
+            'barcode': product.barcode,
+            'category': product.category.name,
+            'currency_type': product.currency_type,
+        }
+
+    def get_currency_rate(self, obj):
+        from apps.currency_rate.serializers import CurrencyRateSerializer
+        return CurrencyRateSerializer(obj.currency_rate, many=False).data
 
 
 class DocumentSerializer(serializers.ModelSerializer):
@@ -9,7 +34,7 @@ class DocumentSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class DocumentItemSerializer(serializers.Serializer):
+class SaleItemSerializer(serializers.Serializer):
     product_id = serializers.IntegerField()
     qty = serializers.DecimalField(max_digits=20, decimal_places=5)
 
@@ -43,7 +68,7 @@ class SellProductSerializer(serializers.Serializer):
         promo_code (int, optional): ID of an optional promo code for discount.
         note (str): Optional comment related to the sale.
     """
-    products = DocumentItemSerializer(many=True)
+    products = SaleItemSerializer(many=True)
     discount = serializers.DecimalField(max_digits=15, decimal_places=5, default=Decimal("0.0"))
     payment_method = serializers.CharField()
     promo_code = serializers.PrimaryKeyRelatedField(

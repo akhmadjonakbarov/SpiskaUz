@@ -70,7 +70,7 @@ class PaymentDetail(BaseModel):
 
 class DocumentItem(BaseDocumentItem):
     document = models.ForeignKey(
-        Document, on_delete=models.CASCADE,
+        Document, on_delete=models.CASCADE, related_name="document_items"
     )
 
     def __str__(self):
@@ -82,7 +82,7 @@ class DocumentItemBalance(BaseDocumentItem):
         Document, on_delete=models.CASCADE,
     )
     document_item = models.ForeignKey(
-        DocumentItem, on_delete=models.CASCADE,
+        DocumentItem, on_delete=models.CASCADE, related_name="balances"
     )
 
     def __str__(self):

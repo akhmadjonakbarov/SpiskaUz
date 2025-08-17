@@ -187,7 +187,7 @@ class SellProductView(GenericAPIView):
         client = None
 
         if client_id:
-            client = User.objects.get(id=user)
+            client = User.objects.get(id=client_id)
 
         if promo_code_id:
             promo_code = PromoCode.objects.get(id=promo_code_id)
@@ -219,7 +219,9 @@ class SellProductView(GenericAPIView):
                     Debt.objects.create(
                         created_by=request.user,
                         client=client,
-                        paid_money=paid_money if float(paid_money) > 0 else Decimal('0.0')
+                        paid_money=paid_money if float(paid_money) > 0 else Decimal('0.0'),
+                        document=document,
+                        shop=document.shop
                     )
                     print(f'[+] Debt was created for {client}')
 

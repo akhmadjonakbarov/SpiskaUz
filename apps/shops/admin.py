@@ -31,9 +31,9 @@ class ShopAdmin(ModelAdmin, GuardedModelAdmin):
 
 @admin.register(ShopBalance)
 class ShopBalanceAdmin(ModelAdmin):
-    pass
+    list_display = ('id','profit', 'cash', 'shop', 'created_by')
 
 
 @admin.register(ShopBalanceTransaction)
 class ShopBalanceTransactionAdmin(ModelAdmin):
-    pass
+    list_display = ('id','value', 'kind', 'shop', 'created_by')

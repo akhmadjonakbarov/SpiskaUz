@@ -12,7 +12,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-
+from django.db import transaction as django_transaction
 from apps.cart.models import ShoppingCart
 from apps.cart.serializers import ShoppingCartSerializer
 from apps.document.models import DocumentItemBalance
@@ -27,6 +27,7 @@ from apps.promocodes.serializers import PromocodeSerializer
 from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance
 from apps.shops.serializers import AdminSerializer, ChangeExchangeRateSerializer, ShopAdminSerializer, \
     ShopContactSerializer, ShopSerializer
+from apps.supplier.models import Supplier, SupplierDebtBalance, DebtPaymentHistory
 from apps.transactions.models import Transaction
 from apps.transactions.serializers import TransactionSerializer
 from apps.users.serializers import AdminMemberSerializer
@@ -603,26 +604,51 @@ class ShopBalanceMixin:
         shop = Shop.objects.get(id=request.data.get('shop'))
         value = request.data.get('value')
         balance: ShopBalance = shop.balance
+        supplier_id = request.data.get('supplier', None)
 
-        if kind in 'profit':
-            balance.profit = balance.profit + Convertor.to_decimal(value)
-        if kind in 'cash_income':
-            balance.cash = balance.cash + Convertor.to_decimal(value)
-        if kind in 'cash_profit':
-            balance.profit = balance.profit + Convertor.to_decimal(value)
-            balance.cash = balance.cash + Convertor.to_decimal(value)
+        with django_transaction.atomic():
+            if kind == 'profit':
+                balance.profit = balance.profit + Convertor.to_decimal(value)
+            if kind == 'cash_income':
+                balance.cash = balance.cash + Convertor.to_decimal(value)
+            if kind == 'cash_profit':
+                balance.profit = balance.profit + Convertor.to_decimal(value)
+                balance.cash = balance.cash + Convertor.to_decimal(value)
 
-        if kind in 'loss':
-            balance.profit = balance.profit - Convertor.to_decimal(value)
-        if kind in 'cash_outcome':
-            balance.cash = balance.cash - Convertor.to_decimal(value)
-        if kind in 'cash_loss':
-            balance.cash = balance.cash - Convertor.to_decimal(value)
-            balance.profit = balance.profit - Convertor.to_decimal(value)
+            if kind == 'loss':
+                balance.profit = balance.profit - Convertor.to_decimal(value)
+                self.calculate_supplier_debt(supplier_id, value)
+
+            if kind == 'cash_outcome':
+                balance.cash = balance.cash - Convertor.to_decimal(value)
+                self.calculate_supplier_debt(supplier_id, value)
+
+            if kind == 'cash_loss':
+                balance.cash = balance.cash - Convertor.to_decimal(value)
+                balance.profit = balance.profit - Convertor.to_decimal(value)
+                self.calculate_supplier_debt(supplier_id, value)
+
+            balance.save()
+
         serializer = ShopTransactionSerializer(transaction, many=False)
+
         return Response(
             serializer.data,
         )
+
+    @staticmethod
+    def calculate_supplier_debt(supplier_id, amount):
+        supplier = None
+        if supplier_id:
+            supplier = Supplier.objects.get(id=supplier_id)
+
+        if supplier:
+            debt_balance: SupplierDebtBalance = supplier.debt_balance
+            debt_balance.balance_uzs = debt_balance.balance_uzs - Convertor.to_decimal(amount)
+            DebtPaymentHistory.objects.create(
+                supplier=supplier, balance=debt_balance, amount=amount,
+                currency_type='uzs', currency_rate=Decimal('0.0'), created_by=supplier.created_by
+            )
 
     @staticmethod
     def create_transaction(request: Request) -> ShopBalanceTransaction:

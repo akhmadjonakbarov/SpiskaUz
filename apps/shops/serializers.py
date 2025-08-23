@@ -8,7 +8,7 @@ from apps.notifications.models import NotificationType
 from apps.shops.models import Shop, ShopCategory, ShopContact
 from apps.users.serializers import UserSerializer
 
-from .models import Admin
+from .models import Admin, ShopBalance, ShopBalanceTransaction
 from ..role_manager.models import Role
 
 
@@ -195,3 +195,9 @@ class AdminSerializer(serializers.ModelSerializer):
         data["user"] = UserSerializer(instance.user, context={"request": self.context.get("request")}).data
 
         return data
+
+
+class ShopTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShopBalanceTransaction
+        fields = ('value', 'note', 'kind', 'shop')

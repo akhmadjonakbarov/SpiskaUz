@@ -2,8 +2,7 @@ from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from unfold.admin import ModelAdmin, TabularInline
 
-from .models import Admin as ShopAdminModel
-from .models import Shop, ShopCategory
+from .models import Admin as ShopAdminModel, Shop, ShopCategory, ShopBalance, ShopBalanceTransaction
 
 
 class ShopCategoryInline(TabularInline):
@@ -28,3 +27,13 @@ class ShopAdmin(ModelAdmin, GuardedModelAdmin):
         return obj.name[:length] + ("..." if len(obj.name) > length else "")
 
     short_name.short_description = "Name"
+
+
+@admin.register(ShopBalance)
+class ShopBalanceAdmin(ModelAdmin):
+    pass
+
+
+@admin.register(ShopBalanceTransaction)
+class ShopBalanceTransactionAdmin(ModelAdmin):
+    pass

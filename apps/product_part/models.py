@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
-from apps.base.models import BaseModelWithUserAndShop, PriceAndQtyMixin, PriceAndQtyMixinWithPercentage
+from apps.base.models import BaseModelWithUserAndShop, PriceAndQtyMixinWithPercentage
 from apps.currency_rate.models import CurrencyRate
 from apps.products.models import Product
 from apps.supplier.models import Supplier
@@ -17,7 +17,7 @@ class ProductPart(BaseModelWithUserAndShop, PriceAndQtyMixinWithPercentage):
         blank=True, null=True, max_digits=50, decimal_places=5
     )
     confirmed_by = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="confirmed_by", blank=True, null=True
+        User, on_delete=models.SET_NULL, related_name="confirmed_by", blank=True, null=True
     )
     confirmed_at = models.DateTimeField(null=True, blank=True)
     is_confirm = models.BooleanField(
@@ -25,7 +25,7 @@ class ProductPart(BaseModelWithUserAndShop, PriceAndQtyMixinWithPercentage):
     )
 
     supplier = models.ForeignKey(
-        Supplier, on_delete=models.CASCADE, related_name="product_parts", blank=True,
+        Supplier, on_delete=models.SET_NULL, related_name="product_parts", blank=True,
         null=True,
     )
 

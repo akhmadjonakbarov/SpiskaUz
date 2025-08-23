@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.utils.dateparse import parse_date
 from typing import Dict
-from apps.shops.models import Shop
+from apps.shops.models import Shop, ShopBalance
 from apps.supplier.models import Supplier
 from utils.convertor import Convertor
 from apps.document.models import DocumentItem
@@ -26,7 +26,7 @@ class BaseStatisticView(GenericAPIView):
     def get_shop(self):
         return Shop.objects.get(id=self.kwargs['shop_id'])
 
-    def get_statistics(self, items) -> Dict:
+    def get_statistics(self, items, shop_id) -> Dict:
 
         start_date = self.request.query_params.get("start_date")
         end_date = self.request.query_params.get("end_date")
@@ -52,6 +52,12 @@ class BaseStatisticView(GenericAPIView):
                 total_income = Convertor.to_decimal(total_income) + doc_item.qty * doc_item.income_price
 
         total_profit = Convertor.to_decimal(total_price) - Convertor.to_decimal(total_income)
+
+        shop_profit = ShopBalance.objects.filter(shop_id=shop_id, deleted_at=None).first()
+
+        if shop_profit is not None:
+            total_profit = Convertor.to_decimal(total_profit) + Convertor.to_decimal(shop_profit.profit)
+
         return {
             'total_price': total_price,
             'total_profit': total_profit,
@@ -65,7 +71,7 @@ class BoughtStatisticView(BaseStatisticView):
     def get(self, request, shop_id):
         shop = self.get_shop()
         document_items = self.get_queryset()
-        statistics = self.get_statistics(document_items)
+        statistics = self.get_statistics(document_items, shop_id=shop.id)
         debt_price = self.get_debts(shop)
         statistics['debt_price'] = debt_price
 
@@ -98,7 +104,7 @@ class SoldStatisticView(BaseStatisticView):
         shop = self.get_shop()
         document_items = self.get_queryset()
 
-        statistics = self.get_statistics(document_items)
+        statistics = self.get_statistics(document_items, shop_id=shop.id)
         statistics['debt_price'] = self.get_debts_price(shop)
 
         return Response(

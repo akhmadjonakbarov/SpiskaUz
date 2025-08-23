@@ -85,3 +85,9 @@ class CurrencyType(models.TextChoices):
     UZS = 'uzs', 'UZS'
 
 
+class TransactionType(models.TextChoices):
+    CASH = 'cash', 'Cash'
+    PROFIT = 'profit', 'Profit'
+    LOSS = 'loss', 'Loss'
+    CASH_PROFIT = 'cash_profit', 'Cash_Profit'
+    CASH_LOSS = 'cash_loss', 'Cash_Loss'

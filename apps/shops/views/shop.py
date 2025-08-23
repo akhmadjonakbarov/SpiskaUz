@@ -22,6 +22,7 @@ from .mixins import (
     ShopHistoryActionsMixin,
     ShoppingCartActionMixin,
     SubscriptionActionMixin,
+    ShopBalanceMixin,
 )
 from apps.currency_rate.models import CurrencyRate
 from apps.role_manager.models import Role
@@ -40,6 +41,7 @@ class ShopViewSet(
     ExchangeRateActionsMixin,
     PromocodeActionsMixin,
     ShopHistoryActionsMixin,
+    ShopBalanceMixin,
 ):
     """
     Do'konlarni boshqarish uchun ViewSet.

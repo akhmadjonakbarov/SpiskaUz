@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 from django.db.models import Sum
-from apps.base.models import BaseModel, BaseModelWithUser
+from apps.base.models import BaseModel, BaseModelWithUser, TransactionType
 from apps.orders.models import OrderStatus
 from apps.users.models import User
 from common.utils import generate_unique_text
@@ -86,3 +86,36 @@ class Admin(models.Model):
 
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.shop.name}"
+
+
+class ShopBalance(BaseModel):
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="shop_balances")
+    shop = models.OneToOneField(Shop, on_delete=models.CASCADE, related_name="balance")
+    profit = models.DecimalField(
+        max_digits=50, decimal_places=5,
+    )
+    cash = models.DecimalField(
+        max_digits=50, decimal_places=5
+    )
+
+    def __str__(self):
+        return f'Cash: {self.cash} Profit: {self.profit}'
+
+
+class ShopBalanceTransaction(BaseModel):
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user_balance_transactions")
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="shop_balance_transactions")
+    balance = models.ForeignKey(
+        ShopBalance, related_name="transactions", on_delete=models.SET_NULL, blank=True,
+        null=True
+    )
+    kind = models.CharField(
+        choices=TransactionType.choices, max_length=20
+    )
+    value = models.DecimalField(
+        max_digits=50, decimal_places=5
+    )
+    note = models.CharField(max_length=400, blank=True, null=True)
+
+    def __str__(self):
+        return f'Value: {self.value} Type: {self.kind}'

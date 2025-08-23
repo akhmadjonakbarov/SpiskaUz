@@ -1,6 +1,7 @@
 import datetime
 from collections import defaultdict
 from decimal import Decimal
+from xmlrpc.client import Fault
 
 from django.db.models import Sum
 from drf_yasg import openapi
@@ -587,3 +588,13 @@ class ShopHistoryActionsMixin:
         transactions = TransactionSerializer(instance=transactions, many=True, context={"request": request})
 
         return Response({"transactions": transactions.data, "statistics": statistics})
+
+
+class ShopBalanceMixin:
+    @action(methods=['POST'], url_path="income", detail=False)
+    def income(self, request, *args, **kwargs):
+        pass
+
+    @action(methods=['POST'], url_path='outcome', detail=False)
+    def outcome(self, request, *args, **kwargs):
+        pass

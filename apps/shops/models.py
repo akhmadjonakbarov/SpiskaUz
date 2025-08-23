@@ -112,10 +112,10 @@ class ShopBalanceTransaction(BaseModel):
     kind = models.CharField(
         choices=TransactionType.choices, max_length=20
     )
-    value = models.DecimalField(
+    amount = models.DecimalField(
         max_digits=50, decimal_places=5
     )
     note = models.CharField(max_length=400, blank=True, null=True)
 
     def __str__(self):
-        return f'Value: {self.value} Type: {self.kind}'
+        return f'Value: {self.amount} Type: {self.kind}'

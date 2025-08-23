@@ -205,4 +205,4 @@ class ShopTransactionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShopBalanceTransaction
-        fields = ('value', 'note', 'kind', 'shop', 'supplier')
+        fields = ('amount', 'note', 'kind', 'shop', 'supplier')

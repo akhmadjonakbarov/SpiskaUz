@@ -36,4 +36,4 @@ class ShopBalanceAdmin(ModelAdmin):
 
 @admin.register(ShopBalanceTransaction)
 class ShopBalanceTransactionAdmin(ModelAdmin):
-    list_display = ('id','value', 'kind', 'shop', 'created_by')
+    list_display = ('id','amount', 'kind', 'shop', 'created_by')

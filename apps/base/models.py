@@ -86,7 +86,8 @@ class CurrencyType(models.TextChoices):
 
 
 class TransactionType(models.TextChoices):
-    CASH = 'cash', 'Cash'
+    CASH_INCOME = 'cash_income', 'Cash_Income'
+    CASH_OUTCOME = 'cash_outcome', 'Cash_Outcome'
     PROFIT = 'profit', 'Profit'
     LOSS = 'loss', 'Loss'
     CASH_PROFIT = 'cash_profit', 'Cash_Profit'

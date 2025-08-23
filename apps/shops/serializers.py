@@ -10,6 +10,7 @@ from apps.users.serializers import UserSerializer
 
 from .models import Admin, ShopBalance, ShopBalanceTransaction
 from ..role_manager.models import Role
+from ..supplier.models import Supplier
 
 
 class ShopCategorySerializer(serializers.ModelSerializer):
@@ -198,6 +199,10 @@ class AdminSerializer(serializers.ModelSerializer):
 
 
 class ShopTransactionSerializer(serializers.ModelSerializer):
+    supplier = serializers.PrimaryKeyRelatedField(
+        queryset=Supplier.objects.filter(deleted_at=None), required=False,
+    )
+
     class Meta:
         model = ShopBalanceTransaction
-        fields = ('value', 'note', 'kind', 'shop')
+        fields = ('value', 'note', 'kind', 'shop', 'supplier')

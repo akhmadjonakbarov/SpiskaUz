@@ -1,9 +1,11 @@
+from decimal import Decimal
+
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from common.utils import assign_perms
 
-from .models import Admin, Shop, ShopCategory
+from .models import Admin, Shop, ShopCategory, ShopBalance
 
 
 @receiver(post_save, sender=Shop)
@@ -25,3 +27,17 @@ def set_chief_admin(sender, instance: Admin, created, **kwargs):
         category_perms = ["add_category", "change_category", "delete_category"]
         order_perms = ["confirm_order", "cancel_order"]
         assign_perms(category_perms + order_perms, instance.user, instance.shop)
+
+
+@receiver(post_save, sender=Shop)
+def create_shop_balance(sender, instance, created, **kwargs):
+    """
+    Create a ShopBalance object automatically when a Shop is created.
+    """
+    if created:
+        ShopBalance.objects.create(
+            shop=instance,
+            created_by=instance.created_by,  # if Shop has created_by field
+            profit=Decimal('0.0'),
+            cash=Decimal('0.0')
+        )

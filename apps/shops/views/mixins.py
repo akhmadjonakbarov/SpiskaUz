@@ -1,7 +1,6 @@
 import datetime
 from collections import defaultdict
 from decimal import Decimal
-from xmlrpc.client import Fault
 
 from django.db.models import Sum
 from drf_yasg import openapi
@@ -11,6 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from apps.cart.models import ShoppingCart
@@ -24,6 +24,7 @@ from apps.products.models import Product, ProductGroup
 from apps.products.serializers import CreateProductsGroupSerializer, ProductPositionSerializer, ProductSerializer, \
     SeparateProductsSerializer, ProductSerializerForUser
 from apps.promocodes.serializers import PromocodeSerializer
+from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance
 from apps.shops.serializers import AdminSerializer, ChangeExchangeRateSerializer, ShopAdminSerializer, \
     ShopContactSerializer, ShopSerializer
 from apps.transactions.models import Transaction
@@ -31,6 +32,9 @@ from apps.transactions.serializers import TransactionSerializer
 from apps.users.serializers import AdminMemberSerializer
 from common.filters import ProductFilter
 from common.serializers import EmptyBodySerializer
+
+from apps.shops.serializers import ShopTransactionSerializer
+from utils.convertor import Convertor
 
 
 class SubscriptionActionMixin:
@@ -591,10 +595,46 @@ class ShopHistoryActionsMixin:
 
 
 class ShopBalanceMixin:
-    @action(methods=['POST'], url_path="income", detail=False)
-    def income(self, request, *args, **kwargs):
-        pass
+    @swagger_auto_schema(request_body=ShopTransactionSerializer)
+    @action(methods=['POST'], url_path="calculate-balance", detail=False)
+    def calculate_balance(self, request, *args, **kwargs):
+        transaction = self.create_transaction(request)
+        kind = request.data.get('kind')
+        shop = Shop.objects.get(id=request.data.get('shop'))
+        value = request.data.get('value')
+        balance: ShopBalance = shop.balance
 
-    @action(methods=['POST'], url_path='outcome', detail=False)
-    def outcome(self, request, *args, **kwargs):
-        pass
+        if kind in 'profit':
+            balance.profit = balance.profit + Convertor.to_decimal(value)
+        if kind in 'cash_income':
+            balance.cash = balance.cash + Convertor.to_decimal(value)
+        if kind in 'cash_profit':
+            balance.profit = balance.profit + Convertor.to_decimal(value)
+            balance.cash = balance.cash + Convertor.to_decimal(value)
+
+        if kind in 'loss':
+            balance.profit = balance.profit - Convertor.to_decimal(value)
+        if kind in 'cash_outcome':
+            balance.cash = balance.cash - Convertor.to_decimal(value)
+        if kind in 'cash_loss':
+            balance.cash = balance.cash - Convertor.to_decimal(value)
+            balance.profit = balance.profit - Convertor.to_decimal(value)
+        serializer = ShopTransactionSerializer(transaction, many=False)
+        return Response(
+            serializer.data,
+        )
+
+    @staticmethod
+    def create_transaction(request: Request) -> ShopBalanceTransaction:
+        kind = request.data.get('kind')
+        value = request.data.get('value')
+        note = request.data.get('note')
+        shop_id = request.data.get('shop')
+        shop = Shop.objects.get(id=shop_id)
+        transaction = ShopBalanceTransaction.objects.create(
+            created_by=request.user,
+            value=value, note=note, shop=shop, kind=kind
+        )
+
+        print("[+] Transaction was created")
+        return transaction

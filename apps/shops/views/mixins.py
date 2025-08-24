@@ -106,7 +106,8 @@ class SubscriptionActionMixin:
         shop = self.get_object()
         users = shop.members.all()
 
-        serializer = self.get_serializer(users, many=True, context={"shop": shop})
+        serializer = self.get_serializer(
+            users, many=True, context={"shop": shop})
 
         return Response(serializer.data)
 
@@ -174,11 +175,13 @@ class ProductGroupActionMixin:
                 # Add to totals
                 total_cost = cost * qty * float(
                     balance.currency_rate_value) if product.currency_type == 'usd' else cost * qty
-                category_map[category_id]["total_profit"] += float(profit) * qty
+                category_map[category_id]["total_profit"] += float(
+                    profit) * qty
                 category_map[category_id]["total_cost"] += total_cost
 
             except Exception as e:
-                print(f"[Profit/Cost Error] Product ID: {product.id}, Error: {e}")
+                print(
+                    f"[Profit/Cost Error] Product ID: {product.id}, Error: {e}")
 
         # Fill product groups
         for product in products:
@@ -302,7 +305,8 @@ class ShoppingCartActionMixin:
 class OrderActionMixin:
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter("page", openapi.IN_QUERY, description="Sahifa raqami", type=openapi.TYPE_INTEGER),
+            openapi.Parameter("page", openapi.IN_QUERY,
+                              description="Sahifa raqami", type=openapi.TYPE_INTEGER),
             openapi.Parameter("page_size", openapi.IN_QUERY, description="Har bir sahifadagi elementlar soni",
                               type=openapi.TYPE_INTEGER),
         ],
@@ -330,14 +334,17 @@ class OrderActionMixin:
 class ProductActionsMixin:
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter("page", openapi.IN_QUERY, description="Sahifa raqami", type=openapi.TYPE_INTEGER),
+            openapi.Parameter("page", openapi.IN_QUERY,
+                              description="Sahifa raqami", type=openapi.TYPE_INTEGER),
             openapi.Parameter("page_size", openapi.IN_QUERY, description="Har bir sahifadagi elementlar soni",
                               type=openapi.TYPE_INTEGER),
             openapi.Parameter("search", openapi.IN_QUERY,
                               description="Search across name, description, barcode, category name",
                               type=openapi.TYPE_STRING),
-            openapi.Parameter("name", openapi.IN_QUERY, description="Filter by product name", type=openapi.TYPE_STRING),
-            openapi.Parameter("barcode", openapi.IN_QUERY, description="Filter by barcode", type=openapi.TYPE_STRING),
+            openapi.Parameter("name", openapi.IN_QUERY,
+                              description="Filter by product name", type=openapi.TYPE_STRING),
+            openapi.Parameter("barcode", openapi.IN_QUERY,
+                              description="Filter by barcode", type=openapi.TYPE_STRING),
             openapi.Parameter("description", openapi.IN_QUERY, description="Filter by description",
                               type=openapi.TYPE_STRING),
             openapi.Parameter("category", openapi.IN_QUERY, description="Filter by category ID",
@@ -352,27 +359,33 @@ class ProductActionsMixin:
     @action(detail=True, methods=["GET"])
     def products(self, request, *args, **kwargs):
         """Do'kondagi barcha mahsulotlarni olish."""
-        queryset = self.get_object().products.prefetch_related("images", "parts").order_by("position")
+        queryset = self.get_object().products.prefetch_related(
+            "images", "parts").order_by("position")
         filtered_qs = ProductFilter(request.GET, queryset=queryset).qs
         page = self.paginate_queryset(filtered_qs)
 
         if page is not None:
-            serializer = ProductSerializer(page, many=True, context={"request": request})
+            serializer = ProductSerializer(
+                page, many=True, context={"request": request})
             return self.get_paginated_response(serializer.data)
 
-        serializer = ProductSerializer(filtered_qs, many=True, context={"request": request})
+        serializer = ProductSerializer(
+            filtered_qs, many=True, context={"request": request})
         return Response(serializer.data)
 
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter("page", openapi.IN_QUERY, description="Sahifa raqami", type=openapi.TYPE_INTEGER),
+            openapi.Parameter("page", openapi.IN_QUERY,
+                              description="Sahifa raqami", type=openapi.TYPE_INTEGER),
             openapi.Parameter("page_size", openapi.IN_QUERY, description="Har bir sahifadagi elementlar soni",
                               type=openapi.TYPE_INTEGER),
             openapi.Parameter("search", openapi.IN_QUERY,
                               description="Search across name, description, barcode, category name",
                               type=openapi.TYPE_STRING),
-            openapi.Parameter("name", openapi.IN_QUERY, description="Filter by product name", type=openapi.TYPE_STRING),
-            openapi.Parameter("barcode", openapi.IN_QUERY, description="Filter by barcode", type=openapi.TYPE_STRING),
+            openapi.Parameter("name", openapi.IN_QUERY,
+                              description="Filter by product name", type=openapi.TYPE_STRING),
+            openapi.Parameter("barcode", openapi.IN_QUERY,
+                              description="Filter by barcode", type=openapi.TYPE_STRING),
             openapi.Parameter("description", openapi.IN_QUERY, description="Filter by description",
                               type=openapi.TYPE_STRING),
             openapi.Parameter("category", openapi.IN_QUERY, description="Filter by category ID",
@@ -387,10 +400,12 @@ class ProductActionsMixin:
     @action(detail=True, methods=["GET"], url_path="products-groups-user")
     def products_groups_user(self, request, *args, **kwargs):
         """Do'kondagi barcha mahsulotlarni guruhlar bo'yicha olish."""
-        queryset = self.get_object().products.prefetch_related("images", "parts").order_by("position")
+        queryset = self.get_object().products.prefetch_related(
+            "images", "parts").order_by("position")
         products = ProductFilter(request.GET, queryset=queryset).qs
 
-        category_map = defaultdict(lambda: {"id": None, "category": "", "groups": []})
+        category_map = defaultdict(
+            lambda: {"id": None, "category": "", "groups": []})
 
         for product in products:
             category = product.category
@@ -411,7 +426,8 @@ class ProductActionsMixin:
                     found = True
                     break
             if not found:
-                category_map[category_id]["groups"].append({"id": group_id, "products": [product]})
+                category_map[category_id]["groups"].append(
+                    {"id": group_id, "products": [product]})
 
         result = []
         for cat in category_map.values():
@@ -431,11 +447,13 @@ class ProductActionsMixin:
         serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
 
-        positions = {pair["product_id"]: pair["position"] for pair in serializer.validated_data}
+        positions = {pair["product_id"]: pair["position"]
+                     for pair in serializer.validated_data}
         products = Product.objects.filter(pk__in=positions.keys(), shop=shop)
 
         if not products.exists():
-            raise ValidationError({"message": "Ma'lumotlar bazasida keltirilgan mahsulotlar topilmadi."})
+            raise ValidationError(
+                {"message": "Ma'lumotlar bazasida keltirilgan mahsulotlar topilmadi."})
 
         for product in products:
             product.position = positions.get(product.id)
@@ -450,7 +468,8 @@ class ContactActionsMixin:
         """Do'kondagi barcha kontaktlarni olish."""
         shop = self.get_object()
         contacts = shop.contacts.all()
-        serializer = ShopContactSerializer(contacts, many=True, context={"request": request})
+        serializer = ShopContactSerializer(
+            contacts, many=True, context={"request": request})
         return Response(serializer.data)
 
 
@@ -514,7 +533,8 @@ class ShopHistoryActionsMixin:
         start_date = request.query_params.get("start_date")
         end_date = request.query_params.get("end_date")
 
-        orders = Order.objects.filter(shop=shop).select_related("admin", "customer")
+        orders = Order.objects.filter(
+            shop=shop).select_related("admin", "customer")
 
         if start_date:
             try:
@@ -530,7 +550,8 @@ class ShopHistoryActionsMixin:
             except ValueError:
                 return Response({"error": "end_date format must be YYYY-MM-DD"}, status=400)
 
-        stats_orders = orders.filter(status__in=[OrderStatus.ACCEPTED, OrderStatus.COMPLETED])
+        stats_orders = orders.filter(
+            status__in=[OrderStatus.ACCEPTED, OrderStatus.COMPLETED])
 
         statistics = stats_orders.aggregate(
             total_price=Sum("total_price"),
@@ -540,7 +561,8 @@ class ShopHistoryActionsMixin:
             total_profit=Sum("profit"),
         )
 
-        orders = OrderSerializer(instance=orders, many=True, context={"request": request})
+        orders = OrderSerializer(
+            instance=orders, many=True, context={"request": request})
 
         return Response({"orders": orders.data, "statistics": statistics})
 
@@ -559,7 +581,8 @@ class ShopHistoryActionsMixin:
         start_date = request.query_params.get("start_date")
         end_date = request.query_params.get("end_date")
 
-        transactions = Transaction.objects.filter(shop=shop).select_related("user")
+        transactions = Transaction.objects.filter(
+            shop=shop).select_related("user")
 
         if start_date:
             try:
@@ -575,10 +598,12 @@ class ShopHistoryActionsMixin:
             except ValueError:
                 return Response({"error": "end_date format must be YYYY-MM-DD"}, status=400)
 
-        profit_spent = transactions.filter(transaction_type="profit").aggregate(total=Sum("amount"))["total"] or 0
-        cash_spent = transactions.filter(transaction_type="cash").aggregate(total=Sum("amount"))["total"] or 0
+        profit_spent = transactions.filter(transaction_type="profit").aggregate(
+            total=Sum("amount"))["total"] or 0
+        cash_spent = transactions.filter(transaction_type="cash").aggregate(
+            total=Sum("amount"))["total"] or 0
         cash_and_profit_spent = transactions.filter(transaction_type="cash_and_profit").aggregate(total=Sum("amount"))[
-                                    "total"] or 0
+            "total"] or 0
         current_cash_total = \
             transactions.filter(transaction_type__in=["cash", "cash_and_profit"]).aggregate(total=Sum("amount"))[
                 "total"] or 0
@@ -590,7 +615,8 @@ class ShopHistoryActionsMixin:
             "current_cash_total": current_cash_total,
         }
 
-        transactions = TransactionSerializer(instance=transactions, many=True, context={"request": request})
+        transactions = TransactionSerializer(
+            instance=transactions, many=True, context={"request": request})
 
         return Response({"transactions": transactions.data, "statistics": statistics})
 
@@ -602,31 +628,31 @@ class ShopBalanceMixin:
         transaction = self.create_transaction(request)
         kind = request.data.get('kind')
         shop = Shop.objects.get(id=request.data.get('shop'))
-        value = request.data.get('value')
+        amount = request.data.get('amount')
         balance: ShopBalance = shop.balance
         supplier_id = request.data.get('supplier', None)
 
         with django_transaction.atomic():
             if kind == 'profit':
-                balance.profit = balance.profit + Convertor.to_decimal(value)
+                balance.profit = balance.profit + Convertor.to_decimal(amount)
             if kind == 'cash_income':
-                balance.cash = balance.cash + Convertor.to_decimal(value)
+                balance.cash = balance.cash + Convertor.to_decimal(amount)
             if kind == 'cash_profit':
-                balance.profit = balance.profit + Convertor.to_decimal(value)
-                balance.cash = balance.cash + Convertor.to_decimal(value)
+                balance.profit = balance.profit + Convertor.to_decimal(amount)
+                balance.cash = balance.cash + Convertor.to_decimal(amount)
 
             if kind == 'loss':
-                balance.profit = balance.profit - Convertor.to_decimal(value)
-                self.calculate_supplier_debt(supplier_id, value)
+                balance.profit = balance.profit - Convertor.to_decimal(amount)
+                self.calculate_supplier_debt(supplier_id, amount)
 
             if kind == 'cash_outcome':
-                balance.cash = balance.cash - Convertor.to_decimal(value)
-                self.calculate_supplier_debt(supplier_id, value)
+                balance.cash = balance.cash - Convertor.to_decimal(amount)
+                self.calculate_supplier_debt(supplier_id, amount)
 
             if kind == 'cash_loss':
-                balance.cash = balance.cash - Convertor.to_decimal(value)
-                balance.profit = balance.profit - Convertor.to_decimal(value)
-                self.calculate_supplier_debt(supplier_id, value)
+                balance.cash = balance.cash - Convertor.to_decimal(amount)
+                balance.profit = balance.profit - Convertor.to_decimal(amount)
+                self.calculate_supplier_debt(supplier_id, amount)
 
             balance.save()
 
@@ -644,7 +670,8 @@ class ShopBalanceMixin:
 
         if supplier:
             debt_balance: SupplierDebtBalance = supplier.debt_balance
-            debt_balance.balance_uzs = debt_balance.balance_uzs - Convertor.to_decimal(amount)
+            debt_balance.balance_uzs = debt_balance.balance_uzs - \
+                Convertor.to_decimal(amount)
             DebtPaymentHistory.objects.create(
                 supplier=supplier, balance=debt_balance, amount=amount,
                 currency_type='uzs', currency_rate=Decimal('0.0'), created_by=supplier.created_by
@@ -653,13 +680,13 @@ class ShopBalanceMixin:
     @staticmethod
     def create_transaction(request: Request) -> ShopBalanceTransaction:
         kind = request.data.get('kind')
-        value = request.data.get('value')
+        amount = request.data.get('amount')
         note = request.data.get('note')
         shop_id = request.data.get('shop')
         shop = Shop.objects.get(id=shop_id)
         transaction = ShopBalanceTransaction.objects.create(
             created_by=request.user,
-            value=value, note=note, shop=shop, kind=kind
+            amount=amount, note=note, shop=shop, kind=kind
         )
 
         print("[+] Transaction was created")

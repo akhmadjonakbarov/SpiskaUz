@@ -1,12 +1,16 @@
+from locale import currency
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from apps.document.models import DocumentItem, DocumentItemBalance
+from apps.product_part.models import ProductPart
 from .models import CurrencyRate
 from .serializers import CurrencyRateSerializer
+from ..shops.models import Shop
 
 
 class LatestCurrencyRate(viewsets.ViewSet):
@@ -66,17 +70,60 @@ class CurrencyRateCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        shop_id = request.data.get("shop")
+        shop_id = request.data.get("shop", None)
+        rate = request.data.get("rate", None)
         if not shop_id:
             return Response({"detail": "Shop is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         if not self.request.user.shops.filter(id=shop_id).exists():
             return Response({"detail": "You don't have access to this shop."}, status=status.HTTP_403_FORBIDDEN)
 
-        return super().create(request, *args, **kwargs)
+        try:
+            shop = Shop.objects.get(id=shop_id)
+            currency_rate = CurrencyRate.objects.create(
+                shop=shop, user=request.user, rate=rate
+            )
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+            product_parts = ProductPart.objects.filter(
+                shop=shop_id, is_confirm=False
+            )
+            balances = (
+                DocumentItemBalance.objects
+                .filter(shop=shop)
+                .select_related("document_item")  # OneToOne => select_related
+            )
+
+            if balances:
+                for balance in balances:
+                    # Update balance
+                    balance.currency_rate = currency_rate
+                    balance.currency_rate_value = currency_rate.rate
+
+                    # Update related document item
+                    document_item = balance.document_item
+                    document_item.currency_rate = currency_rate
+                    document_item.currency_rate_value = currency_rate.rate
+
+                    balance.save(update_fields=["currency_rate", "currency_rate_value"])
+                    document_item.save(update_fields=["currency_rate", "currency_rate_value"])
+
+            if product_parts:
+                for pp in product_parts:
+                    pp.currency_rate = currency_rate
+                    pp.currency_rate_value = currency_rate.rate
+                    pp.save()
+
+            serializer = self.get_serializer(currency_rate, many=False)
+            return Response(
+                data=serializer.data
+            )
+        except Exception as e:
+            print(e)
+            return Response(
+                data={
+                    'error': e
+                }
+            )
 
 
 # Retrieve View

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db.models import Sum
 from rest_framework import serializers
 
@@ -66,12 +68,18 @@ class ProductSerializer(serializers.ModelSerializer):
     #     return None
 
     def get_profit_as_percent(self, product: Product):
-        balance = DocumentItemBalance.objects.filter(
+        total_percent = Decimal('0.0')
+        balances = DocumentItemBalance.objects.filter(
             product=product, deleted_at=None,
-        ).first()
-        if balance:
-            return Convertor.to_float(balance.profit_as_percent)
-        return float(0.0)
+        )
+
+        if not balances:
+            return Decimal('0.0')
+        for balance in balances:
+            total_percent = total_percent + Convertor.to_decimal(balance.profit_as_percent)
+
+        middle_percent = total_percent / Decimal(balances.count())
+        return middle_percent
 
     def get_currency(self, product):
         from apps.currency_rate.serializers import CurrencyRateSerializer, CurrencyRate
@@ -121,12 +129,18 @@ class ProductSerializerForUser(serializers.ModelSerializer):
         return qty or 0
 
     def get_profit_as_percent(self, product: Product):
-        balance = DocumentItemBalance.objects.filter(
+        total_percent = Decimal('0.0')
+        balances = DocumentItemBalance.objects.filter(
             product=product, deleted_at=None,
-        ).first()
-        if balance:
-            return Convertor.to_float(balance.profit_as_percent)
-        return float(0.0)
+        )
+
+        if not balances:
+            return Decimal('0.0')
+        for balance in balances:
+            total_percent = total_percent + Convertor.to_decimal(balance.profit_as_percent)
+
+        middle_percent = total_percent / Decimal(balances.count())
+        return middle_percent
 
     def get_currency(self, product):
         from apps.currency_rate.serializers import CurrencyRateSerializer, CurrencyRate

@@ -24,7 +24,7 @@ from apps.products.models import Product, ProductGroup
 from apps.products.serializers import CreateProductsGroupSerializer, ProductPositionSerializer, ProductSerializer, \
     SeparateProductsSerializer, ProductSerializerForUser
 from apps.promocodes.serializers import PromocodeSerializer
-from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance
+from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance, Admin
 from apps.shops.serializers import AdminSerializer, ChangeExchangeRateSerializer, ShopAdminSerializer, \
     ShopContactSerializer, ShopSerializer
 from apps.supplier.models import Supplier, SupplierDebtBalance, DebtPaymentHistory
@@ -87,7 +87,8 @@ class SubscriptionActionMixin:
     def owned(self, request):
         """Foydalanuvchiga tegishli do'konlarni olish."""
         user = request.user
-        shops = self.get_queryset().filter(owner=user)
+        admin = Admin.objects.filter(user=user)
+        shops = self.get_queryset().filter(admins__in=admin)
 
         page = self.paginate_queryset(shops)
 
@@ -603,7 +604,7 @@ class ShopHistoryActionsMixin:
         cash_spent = transactions.filter(transaction_type="cash").aggregate(
             total=Sum("amount"))["total"] or 0
         cash_and_profit_spent = transactions.filter(transaction_type="cash_and_profit").aggregate(total=Sum("amount"))[
-            "total"] or 0
+                                    "total"] or 0
         current_cash_total = \
             transactions.filter(transaction_type__in=["cash", "cash_and_profit"]).aggregate(total=Sum("amount"))[
                 "total"] or 0
@@ -671,7 +672,7 @@ class ShopBalanceMixin:
         if supplier:
             debt_balance: SupplierDebtBalance = supplier.debt_balance
             debt_balance.balance_uzs = debt_balance.balance_uzs - \
-                Convertor.to_decimal(amount)
+                                       Convertor.to_decimal(amount)
             DebtPaymentHistory.objects.create(
                 supplier=supplier, balance=debt_balance, amount=amount,
                 currency_type='uzs', currency_rate=Decimal('0.0'), created_by=supplier.created_by

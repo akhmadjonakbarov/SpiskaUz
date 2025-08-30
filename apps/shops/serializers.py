@@ -9,8 +9,8 @@ from apps.shops.models import Shop, ShopCategory, ShopContact
 from apps.users.serializers import UserSerializer
 
 from .models import Admin, ShopBalance, ShopBalanceTransaction
-from ..role_manager.models import Role
-from ..supplier.models import Supplier
+from apps.role_manager.models import Role
+from apps.supplier.models import Supplier
 
 
 class ShopCategorySerializer(serializers.ModelSerializer):
@@ -159,12 +159,20 @@ class ShopSerializer(serializers.ModelSerializer):
 
 class ShopAdminSerializer(ShopSerializer):
     has_admin_notifications = serializers.SerializerMethodField()
+    admin_type = serializers.SerializerMethodField()
 
     class Meta(ShopSerializer.Meta):
-        fields = ShopSerializer.Meta.fields + ["has_admin_notifications"]
+        fields = ShopSerializer.Meta.fields + ["has_admin_notifications", "admin_type"]
 
     def get_has_admin_notifications(self, obj):
         return obj.notifications.filter(type=NotificationType.ORDER_EVENT_ADMIN).exists()
+
+    def get_admin_type(self, obj):
+        from apps.shops.models import Admin
+        user = self.context['request'].user
+
+        admin = Admin.objects.filter(shop=obj, user=user).first()
+        return admin.type
 
 
 class SetTelegramLinkSerializer(serializers.Serializer):

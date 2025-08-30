@@ -19,7 +19,7 @@ class DocumentAdmin(BaseAdmin):
 class DocumentItemAdmin(BaseAdmin):
     list_display = (
         'id', 'get_product_name', 'sale_price', 'income_price',
-        'qty', 'get_currency_type', 'currency_rate_value', 'get_product_status'
+        'qty', 'get_currency_type', 'currency_rate_value', 'get_product_status','profit_as_percent'
     )
     list_filter = ('document__doc_type', 'product__currency_type',)
 
@@ -40,7 +40,7 @@ class DocumentItemAdmin(BaseAdmin):
 class DocumentItemBalanceAdmin(BaseAdmin):
     list_display = (
         'id', 'get_product_name', 'sale_price', 'income_price',
-        'qty', 'get_currency_type', 'currency_rate_value',
+        'qty', 'get_currency_type', 'currency_rate_value','profit_as_percent'
     )
 
     @admin.display(description='Product Name')

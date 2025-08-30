@@ -16,6 +16,7 @@ class ProductPartSerializer(serializers.ModelSerializer):
     currency_rate = CurrencyRateSerializer()
     confirmed_by = UserSerializer()
     supplier = SupplierSerializer()
+    profit_as_percent = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductPart
@@ -43,6 +44,9 @@ class ProductPartSerializer(serializers.ModelSerializer):
                     pass  # skip if conversion fails
 
         return data
+
+    def get_profit_as_percent(self, product_part: ProductPart):
+        return product_part.profit_as_percent
 
 
 class CreateProductPartSerializer(serializers.Serializer):

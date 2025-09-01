@@ -52,7 +52,7 @@ LOCAL_APPS = [
     "apps.orders",
     "apps.products",
     "apps.promocodes",
-    "apps.shops",
+    "apps.shops.apps.ShopsConfig",
     "apps.transactions",
     "apps.users",
     'apps.base',

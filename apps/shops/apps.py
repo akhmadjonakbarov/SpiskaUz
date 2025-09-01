@@ -6,4 +6,4 @@ class ShopsConfig(AppConfig):
     name = "apps.shops"
 
     def ready(self):
-        return super().ready()
+        import apps.shops.signals

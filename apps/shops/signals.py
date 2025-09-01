@@ -37,7 +37,7 @@ def create_shop_balance(sender, instance, created, **kwargs):
     if created:
         ShopBalance.objects.create(
             shop=instance,
-            created_by=instance.created_by,  # if Shop has created_by field
+            created_by=instance.owner,
             profit=Decimal('0.0'),
             cash=Decimal('0.0')
         )

@@ -1,12 +1,10 @@
-from locale import currency
-
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from apps.document.models import DocumentItem, DocumentItemBalance
+from apps.document.models import DocumentItemBalance
 from apps.product_part.models import ProductPart
 from .models import CurrencyRate
 from .serializers import CurrencyRateSerializer

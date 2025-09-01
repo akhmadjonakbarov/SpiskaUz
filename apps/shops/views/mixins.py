@@ -82,13 +82,20 @@ class SubscriptionActionMixin:
         serializer = self.get_serializer(shops, many=True)
         return Response(serializer.data)
 
-    @swagger_auto_schema(responses={200: ShopAdminSerializer(many=True)})
-    @action(methods=["GET"], detail=False, serializer_class=ShopAdminSerializer)
+    @swagger_auto_schema(responses={200: ShopSerializer(many=True)})
+    @action(methods=["GET"], detail=False, serializer_class=ShopSerializer)
     def owned(self, request):
         """Foydalanuvchiga tegishli do'konlarni olish."""
         user = request.user
-        admin = Admin.objects.filter(user=user)
-        shops = self.get_queryset().filter(admins__in=admin)
+
+        # Shops owned directly
+        owned_shops = Shop.objects.filter(owner=user)
+
+        # Shops where user has any role
+        role_shops = Shop.objects.filter(role__user=user)
+
+        # Union of both, without duplicates
+        shops = (owned_shops | role_shops).distinct()
 
         page = self.paginate_queryset(shops)
 

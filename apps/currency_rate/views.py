@@ -97,13 +97,8 @@ class CurrencyRateCreateView(generics.CreateAPIView):
                     balance.currency_rate = currency_rate
                     balance.currency_rate_value = currency_rate.rate
 
-                    # Update related document item
-                    document_item = balance.document_item
-                    document_item.currency_rate = currency_rate
-                    document_item.currency_rate_value = currency_rate.rate
 
                     balance.save(update_fields=["currency_rate", "currency_rate_value"])
-                    document_item.save(update_fields=["currency_rate", "currency_rate_value"])
 
             if product_parts:
                 for pp in product_parts:

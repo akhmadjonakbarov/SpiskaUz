@@ -1,70 +1,124 @@
+from itertools import product
+
+from django.db import transaction
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
-
-from apps.orders.models import Order
+from apps.orders.models import Order, OrderStatus, OrderItem
 from apps.orders.serializers import OrderSerializer
 from apps.orders.services import OrderService
 from apps.promocodes.serializers import ApplyPromocodeSerializer
-
-from .models import PromoCode, ShoppingCart, ShoppingCartItem
+from utils.convertor import Convertor
+from .models import PromoCode, Cart, CartItem
 from .permissions import CanConfirmCartPermission, CanEditCartItemPermission
-from .serializers import ConfirmShoppingCartSerializer, ShoppingCartItemSerializer, ShoppingCartSerializer
+from .serializers import ConfirmShoppingCartSerializer, ShoppingCartItemSerializer, ShoppingCartSerializer, \
+    AddCartItemSerializer
+from ..products.models import Product
 
 
-class ShoppingCartItemViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin):
+class ShoppingCartItemViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
+                              mixins.DestroyModelMixin):
     serializer_class = ShoppingCartItemSerializer
-    queryset = ShoppingCartItem.objects.all()
+    queryset = CartItem.objects.all()
     permission_classes = [CanEditCartItemPermission]
 
-    def perform_create(self, serializer):
-        validated_data = serializer.validated_data
-        user = self.request.user
-        product = validated_data["product"]
+    @swagger_auto_schema(
+        request_body=AddCartItemSerializer
+    )
+    def create(self, request, *args, **kwargs):
+        amount = request.data.get('amount', 0.0)
+        product_id = request.data.get('product')
+        product = Product.objects.get(id=product_id)
+        user = request.user
 
-        cart, _ = ShoppingCart.objects.get_or_create(user=user, shop=product.shop)
+        cart = Cart.objects.filter(user=user, shop=product.shop).first()
 
+        if not cart:
+            cart = Cart.objects.create(
+                user=user, shop=product.shop
+            )
         cart_item = self.get_queryset().filter(cart__user=user, cart__shop=product.shop, product=product).first()
 
         if cart_item:
-            cart_item.amount += validated_data["amount"]
+            cart_item.amount += Convertor.to_decimal(amount)
             cart_item.save()
-            serializer.instance = cart_item
-
         else:
-            serializer.save(cart=cart)
+            CartItem.objects.create(
+                cart=cart, product=product, amount=Convertor.to_decimal(amount)
+            )
+        return Response(
+            ShoppingCartSerializer(cart, many=False)
+            .data,
+        )
+
+    # def perform_create(self, serializer):
+    #     validated_data = serializer.validated_data
+    #     user = self.request.user
+    #     product = validated_data["product"]
+    #
+    #     cart = Cart.objects.filter(user=user, shop=product.shop).first()
+    #
+    #     if not cart:
+    #         cart = Cart.objects.create(
+    #             user=user, shop=product.shop
+    #         )
+    #     cart_item = self.get_queryset().filter(cart__user=user, cart__shop=product.shop, product=product).first()
+    #
+    #     if cart_item:
+    #         cart_item.amount += validated_data["amount"]
+    #         cart_item.save()
+    #         serializer.instance = cart_item
+    #
+    #     else:
+    #         CartItem.objects.create(
+    #             cart=cart, product=product, amount=validated_data['amount']
+    #         )
 
 
 class ShoppingCartViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     serializer_class = ShoppingCartSerializer
-    queryset = ShoppingCart.objects.all()
+    queryset = Cart.objects.all()
     permission_classes = [CanEditCartItemPermission]
 
     order_service = OrderService()
 
     @swagger_auto_schema(request_body=ConfirmShoppingCartSerializer)
-    @action(detail=True, methods=["POST"], url_path="confirm-order", permission_classes=[CanConfirmCartPermission])
-    def create_order(self, request, pk):
+    @action(detail=True, methods=["POST"], url_path="create-order", permission_classes=[CanConfirmCartPermission])
+    def create_order(self, request: Request, pk):
         cart = self.get_object()
+        cart_items = CartItem.objects.filter(cart=cart)
 
-        serializer = ConfirmShoppingCartSerializer(instance=cart, data=request.data)
-        serializer.is_valid(raise_exception=True)
+        comment = request.data.get("comment", None)
+        try:
+            with transaction.atomic():
+                order: Order = Order.objects.create(
+                    customer=cart.user,
+                    shop=cart.shop,
+                    status=OrderStatus.PENDING,
+                    comment=comment
+                )
+                for ci in cart_items:
+                    cart_item: CartItem = ci
+                    OrderItem.objects.create(
+                        order=order, product=cart_item.product, amount=cart_item.amount
+                    )
 
-        payment_method = serializer.validated_data["payment_method"]
-        paid_amount = serializer.validated_data["paid_amount"]
-        comment = serializer.validated_data.get("comment", "")
+            serializer = OrderSerializer(order, context={"request": request})
 
-        order: Order = self.order_service.create_order_from_cart(
-            cart,
-            payment_method=payment_method,
-            comment=comment,
-            paid_amount=paid_amount,
-        )
-
-        serializer = OrderSerializer(order, context={"request": request})
-
-        return Response(serializer.data, status=201)
+            return Response(data={
+                'message': f'Order#{order.id} created successfully',
+                'order': OrderSerializer(order, many=False).data
+            }, status=201
+            )
+        except Exception as e:
+            print(e)
+            return Response(
+                data={
+                    'error': str(e)
+                }
+            )
 
     @swagger_auto_schema(request_body=ApplyPromocodeSerializer)
     @action(detail=True, methods=["POST"], url_path="apply-promocode", serializer_class=ApplyPromocodeSerializer)

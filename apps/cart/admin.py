@@ -1,15 +1,15 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline
 
-from .models import ShoppingCart, ShoppingCartItem
+from .models import Cart, CartItem
 
 
 class ShoppingCartItemInline(TabularInline):
-    model = ShoppingCartItem
+    model = CartItem
     extra = 1
 
 
-@admin.register(ShoppingCart)
+@admin.register(Cart)
 class ShoppingCartAdmin(ModelAdmin):
     list_display = ["pk", "shop", "user", "promocode"]
     inlines = [ShoppingCartItemInline]

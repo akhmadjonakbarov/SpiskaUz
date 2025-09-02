@@ -17,29 +17,43 @@ class OrderPaymentMethod(models.TextChoices):
 
 
 class Order(BaseModel):
-    customer = models.ForeignKey("users.User", on_delete=models.SET_NULL, related_name="customer_orders", verbose_name="Customer", null=True, blank=True)
+    # customer = models.ForeignKey("users.User", on_delete=models.SET_NULL, related_name="customer_orders",
+    #                              verbose_name="Customer", null=True, blank=True)
+    # shop = models.ForeignKey("shops.Shop", on_delete=models.CASCADE, related_name="orders", verbose_name="Shop")
+    # admin = models.ForeignKey("users.User", on_delete=models.SET_NULL, null=True, blank=True,
+    #                           related_name="managed_orders", verbose_name="Admin")
+    # discount = models.DecimalField("Discount", max_digits=14, decimal_places=2, default=0)
+    # paid_amount = models.DecimalField("Paid Amount", max_digits=14, decimal_places=2, default=0)
+    # debt = models.DecimalField("Debt", max_digits=14, decimal_places=2, default=0)
+    # profit = models.DecimalField("Profit", max_digits=28, decimal_places=2, default=0)
+    # comment = models.TextField("Comment", blank=True, null=True)
+    # status = models.CharField("Status", max_length=20, choices=OrderStatus.choices, default=OrderStatus.PENDING)
+    # payment_method = models.CharField("Payment Method", max_length=20, choices=OrderPaymentMethod.choices,
+    #                                   default=OrderPaymentMethod.CASH)
+    customer = models.ForeignKey("users.User", on_delete=models.SET_NULL, related_name="customer_orders",
+                                 verbose_name="Customer", null=True, blank=True)
     shop = models.ForeignKey("shops.Shop", on_delete=models.CASCADE, related_name="orders", verbose_name="Shop")
-    admin = models.ForeignKey("users.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="managed_orders", verbose_name="Admin")
-    total_price = models.DecimalField("Total Price", max_digits=14, decimal_places=2, default=0)
+    admin = models.ForeignKey("users.User", on_delete=models.SET_NULL, null=True, blank=True,
+                              related_name="managed_orders", verbose_name="Admin")
     discount = models.DecimalField("Discount", max_digits=14, decimal_places=2, default=0)
-    agreed_price = models.DecimalField("Agreed Price", max_digits=14, decimal_places=2, default=0)
-    paid_amount = models.DecimalField("Paid Amount", max_digits=14, decimal_places=2, default=0)
-    debt = models.DecimalField("Debt", max_digits=14, decimal_places=2, default=0)
-    profit = models.DecimalField("Profit", max_digits=28, decimal_places=2, default=0)
     comment = models.TextField("Comment", blank=True, null=True)
     status = models.CharField("Status", max_length=20, choices=OrderStatus.choices, default=OrderStatus.PENDING)
-    payment_method = models.CharField("Payment Method", max_length=20, choices=OrderPaymentMethod.choices, default=OrderPaymentMethod.CASH)
-
 
     def __str__(self):
         return f"Order #{self.id} - {self.customer} - {self.status}"
 
 
-class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items", verbose_name="Order")
-    product = models.ForeignKey("products.Product", on_delete=models.CASCADE, related_name="order_items", verbose_name="Product")
-    amount = models.DecimalField("Amount", max_digits=10, decimal_places=3)
-    price = models.DecimalField("Price", max_digits=14, decimal_places=2, default=0)
+class OrderItem(BaseModel):
+    order = models.ForeignKey(
+        Order, on_delete=models.CASCADE, related_name="items", verbose_name="Order"
+    )
+    product = models.ForeignKey(
+        "products.Product", on_delete=models.CASCADE, related_name="order_items",
+        verbose_name="Product"
+    )
+    amount = models.DecimalField(
+        verbose_name="Amount", max_digits=50, decimal_places=3
+    )
 
     def __str__(self):
         return f"OrderItem(order={self.order}, product={self.product}, amount={self.amount})"

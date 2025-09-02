@@ -6,8 +6,12 @@ from .models import Order, OrderItem
 
 @admin.register(OrderItem)
 class OrderItemAdmin(ModelAdmin):
-    list_display = ("id", "order", "product", "amount", "price")
-    list_filter = ("order", "product")
+    list_display = (
+        "id", "order", "product", "amount"
+    )
+    list_filter = (
+        "order", "product"
+    )
 
 
 class OrderItemInline(TabularInline):
@@ -18,6 +22,9 @@ class OrderItemInline(TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(ModelAdmin):
-    list_display = ("id", "customer", "shop", "admin", "total_price", "discount", "agreed_price", "paid_amount", "debt", "status", "created_at", "updated_at")
+    list_display = (
+        "id", "customer", "shop", "admin", "discount", "status",
+        "created_at", "updated_at"
+    )
     list_filter = ("customer", "shop")
     inlines = [OrderItemInline]

@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
-from apps.cart.models import ShoppingCart
+from apps.cart.models import Cart
 from apps.notifications.models import Notification, NotificationType
 from apps.users.models import User
 
@@ -24,7 +24,7 @@ class OrderService:
             raise ValidationError({"error": f"Order must be in one of {allowed_statuses}."})
 
     @transaction.atomic
-    def create_order_from_cart(self, cart: ShoppingCart, payment_method=OrderPaymentMethod.CASH, **kwargs) -> Order:
+    def create_order_from_cart(self, cart: Cart, payment_method=OrderPaymentMethod.CASH, **kwargs) -> Order:
         cart_items = cart.items.select_related("product")
 
         if not cart_items.exists():
@@ -38,7 +38,6 @@ class OrderService:
             shop=cart.shop,
             status=OrderStatus.PENDING,
             payment_method=payment_method,
-            usd_exchange_rate=None,
             **kwargs,
         )
 
@@ -63,7 +62,7 @@ class OrderService:
         return order
 
     def restore_order(self, user: User, order: Order):
-        cart, _ = ShoppingCart.objects.get_or_create(user=user, shop=order.shop)
+        cart, _ = Cart.objects.get_or_create(user=user, shop=order.shop)
 
         for item in order.items.select_related("product"):
             cart.items.get_or_create(product=item.product, amount=item.amount)
@@ -78,7 +77,8 @@ class OrderService:
         for item in order.items.all():
             product = item.product
             if product.stock < item.amount:
-                raise ValidationError(f"{product.name} mahsuloti yetarli emas. Zaxira: {product.stock}, So‘rov: {item.amount}")
+                raise ValidationError(
+                    f"{product.name} mahsuloti yetarli emas. Zaxira: {product.stock}, So‘rov: {item.amount}")
 
         for item in order.items.all():
             total_profit += item.product.decrease_stock(item.amount)

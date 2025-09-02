@@ -51,25 +51,25 @@ class SimpleUserSerializer(serializers.ModelSerializer):
 
 
 class AdminMemberSerializer(BaseUserSerializer):
-    debt_in_uzs = serializers.SerializerMethodField()
-    debt_in_usd = serializers.SerializerMethodField()
-    total_debt = serializers.SerializerMethodField()
-    total_converted_uzs = serializers.SerializerMethodField()
-    total_converted_usd = serializers.SerializerMethodField()
-    total_paid_uzs = serializers.SerializerMethodField()
-    total_paid_usd = serializers.SerializerMethodField()
-    has_notification = serializers.SerializerMethodField()
+    # debt_in_uzs = serializers.SerializerMethodField()
+    # debt_in_usd = serializers.SerializerMethodField()
+    # total_debt = serializers.SerializerMethodField()
+    # total_converted_uzs = serializers.SerializerMethodField()
+    # total_converted_usd = serializers.SerializerMethodField()
+    # total_paid_uzs = serializers.SerializerMethodField()
+    # total_paid_usd = serializers.SerializerMethodField()
+    # has_notification = serializers.SerializerMethodField()
 
     class Meta(BaseUserSerializer.Meta):
         fields = BaseUserSerializer.Meta.fields + [
-            "debt_in_uzs",
-            "debt_in_usd",
-            "total_debt",
-            "total_converted_uzs",
-            "total_converted_usd",
-            "total_paid_uzs",
-            "total_paid_usd",
-            "has_notification",
+            # "debt_in_uzs",
+            # "debt_in_usd",
+            # "total_debt",
+            # "total_converted_uzs",
+            # "total_converted_usd",
+            # "total_paid_uzs",
+            # "total_paid_usd",
+            # "has_notification",
         ]
 
     def get_shop(self):

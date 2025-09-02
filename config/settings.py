@@ -190,7 +190,7 @@ UNFOLD = {
                     {
                         "title": _("Shopping Cart"),
                         "icon": "shopping_bag",
-                        "link": reverse_lazy("admin:cart_shoppingcart_changelist"),
+                        "link": reverse_lazy("admin:cart_cart_changelist"),
                     },
                 ],
             },

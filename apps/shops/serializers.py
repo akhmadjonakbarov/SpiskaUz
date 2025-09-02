@@ -3,7 +3,7 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from apps.cart.models import ShoppingCart
+from apps.cart.models import Cart
 from apps.notifications.models import NotificationType
 from apps.shops.models import Shop, ShopCategory, ShopContact
 from apps.users.serializers import UserSerializer
@@ -152,7 +152,7 @@ class ShopSerializer(serializers.ModelSerializer):
 
     def get_has_cart_item(self, instance):
         user = self.context["request"].user
-        cart, _ = ShoppingCart.objects.get_or_create(user=user, shop=instance)
+        cart, _ = Cart.objects.get_or_create(user=user, shop=instance)
 
         return cart.items.exists()
 

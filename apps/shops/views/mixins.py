@@ -13,7 +13,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from django.db import transaction as django_transaction
-from apps.cart.models import ShoppingCart
+from apps.cart.models import Cart
 from apps.cart.serializers import ShoppingCartSerializer
 from apps.document.models import DocumentItemBalance
 from apps.document.utils.calculator import Calculator
@@ -285,7 +285,7 @@ class ShoppingCartActionMixin:
         shop = self.get_object()
 
         cart, created = (
-            ShoppingCart.objects.select_related(
+            Cart.objects.select_related(
                 "user",
                 "shop",
                 "promocode",

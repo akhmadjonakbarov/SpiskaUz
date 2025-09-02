@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from apps.cart.models import ShoppingCart
+from apps.cart.models import Cart
 
 from .models import PromoCode, PromocodeItem
 
@@ -44,7 +44,7 @@ class ApplyPromocodeSerializer(serializers.Serializer):
     code = serializers.CharField(max_length=256)
 
     def validate(self, attrs):
-        cart = get_object_or_404(ShoppingCart, pk=attrs["cart"])
+        cart = get_object_or_404(Cart, pk=attrs["cart"])
         promocode = get_object_or_404(PromoCode, code=attrs["code"], shop=cart.shop)
 
         if not promocode.can_use_promocode(attrs["current_user"]):

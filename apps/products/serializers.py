@@ -93,6 +93,24 @@ class ProductSerializer(serializers.ModelSerializer):
             return currency_serializer.data
 
 
+class ProductReorderSerializer(serializers.Serializer):
+    category_id = serializers.IntegerField()
+    ordered_ids = serializers.ListField(
+        child=serializers.IntegerField(), allow_empty=False
+    )
+
+    def validate(self, data):
+        category_id = data["category_id"]
+        ordered_ids = data["ordered_ids"]
+
+        # check products really belong to this category
+        from .models import Product
+        products = Product.objects.filter(id__in=ordered_ids, category_id=category_id)
+        if products.count() != len(ordered_ids):
+            raise serializers.ValidationError("Some products do not belong to this category.")
+
+        return data
+
 class ProductSerializerForUser(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True)
     category = ShopCategorySerializer(read_only=True)

@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from common.serializers import EmptyBodySerializer
 from .models import Product, ReportOption
 from .serializers import ProductSerializer, CreateProductSerializer, CreateProductImageSerializer, ReportSerializer, \
-    ReportOptionSerializer, ProductSerializerForUser
+    ReportOptionSerializer, ProductSerializerForUser, ProductReorderSerializer
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -165,6 +165,24 @@ class ProductViewSet(viewsets.ModelViewSet):
                 'detail': 'Product was deleted'
             }, status=status.HTTP_200_OK
         )
+
+    @swagger_auto_schema(
+        request_body=ProductReorderSerializer
+    )
+    @action(detail=False, methods=["post"])
+    def reorder(self, request):
+        serializer = ProductReorderSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        category_id = serializer.validated_data["category_id"]
+        ordered_ids = serializer.validated_data["ordered_ids"]
+
+        # update positions
+        for index, product_id in enumerate(ordered_ids, start=1):
+            Product.objects.filter(id=product_id, category_id=category_id).update(position_number=index)
+
+        products = Product.objects.filter(category_id=category_id).order_by("position_number")
+        return Response(ProductSerializer(products, many=True).data)
 
 
 class ReportOptionListAPIView(ListAPIView):

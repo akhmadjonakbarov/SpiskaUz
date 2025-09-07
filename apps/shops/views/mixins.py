@@ -464,7 +464,7 @@ class ProductActionsMixin:
                 {"message": "Ma'lumotlar bazasida keltirilgan mahsulotlar topilmadi."})
 
         for product in products:
-            product.position = positions.get(product.id)
+            product.position_number = positions.get(product.id)
 
         Product.objects.bulk_update(products, ["position"])
         return Response({"message": "Positions updated successfully"}, status=status.HTTP_200_OK)

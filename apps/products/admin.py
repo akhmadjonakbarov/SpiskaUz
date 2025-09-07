@@ -20,7 +20,7 @@ class ProductPartInline(TabularInline):
 class ProductAdmin(ModelAdmin, GuardedModelAdmin):
     list_display = [
         "id", "name", "sale_price", "currency_type", "barcode", "discount", "group", "category", "shop", "unit",
-        "position", "is_selected"
+        "position_number", "is_selected"
     ]
     inlines = [ProductImageInline, ProductPartInline]
     list_filter = ["shop"]

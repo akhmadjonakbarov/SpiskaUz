@@ -36,7 +36,7 @@ class Product(BaseModelWithUser):
     barcode = models.CharField("Barcode", max_length=100, unique=True)
     is_active = models.BooleanField("Active", default=True)
     discount = models.DecimalField("Discount", max_digits=50, decimal_places=5)
-    position = models.IntegerField("Position", default=0)
+    position_number = models.IntegerField("Position", default=0)
     group = models.ForeignKey(
         ProductGroup, on_delete=models.CASCADE,
         related_name="products", verbose_name="Group",
@@ -50,8 +50,7 @@ class Product(BaseModelWithUser):
     class Meta:
         verbose_name = "Product"
         verbose_name_plural = "Products"
-
-        ordering = ("-created_at",)
+        ordering = ["position_number", ]
 
     def __str__(self):
         return self.name + " -- " + self.shop.name[:15]

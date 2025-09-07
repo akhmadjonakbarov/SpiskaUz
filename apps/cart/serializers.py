@@ -15,24 +15,13 @@ class AddCartItemSerializer(serializers.Serializer):
 
 
 class ShoppingCartItemSerializer(serializers.ModelSerializer):
-    sale_price = serializers.IntegerField(source="product.sale_price", read_only=True)
-    sale_price_with_discount = serializers.IntegerField(read_only=True)
-
     class Meta:
         model = CartItem
         exclude = ["cart"]
 
-    def to_representation(self, instance):
-        value = super().to_representation(instance)
-        value["amount"] = float(instance.amount)
-        value["product"] = ProductSerializer(instance.product, context={"request": self.context.get("request")}).data
 
-        return value
-
-
-class ShoppingCartSerializer(serializers.ModelSerializer):
+class CartSerializer(serializers.ModelSerializer):
     items = ShoppingCartItemSerializer(many=True)
-    shop = ShopSerializer()
 
     class Meta:
         model = Cart

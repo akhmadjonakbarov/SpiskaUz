@@ -7,10 +7,12 @@ from rest_framework.views import Response
 from apps.orders.services import OrderService
 from common.mixins import ActionPermissionMixin
 from common.serializers import EmptyBodySerializer
+from utils.convertor import Convertor
 
 from .models import Order, OrderStatus
 from .permissions import CanCancelOrder, CanRestoreOrder
 from .serializers import CancelAcceptedOrderSerializer, OrderSerializer
+from apps.document.models import DocumentOrder, Document, DocumentItemBalance, DocumentItem
 
 
 class OrderViewSet(
@@ -43,6 +45,23 @@ class OrderViewSet(
         ("cancel_order",): [CanCancelOrder],
         ("restore_order",): [CanRestoreOrder],
     }
+
+    def list(self, request, *args, **kwargs):
+        orders = (Order.objects.select_related("customer", "admin")
+                  .prefetch_related(
+            "items",
+            "items__product__parts",
+            "items__product__images",
+            "items__product__category",
+            "items__product__favorited_by",
+            "shop__members",
+            "shop__owner",
+            "shop__contacts",
+            "shop__categories",
+        )
+                  .filter(
+            status='pending' or 'accepted' or 'completed'
+        ).all())
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -99,7 +118,6 @@ class OrderViewSet(
     def cancel_accepted_order(self, request, pk=None, *args, **kwargs):
         order = self.get_object()
         self.check_object_permissions(request=request, obj=order)
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         action_status = serializer.validated_data.get("status")
@@ -118,6 +136,40 @@ class OrderViewSet(
 
         if action_status == "accept":
             order.status = OrderStatus.CANCELLED
+            document_order = DocumentOrder.objects.get(order=order)
+            document: Document = document_order.document
+            for di in document.document_items.all():
+                document_item: DocumentItem = di
+                balance = DocumentItemBalance.objects.filter(
+                    income_price=document_item.income_price, sale_price=document_item.sale_price,
+                    product=document_item.product,
+                ).first()
+                if balance:
+                    balance.qty = balance.qty + Convertor.to_decimal(document_item.qty)
+                    balance.save()
+                else:
+                    new_document = Document.objects.create(
+                        doc_type='buy', shop=document.shop, user=document.user,
+                    )
+                    new_document_item = DocumentItem.objects.create(
+                        document=new_document,
+                        shop=document.shop, user=document.user,
+                        qty=document_item.qty, income_price=document_item.income_price,
+                        sale_price=document_item.sale_price, profit_as_percent=document_item.profit_as_percent,
+                        product=document_item.product,
+                        currency_rate=document_item.currency_rate,
+                        currency_rate_value=document_item.currency_rate_value,
+                    )
+                    DocumentItemBalance.objects.create(
+                        document=new_document,
+                        shop=document.shop, user=document.user,
+                        qty=new_document_item.qty, income_price=new_document_item.income_price,
+                        sale_price=new_document_item.sale_price, profit_as_percent=new_document_item.profit_as_percent,
+                        product=new_document_item.product, document_item=new_document_item,
+                        currency_rate=new_document_item.currency_rate,
+                        currency_rate_value=new_document_item.currency_rate_value,
+                    )
+
             order.save()
             return Response(
                 {"message": "Accepted order has been cancelled."},
@@ -175,7 +227,6 @@ class OrderViewSet(
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    @swagger_auto_schema(request_body=EmptyBodySerializer)
     @action(["POST"], detail=True)
     def accept(self, request, pk=None, *args, **kwargs):
         order = self.get_object()
@@ -189,6 +240,7 @@ class OrderViewSet(
             )
 
         return Response(
-            {"message": "Failed to update order status to 'processing'. It may already be in that state or invalid transition."},
+            {
+                "message": "Failed to update order status to 'processing'. It may already be in that state or invalid transition."},
             status=status.HTTP_400_BAD_REQUEST,
         )

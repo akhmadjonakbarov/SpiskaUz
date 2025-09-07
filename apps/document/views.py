@@ -229,7 +229,9 @@ class SellProductView(GenericAPIView):
                     )
                     print(f'[+] Debt was created for {client}')
 
-                latest_currency = CurrencyRate.objects.order_by('-created_at').first()
+                latest_currency = CurrencyRate.objects.filter(
+                    shop=document.shop
+                ).order_by('-created_at').first()
                 if not latest_currency:
                     raise Exception("Currency rate not available.")
 

@@ -13,7 +13,7 @@ from apps.promocodes.serializers import ApplyPromocodeSerializer
 from utils.convertor import Convertor
 from .models import PromoCode, Cart, CartItem
 from .permissions import CanConfirmCartPermission, CanEditCartItemPermission
-from .serializers import ConfirmShoppingCartSerializer, ShoppingCartItemSerializer, ShoppingCartSerializer, \
+from .serializers import ConfirmShoppingCartSerializer, ShoppingCartItemSerializer, CartSerializer, \
     AddCartItemSerializer
 from ..products.models import Product
 
@@ -49,7 +49,7 @@ class ShoppingCartItemViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, 
                 cart=cart, product=product, amount=Convertor.to_decimal(amount)
             )
         return Response(
-            ShoppingCartSerializer(cart, many=False)
+            CartSerializer(cart, many=False)
             .data,
         )
 
@@ -78,7 +78,7 @@ class ShoppingCartItemViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, 
 
 
 class ShoppingCartViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-    serializer_class = ShoppingCartSerializer
+    serializer_class = CartSerializer
     queryset = Cart.objects.all()
     permission_classes = [CanEditCartItemPermission]
 

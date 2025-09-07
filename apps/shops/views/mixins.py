@@ -14,7 +14,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from django.db import transaction as django_transaction
 from apps.cart.models import Cart
-from apps.cart.serializers import ShoppingCartSerializer
+from apps.cart.serializers import CartSerializer
 from apps.document.models import DocumentItemBalance
 from apps.document.utils.calculator import Calculator
 from apps.notifications.models import Notification, NotificationType
@@ -278,7 +278,7 @@ class ProductGroupActionMixin:
 
 
 class ShoppingCartActionMixin:
-    @action(["GET"], detail=True, url_path="shopping-cart", serializer_class=ShoppingCartSerializer,
+    @action(["GET"], detail=True, url_path="shopping-cart", serializer_class=CartSerializer,
             permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, *args, **kwargs):
         user = request.user

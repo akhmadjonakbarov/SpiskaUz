@@ -1,4 +1,5 @@
 from decimal import Decimal
+from itertools import product
 
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
@@ -8,6 +9,8 @@ from apps.notifications.models import Notification, NotificationType
 from apps.users.models import User
 
 from .models import Order, OrderItem, OrderPaymentMethod, OrderStatus
+from ..currency_rate.models import CurrencyRate
+from apps.document.models import Document, PaymentDetail, DocumentItem, DocumentItemBalance, DocumentOrder
 
 
 class OrderService:
@@ -71,36 +74,72 @@ class OrderService:
 
     def complete_order(self, order: Order, admin: User):
         self._assert_order_status(order, [OrderStatus.PENDING, OrderStatus.ACCEPTED])
-
-        total_profit = 0
-
-        for item in order.items.all():
-            product = item.product
-            if product.stock < item.amount:
-                raise ValidationError(
-                    f"{product.name} mahsuloti yetarli emas. Zaxira: {product.stock}, So‘rov: {item.amount}")
-
-        for item in order.items.all():
-            total_profit += item.product.decrease_stock(item.amount)
-
         order.status = OrderStatus.COMPLETED
-        order.usd_exchange_rate = order.shop.usd_exchange_rate
-        order.admin = admin
-        order.profit = total_profit
         order.save()
-
         self._create_notification(order.customer, order.shop, NotificationType.ORDER_EVENT_USER, order)
 
         return order
 
     def accept_order(self, order: Order, admin: User):
-        self._assert_order_status(order, [OrderStatus.PENDING])
+        try:
+            self._assert_order_status(order, [OrderStatus.PENDING])
+            document = Document.objects.create(
+                doc_type='sell', user=admin, shop=order.shop
+            )
+            PaymentDetail.objects.create(
+                payment_method='card', document=document, discount=order.discount
+            )
+            latest_currency = CurrencyRate.objects.filter(
+                shop=document.shop
+            ).order_by('-created_at').first()
 
-        order.status = OrderStatus.ACCEPTED
-        order.admin = admin
-        order.usd_exchange_rate = order.shop.usd_exchange_rate
-        order.save()
+            for oi in order.items.all():
+                order_item: OrderItem = oi
+                sell_qty = Decimal(str(order_item.amount))
+                balances = DocumentItemBalance.objects.filter(
+                    product=order_item.product,
+                    shop=document.shop,
+                    qty__gt=0
+                ).order_by('created_at')
+                total_available = sum(b.qty for b in balances)
+                if Decimal(total_available) < sell_qty:
+                    raise Exception(f"Not enough stock for product {order_item.product.name}.")
+                remaining_qty = sell_qty
+                for balance in balances:
+                    if remaining_qty <= 0:
+                        break
 
-        self._create_notification(order.customer, order.shop, NotificationType.ORDER_EVENT_USER, order)
+                    deduct_qty = min(balance.qty, remaining_qty)
 
-        return True
+                    DocumentItem.objects.create(
+                        document=document,
+                        product=product,
+                        currency_rate=latest_currency if order_item.product.currency_type == 'usd' else None,
+                        currency_rate_value=latest_currency.rate if order_item.product.currency_type == 'usd' else Decimal(
+                            '0.0'),
+                        qty=deduct_qty,
+                        income_price=balance.income_price,
+                        profit_as_percent=balance.profit_as_percent,
+                        shop=document.shop,
+                        user=document.user,
+                        sale_price=balance.sale_price
+                    )
+
+                    balance.qty -= deduct_qty
+                    balance.save()
+
+                    remaining_qty -= deduct_qty
+
+            order.status = OrderStatus.ACCEPTED
+            order.admin = admin
+            order.save()
+
+            DocumentOrder.objects.create(
+                order=order, document=document
+            )
+
+            self._create_notification(order.customer, order.shop, NotificationType.ORDER_EVENT_USER, order)
+
+            return True
+        except Exception as e:
+            raise e

@@ -6,6 +6,7 @@ from django.db import models
 from apps.base.models import BaseModelWithUserAndShop, BaseModel, PriceAndQtyMixinWithPercentage
 
 from apps.currency_rate.models import CurrencyRate
+from apps.orders.models import Order
 from apps.products.models import Product
 from apps.promocodes.models import PromoCode
 from constants.currency_choices import CURRENCY_CHOICES
@@ -117,3 +118,12 @@ class PaymentInfo(BaseModelWithUserAndShop):
 
     def __str__(self):
         return f"{self.document} - {self.note or 'No note'}"
+
+
+class DocumentOrder(BaseModel):
+    document = models.OneToOneField(
+        Document, on_delete=models.CASCADE
+    )
+    order = models.OneToOneField(
+        Order, on_delete=models.CASCADE
+    )

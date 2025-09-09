@@ -1,18 +1,16 @@
 import uuid
 from django.db import models
-
 from apps.base.models import BaseModel, BaseModelWithUser
 from apps.shops.models import Shop, ShopCategory
 from apps.users.models import User
 from constants.currency_choices import CURRENCY_CHOICES
 from .utils.generate_image_path import product_image_upload_path
-from ..unit.models import Unit
+from apps.unit.models import Unit
 
 
 class ProductGroup(BaseModelWithUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="product_groups", verbose_name="Shop")
-
     position = models.IntegerField("Position", default=0)
 
     class Meta:

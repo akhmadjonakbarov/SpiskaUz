@@ -13,14 +13,14 @@ from apps.promocodes.serializers import ApplyPromocodeSerializer
 from utils.convertor import Convertor
 from .models import PromoCode, Cart, CartItem
 from .permissions import CanConfirmCartPermission, CanEditCartItemPermission
-from .serializers import ConfirmShoppingCartSerializer, ShoppingCartItemSerializer, CartSerializer, \
+from .serializers import ConfirmShoppingCartSerializer, CartItemSerializer, CartSerializer, \
     AddCartItemSerializer
 from ..products.models import Product
 
 
 class ShoppingCartItemViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin,
                               mixins.DestroyModelMixin):
-    serializer_class = ShoppingCartItemSerializer
+    serializer_class = CartItemSerializer
     queryset = CartItem.objects.all()
     permission_classes = [CanEditCartItemPermission]
 

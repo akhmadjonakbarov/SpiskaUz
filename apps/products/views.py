@@ -11,7 +11,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from common.serializers import EmptyBodySerializer
-from .models import Product, ReportOption
+from .models import Product, ReportOption, ProductGroup
 from .serializers import ProductSerializer, CreateProductSerializer, CreateProductImageSerializer, ReportSerializer, \
     ReportOptionSerializer, ProductSerializerForUser, ProductReorderSerializer
 
@@ -65,7 +65,8 @@ class ProductViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        product = serializer.save()  # This returns the created Product instance
+        product = serializer.save()
+        ProductGroup.objects.create()
 
         # Now use ProductSerializer to return the product
         output_serializer = ProductSerializer(product, context={'request': request})

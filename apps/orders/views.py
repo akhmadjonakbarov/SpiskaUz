@@ -63,6 +63,10 @@ class OrderViewSet(
             status='pending' or 'accepted' or 'completed'
         ).all())
 
+        return Response(
+            data=self.get_serializer(orders, many=True).data
+        )
+
     def destroy(self, request, *args, **kwargs):
         """
         Order ni o'chirish uchun

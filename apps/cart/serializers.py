@@ -2,6 +2,7 @@ from decimal import Decimal
 from rest_framework import serializers
 from apps.cart.models import Cart, CartItem
 from apps.products.models import Product
+from apps.products.serializers import ProductSerializer
 from utils.convertor import Convertor
 
 
@@ -13,6 +14,8 @@ class AddCartItemSerializer(serializers.Serializer):
 
 
 class CartItemSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(many=False)
+
     class Meta:
         model = CartItem
         exclude = ["cart"]

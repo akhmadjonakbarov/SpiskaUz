@@ -368,7 +368,7 @@ class ProductActionsMixin:
     def products(self, request, *args, **kwargs):
         """Do'kondagi barcha mahsulotlarni olish."""
         queryset = self.get_object().products.prefetch_related(
-            "images", "parts").order_by("position")
+            "images", "parts").order_by("position_number")
         filtered_qs = ProductFilter(request.GET, queryset=queryset).qs
         page = self.paginate_queryset(filtered_qs)
 
@@ -409,7 +409,7 @@ class ProductActionsMixin:
     def products_groups_user(self, request, *args, **kwargs):
         """Do'kondagi barcha mahsulotlarni guruhlar bo'yicha olish."""
         queryset = self.get_object().products.prefetch_related(
-            "images", "parts").order_by("position")
+            "images", "parts").order_by("position_number")
         products = ProductFilter(request.GET, queryset=queryset).qs
 
         category_map = defaultdict(
@@ -455,7 +455,7 @@ class ProductActionsMixin:
         serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
 
-        positions = {pair["product_id"]: pair["position"]
+        positions = {pair["product_id"]: pair["position_number"]
                      for pair in serializer.validated_data}
         products = Product.objects.filter(pk__in=positions.keys(), shop=shop)
 
@@ -466,7 +466,7 @@ class ProductActionsMixin:
         for product in products:
             product.position_number = positions.get(product.id)
 
-        Product.objects.bulk_update(products, ["position"])
+        Product.objects.bulk_update(products, ["position_number"])
         return Response({"message": "Positions updated successfully"}, status=status.HTTP_200_OK)
 
 
@@ -561,18 +561,18 @@ class ShopHistoryActionsMixin:
         stats_orders = orders.filter(
             status__in=[OrderStatus.ACCEPTED, OrderStatus.COMPLETED])
 
-        statistics = stats_orders.aggregate(
-            total_price=Sum("total_price"),
-            discount=Sum("discount"),
-            agreed_price=Sum("agreed_price"),
-            debt=Sum("debt"),
-            total_profit=Sum("profit"),
-        )
+        # statistics = stats_orders.aggregate(
+        #     total_price=Sum("total_price"),
+        #     discount=Sum("discount"),
+        #     agreed_price=Sum("agreed_price"),
+        #     debt=Sum("debt"),
+        #     total_profit=Sum("profit"),
+        # )
 
         orders = OrderSerializer(
             instance=orders, many=True, context={"request": request})
 
-        return Response({"orders": orders.data, "statistics": statistics})
+        return Response({"orders": orders.data, })
 
     @swagger_auto_schema(
         manual_parameters=[

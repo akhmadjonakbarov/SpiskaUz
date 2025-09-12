@@ -60,7 +60,7 @@ class OrderViewSet(
             "shop__categories",
         )
                   .filter(
-            status='pending' or 'accepted' or 'completed'
+            status='pending' or 'accepted' or 'completed', customer=request.user
         ).all())
 
         return Response(

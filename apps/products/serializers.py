@@ -187,7 +187,7 @@ class CreateProductSerializer(serializers.Serializer):
     barcode = serializers.CharField(max_length=20, default="Barcode")
     is_active = serializers.BooleanField(default=False)
     discount = serializers.FloatField(default=0.0)
-    position = serializers.IntegerField(default=0)
+    position_number = serializers.IntegerField(default=0)
     currency_type = serializers.CharField(default="uzs")
     shop = serializers.UUIDField()
     category = serializers.IntegerField()

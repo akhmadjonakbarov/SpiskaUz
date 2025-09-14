@@ -63,12 +63,19 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def create(self, request, *args, **kwargs):
+        existed_product = Product.objects.filter(barcode=request.data['barcode']).first()
+        if existed_product:
+            return Response(
+                data={
+                    'detail': 'The barcode already exist',
+                }, status=409
+            )
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         product = serializer.save()
-        ProductGroup.objects.create()
+        # ProductGroup.objects.create()
 
-        # Now use ProductSerializer to return the product
         output_serializer = ProductSerializer(product, context={'request': request})
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 

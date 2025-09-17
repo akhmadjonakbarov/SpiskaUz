@@ -1,6 +1,5 @@
 from decimal import Decimal
 
-from django.db import transaction, IntegrityError
 from rest_framework import status
 from rest_framework.generics import GenericAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -28,9 +27,6 @@ class SupplierViewSet(ModelViewSet):
             return CreateSupplierSerializer
 
         return SupplierSerializer
-
-    from django.db import transaction, IntegrityError
-    from rest_framework.exceptions import ValidationError
 
     def create(self, request, *args, **kwargs):
         phone_number = request.data.get("phone_number")

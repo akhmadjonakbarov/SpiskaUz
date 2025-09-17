@@ -4,10 +4,11 @@ from django.views.generic import DetailView
 from rest_framework import viewsets
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from apps.shops.models import Shop, Category
 
-from apps.shops.serializers import ShopSerializer
+from apps.shops.serializers import ShopSerializer, ShopDetailSerializer
 from common.mixins import ActionPermissionMixin
 from common.paginations import PageSizePagination
 
@@ -119,6 +120,11 @@ class ShopViewSet(
             shop=shop,
             rate=usd_exchange_rate,
         )
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = ShopDetailSerializer(instance, many=False)
+        return Response(serializer.data)
 
 
 class ShopDetailView(DetailView):

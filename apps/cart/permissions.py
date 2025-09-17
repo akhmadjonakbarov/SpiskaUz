@@ -3,8 +3,9 @@ from rest_framework.permissions import IsAuthenticated
 
 class CanEditCartItemPermission(IsAuthenticated):
     def has_object_permission(self, request, view, obj):
-        # return obj.cart.user == request.user
-        return True
+        if request.user.is_staff:
+            return True
+        return obj.cart.customer == request.user
 
 
 class CanConfirmCartPermission(IsAuthenticated):

@@ -9,9 +9,8 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-
 from common.serializers import EmptyBodySerializer
-from .models import Product, ReportOption, ProductGroup
+from .models import Product, ReportOption
 from .serializers import ProductSerializer, CreateProductSerializer, CreateProductImageSerializer, ReportSerializer, \
     ReportOptionSerializer, ProductSerializerForUser, ProductReorderSerializer
 
@@ -98,7 +97,6 @@ class ProductViewSet(viewsets.ModelViewSet):
     def toggle_favorite(self, request, pk=None):
         product = self.get_object()
         user = request.user
-
         if product in user.favorite_products.all():
             user.favorite_products.remove(product)
             return Response({"detail": "Removed from favorites"}, status=status.HTTP_200_OK)
@@ -161,7 +159,9 @@ class ProductViewSet(viewsets.ModelViewSet):
         ]
     )
     def list(self, request: Request, *args, **kwargs):
-        products = self.get_queryset()
+        products = self.get_queryset().filter(
+            shop_id=request.query_params.get('shop_id')
+        )
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
 

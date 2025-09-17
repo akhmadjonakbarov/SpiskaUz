@@ -5,8 +5,8 @@ from rest_framework import serializers
 
 from apps.document.models import DocumentItemBalance
 from apps.products.models import Product, ProductGroup, ProductImage, Report, ReportOption
-from apps.shops.models import Shop, ShopCategory
-from apps.shops.serializers import ShopCategorySerializer
+from apps.shops.models import Shop, Category
+from apps.shops.serializers import CategorySerializer
 from apps.unit.models import Unit
 from apps.unit.serializers import UnitSerializer
 from utils.convertor import Convertor
@@ -27,7 +27,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True)
-    category = ShopCategorySerializer(read_only=True)
+    category = CategorySerializer(read_only=True)
     unit = UnitSerializer(read_only=True)
     is_favorite = serializers.SerializerMethodField()
     qty = serializers.SerializerMethodField()
@@ -113,7 +113,7 @@ class ProductReorderSerializer(serializers.Serializer):
 
 class ProductSerializerForUser(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True)
-    category = ShopCategorySerializer(read_only=True)
+    category = CategorySerializer(read_only=True)
     unit = UnitSerializer(read_only=True)
     is_favorite = serializers.SerializerMethodField()
     qty = serializers.SerializerMethodField()
@@ -202,8 +202,8 @@ class CreateProductSerializer(serializers.Serializer):
 
     def validate_category(self, value):
         try:
-            return ShopCategory.objects.get(pk=value)
-        except ShopCategory.DoesNotExist:
+            return Category.objects.get(pk=value)
+        except Category.DoesNotExist:
             raise serializers.ValidationError("Category not found.")
 
     def validate_unit(self, value):

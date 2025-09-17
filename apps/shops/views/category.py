@@ -2,8 +2,8 @@ from rest_framework import viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 
-from apps.shops.models import ShopCategory
-from apps.shops.serializers import ShopCategorySerializer
+from apps.shops.models import Category
+from apps.shops.serializers import CategorySerializer
 
 
 class ShopCategoryViewSet(viewsets.ModelViewSet):
@@ -22,8 +22,8 @@ class ShopCategoryViewSet(viewsets.ModelViewSet):
         Do'kon kategoriyasini o'chirish
     """
 
-    queryset = ShopCategory.objects.all()
-    serializer_class = ShopCategorySerializer
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
     parser_classes = [FormParser, MultiPartParser]
 
     def perform_destroy(self, instance):

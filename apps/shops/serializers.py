@@ -5,7 +5,7 @@ from rest_framework.validators import UniqueTogetherValidator
 
 from apps.cart.models import Cart
 from apps.notifications.models import NotificationType
-from apps.shops.models import Shop, ShopCategory, ShopContact
+from apps.shops.models import Shop, Category, ShopContact
 from apps.users.serializers import UserSerializer
 
 from .models import Admin, ShopBalance, ShopBalanceTransaction
@@ -13,10 +13,10 @@ from apps.role_manager.models import Role
 from apps.supplier.models import Supplier
 
 
-class ShopCategorySerializer(serializers.ModelSerializer):
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = ShopCategory
-        fields = ["id", "name", "shop", "image", "can_delete"]
+        model = Category
+        fields = ["id", "name", "image", "can_delete"]
 
         read_only_fields = ["can_delete"]
 
@@ -38,12 +38,12 @@ class ShopContactSerializer(serializers.ModelSerializer):
 class ShopSerializer(serializers.ModelSerializer):
     owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
     share_link = serializers.SerializerMethodField()
-    categories = ShopCategorySerializer(many=True, read_only=True)
+    categories = CategorySerializer(many=True, read_only=True)
     product_count = serializers.SerializerMethodField()
     contacts = ShopContactSerializer(many=True, read_only=True)
     is_member = serializers.SerializerMethodField()
     has_notifications = serializers.SerializerMethodField()
-    has_cart_item = serializers.SerializerMethodField()
+
     usd_exchange_rate = serializers.FloatField(write_only=True)  # or read_only=True if it's output only
     currency = serializers.SerializerMethodField()
     role = serializers.SerializerMethodField()
@@ -69,7 +69,6 @@ class ShopSerializer(serializers.ModelSerializer):
             "telegram_link",
             "is_member",
             "has_notifications",
-            "has_cart_item",
             "currency",
             "role",
             "is_open"
@@ -149,12 +148,6 @@ class ShopSerializer(serializers.ModelSerializer):
         data["owner"] = UserSerializer(instance.owner, context={"request": self.context.get("request")}).data
 
         return data
-
-    def get_has_cart_item(self, instance):
-        user = self.context["request"].user
-        cart, _ = Cart.objects.get_or_create(user=user, shop=instance)
-
-        return cart.items.exists()
 
 
 class ShopAdminSerializer(ShopSerializer):

@@ -1,10 +1,10 @@
 from rest_framework.routers import DefaultRouter
 
-from .views import ShoppingCartItemViewSet, ShoppingCartViewSet
+from .views import CartItemViewSet, CartViewSet
 
 router = DefaultRouter()
-router.register("cart", ShoppingCartViewSet)
-router.register("cart-item", ShoppingCartItemViewSet)
+router.register("cart", CartViewSet)
+router.register("cart-item", CartItemViewSet)
 
 
 urlpatterns = router.urls + []

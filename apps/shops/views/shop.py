@@ -5,7 +5,7 @@ from rest_framework import viewsets
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 
-from apps.shops.models import Shop, ShopCategory
+from apps.shops.models import Shop, Category
 
 from apps.shops.serializers import ShopSerializer
 from common.mixins import ActionPermissionMixin
@@ -102,11 +102,15 @@ class ShopViewSet(
             role='owner', shop=shop, created_by=self.request.user,
         )
 
-        ShopCategory.objects.create(
-            user=self.request.user,
-            shop=shop, can_delete=False,
-            name="Umumiy"
-        )
+        category = Category.objects.filter(name="Umumiy", shops=shop).first()
+        if category is None:
+            category = Category.objects.create(
+                user=self.request.user,
+                can_delete=False,
+                name="Umumiy"
+            )
+            category.shops.add(shop)
+            category.save()
 
         # Create CurrencyRate entry
         CurrencyRate.objects.create(

@@ -11,6 +11,6 @@ class ShoppingCartItemInline(TabularInline):
 
 @admin.register(Cart)
 class ShoppingCartAdmin(ModelAdmin):
-    list_display = ["pk", "shop", "user", "promocode"]
+    list_display = ["pk", "shop", "customer", "promocode"]
     inlines = [ShoppingCartItemInline]
     min_num = 1

@@ -3,7 +3,16 @@ from rest_framework import serializers
 from apps.cart.models import Cart, CartItem
 from apps.products.models import Product
 from apps.products.serializers import ProductSerializer
+from apps.shops.models import Shop
 from utils.convertor import Convertor
+
+
+class ShopSerializerForCart(serializers.ModelSerializer):
+    class Meta:
+        model = Shop
+        exclude = (
+            "deleted_at", "members"
+        )
 
 
 class AddCartItemSerializer(serializers.Serializer):
@@ -24,13 +33,17 @@ class CartItemSerializer(serializers.ModelSerializer):
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True)
     total_price = serializers.SerializerMethodField()
+    shop = ShopSerializerForCart(many=False)
 
     class Meta:
         model = Cart
-        fields = "__all__"
+        exclude = (
+            "deleted_at",
+        )
 
     def get_total_price(self, cart: Cart):
         from apps.document.models import DocumentItemBalance
+        from apps.currency_rate.models import CurrencyRate
         total_price = Decimal('0.0')
 
         for item in cart.items.all():
@@ -38,14 +51,26 @@ class CartSerializer(serializers.ModelSerializer):
             balance = DocumentItemBalance.objects.filter(
                 product=cart_item.product, shop=cart.shop
             ).first()
-
-            if cart_item.product.currency_type.lower() in 'usd':
-                converted_price = Convertor.to_decimal(balance.sale_price) * Convertor.to_decimal(
-                    balance.currency_rate_value)
-                total_price = total_price + converted_price * Convertor.to_decimal(cart_item.amount)
+            if balance is not None:
+                if cart_item.product.currency_type.lower() in 'usd':
+                    converted_price = Convertor.to_decimal(balance.sale_price) * Convertor.to_decimal(
+                        balance.currency_rate_value)
+                    total_price = total_price + converted_price * Convertor.to_decimal(cart_item.amount)
+                else:
+                    total_price = total_price + Convertor.to_decimal(balance.sale_price) * Convertor.to_decimal(
+                        cart_item.amount)
             else:
-                total_price = total_price + Convertor.to_decimal(balance.sale_price) * Convertor.to_decimal(
-                    cart_item.amount)
+                latest = CurrencyRate.objects.order_by('-created_at').filter(
+                    shop=cart_item.cart.shop
+                ).first()
+                if cart_item.product.currency_type.lower() in 'usd':
+                    converted_price = Convertor.to_decimal(cart_item.product.sale_price) * Convertor.to_decimal(
+                        latest.rate)
+                    total_price = total_price + converted_price * Convertor.to_decimal(cart_item.amount)
+                else:
+                    total_price = total_price + Convertor.to_decimal(
+                        cart_item.product.sale_price) * Convertor.to_decimal(
+                        cart_item.amount)
         return total_price
 
 

@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 from apps.base.models import BaseModel, BaseModelWithUser
-from apps.shops.models import Shop, ShopCategory
+from apps.shops.models import Shop, Category
 from apps.users.models import User
 from constants.currency_choices import CURRENCY_CHOICES
 from .utils.generate_image_path import product_image_upload_path
@@ -27,7 +27,7 @@ class Product(BaseModelWithUser):
         "Name", max_length=256,
     )
     description = models.TextField("Description", max_length=1000, )
-    category = models.ForeignKey(ShopCategory, on_delete=models.CASCADE, verbose_name="Category")
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Category")
     is_selected = models.BooleanField("Selected", default=False)
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
     sale_price = models.DecimalField("Sale Price", max_digits=50, decimal_places=5)

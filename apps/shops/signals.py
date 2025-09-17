@@ -5,7 +5,7 @@ from django.dispatch import receiver
 
 from common.utils import assign_perms
 
-from .models import Admin, Shop, ShopCategory, ShopBalance
+from .models import Admin, Shop, Category, ShopBalance
 
 
 @receiver(post_save, sender=Shop)
@@ -17,7 +17,7 @@ def set_shop_permissions(sender, instance, created, **kwargs):
         order_perms = ["confirm_order", "cancel_order"]
 
         assign_perms(product_perms + category_perms + shop_perms + order_perms, instance.owner, instance)
-        ShopCategory.objects.create(name="Umumiy", shop=instance, can_delete=False)
+
         instance.members.add(instance.owner)
 
 

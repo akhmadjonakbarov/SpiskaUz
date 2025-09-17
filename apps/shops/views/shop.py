@@ -123,7 +123,7 @@ class ShopViewSet(
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = ShopDetailSerializer(instance, many=False)
+        serializer = ShopDetailSerializer(instance, many=False, context={"request": request})
         return Response(serializer.data)
 
 

@@ -238,7 +238,7 @@ class ShopDetailSerializer(serializers.ModelSerializer):
 
         return data
 
-    def has_cart_item(self, instance):
+    def get_has_cart_item(self, instance):
         return instance.carts.all().count() > 0
 
 

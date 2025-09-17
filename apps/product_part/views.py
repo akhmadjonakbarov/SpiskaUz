@@ -25,7 +25,7 @@ class ProductPartViewSet(viewsets.ModelViewSet):
         Delete a product part
     """
 
-    queryset = ProductPart.objects.all()
+    queryset = ProductPart.objects.filter(deleted_at=None).all()
     serializer_class = ProductPartSerializer
     permission_classes = (IsAuthenticated,)
 

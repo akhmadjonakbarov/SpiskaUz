@@ -69,7 +69,8 @@ class ShopViewSet(
     """
 
     queryset = Shop.objects.select_related("owner").prefetch_related("categories", "contacts", "products",
-                                                                     "members").all().order_by("created_at")
+                                                                     "members").filter(deleted_at=None).all().order_by(
+        "created_at")
     serializer_class = ShopSerializer
     parser_classes = [FormParser, MultiPartParser]
     permission_classes = [IsAuthenticated]
@@ -129,7 +130,7 @@ class ShopDetailView(DetailView):
     """
 
     template_name = "shop/shop_detail.html"
-    queryset = Shop.objects.all()
+    queryset = Shop.objects.filter(deleted_at=None).all()
 
     def get_object(self, queryset=None):
         return get_object_or_404(Shop, link=self.kwargs["link"])

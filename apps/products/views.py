@@ -35,7 +35,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     filter_fields = ('shop_id',)
 
-    queryset = Product.objects.prefetch_related("favorited_by").all()
+    queryset = Product.objects.prefetch_related("favorited_by").filter(deleted_at=None).all()
     serializer_class = ProductSerializer
     create_serializer_class = CreateProductSerializer
     permission_classes = [IsAuthenticated, ]

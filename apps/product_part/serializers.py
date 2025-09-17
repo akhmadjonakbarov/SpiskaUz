@@ -73,7 +73,7 @@ class CreateProductPartSerializer(serializers.Serializer):
             latest_rate = self.get_latest_currency_rate(product.shop)
             currency_rate_value = latest_rate.rate
 
-        # 🔒 Safe float-to-decimal conversion using str() wrapper
+
         sale_price = Decimal(str(product.sale_price))
         income_price = Decimal(str(validated_data["income_price"]))
 

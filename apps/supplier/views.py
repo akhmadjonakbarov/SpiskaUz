@@ -11,8 +11,8 @@ from rest_framework.exceptions import ValidationError
 from utils.convertor import Convertor
 from .serializers import SupplierSerializer, CreateSupplierSerializer, PayDebtSerializer, DebtPaymentHistorySerializer
 from .models import Supplier, SupplierDebtBalance, DebtPaymentHistory
-from ..currency_rate.models import CurrencyRate
-from ..shops.models import Shop
+from apps.currency_rate.models import CurrencyRate
+from apps.shops.models import Shop
 
 
 class SupplierViewSet(ModelViewSet):

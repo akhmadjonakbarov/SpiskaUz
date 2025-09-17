@@ -11,8 +11,11 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from common.serializers import EmptyBodySerializer
 from .models import Product, ReportOption
-from .serializers import ProductSerializer, CreateProductSerializer, CreateProductImageSerializer, ReportSerializer, \
+from .serializers import (
+    ProductSerializer, CreateProductSerializer,
+    CreateProductImageSerializer, ReportSerializer,
     ReportOptionSerializer, ProductSerializerForUser, ProductReorderSerializer
+)
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -82,12 +85,10 @@ class ProductViewSet(viewsets.ModelViewSet):
         partial = kwargs.pop("partial", False)
         instance = self.get_object()
 
-        # Use write serializer (e.g., CreateProductSerializer) for input
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         product = serializer.save()
 
-        # Use read serializer (e.g., ProductSerializer) for output
         output_serializer = ProductSerializer(product, context={"request": request})
         return Response(output_serializer.data, status=status.HTTP_200_OK)
 
@@ -160,6 +161,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     )
     def list(self, request: Request, *args, **kwargs):
         products = self.get_queryset().filter(
+            is_active=True,
             shop_id=request.query_params.get('shop_id')
         )
         serializer = ProductSerializer(products, many=True)

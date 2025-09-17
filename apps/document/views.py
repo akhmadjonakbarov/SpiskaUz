@@ -68,9 +68,17 @@ class BuyProductView(GenericAPIView):
                 un_payed_money = request.data.get('un_payed_money')
                 note = request.data.get('note', None)
                 supplier_id = request.data.get('supplier_id')
+                currency_type = request.data.get('currency_type', None)
                 supplier = Supplier.objects.get(id=supplier_id)
                 first_part = ProductPart.objects.get(id=request.data.get("product_part_ids")[0])
                 shop = first_part.shop
+
+                if currency_type is None:
+                    return Response(
+                        data={
+                            'detail': 'Please select currency type. CurrencyType might be usd or uzs'
+                        }
+                    )
 
                 # Create Document
                 document_factory = DocumentFactory(
@@ -78,7 +86,7 @@ class BuyProductView(GenericAPIView):
                     doc_type='buy',
                     payment_info_data=PaymentInfoData(
                         first_part=first_part, payed_money=payed_money, un_payed_money=un_payed_money, note=note,
-                        currency_type=first_part.product.currency_type
+                        currency_type=currency_type
                     )
                 )
                 document = document_factory.create()
@@ -144,20 +152,22 @@ class BuyProductView(GenericAPIView):
 
             product_part.confirm(user, supplier)
 
-    def update_or_create_supplier_debt(self, first_part: ProductPart, supplier: Supplier, un_payed_money):
+    def update_or_create_supplier_debt(
+            self, currency_type: str, supplier: Supplier, un_payed_money
+    ):
 
         try:
             supplier_debt_balance = SupplierDebtBalance.objects.get(
                 supplier=supplier
             )
 
-            if first_part.product.currency_type == CURRENCY_USD:
+            if currency_type == CURRENCY_USD:
                 supplier_debt_balance.balance_usd += Convertor.to_decimal(un_payed_money)
             else:
                 supplier_debt_balance.balance_usd += Convertor.to_decimal(un_payed_money)
             supplier_debt_balance.save()
         except SupplierDebtBalance.DoesNotExist:
-            if first_part.product.currency_type == CURRENCY_USD:
+            if currency_type == CURRENCY_USD:
                 SupplierDebtBalance.objects.create(
                     supplier=supplier,
                     balance_usd=un_payed_money

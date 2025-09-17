@@ -7,8 +7,8 @@ from typing import Dict
 from apps.shops.models import Shop, ShopBalance, ShopBalanceTransaction
 from apps.supplier.models import Supplier
 from utils.convertor import Convertor
-from apps.document.models import DocumentItem
-from apps.document.serializers import DocumentItemSerializer
+from apps.document.models import DocumentItem, Document
+from apps.document.serializers import DocumentItemSerializer, DocumentSerializer, DocumentSerializerForStatistic
 from apps.debt.models import Debt
 from django.db.models import Sum
 from apps.shops.serializers import ShopTransactionSerializer
@@ -21,8 +21,8 @@ class BaseStatisticView(GenericAPIView):
     doc_type = None
 
     def get_queryset(self):
-        return DocumentItem.objects.filter(
-            document__doc_type=self.doc_type, shop_id=self.kwargs['shop_id'], deleted_at=None
+        return Document.objects.filter(
+            doc_type=self.doc_type, shop_id=self.kwargs['shop_id'], deleted_at=None
         ).order_by('-created_at')
 
     def get_shop(self):
@@ -34,8 +34,8 @@ class BoughtStatisticView(BaseStatisticView):
 
     def get(self, request, shop_id):
         shop = self.get_shop()
-        document_items = self.get_queryset()
-        statistics = self.get_statistics(document_items, shop_id=shop.id)
+        documents = self.get_queryset()
+        statistics = self.get_statistics(documents, shop_id=shop.id)
         debt_price = self.get_debts(shop)
         statistics['debt_price'] = debt_price
 
@@ -60,29 +60,30 @@ class BoughtStatisticView(BaseStatisticView):
 
         return total_debt
 
-    def get_statistics(self, items, shop_id) -> Dict:
+    def get_statistics(self, documents, shop_id) -> Dict:
         start_date = self.request.query_params.get("start_date")
         end_date = self.request.query_params.get("end_date")
 
         if start_date:
             start_date = parse_date(start_date)  # or parse_datetime if datetime
-            items = items.filter(created_at__gte=start_date)
+            documents = documents.filter(created_at__gte=start_date)
         if end_date:
             end_date = parse_date(end_date)
-            items = items.filter(created_at__lte=end_date)
+            documents = documents.filter(created_at__lte=end_date)
 
         total_price = Decimal('0.0')
         total_income = Decimal('0.0')
-        for doc_item in items:
-            if doc_item.product.currency_type.lower() in 'usd':
-                total_price = Convertor.to_decimal(
-                    total_price) + doc_item.qty * doc_item.sale_price * doc_item.currency_rate_value
+        for document in documents:
+            for doc_item in document.document_items.all():
+                if doc_item.product.currency_type.lower() in 'usd':
+                    total_price = Convertor.to_decimal(
+                        total_price) + doc_item.qty * doc_item.sale_price * doc_item.currency_rate_value
 
-                total_income = Convertor.to_decimal(
-                    total_income) + doc_item.qty * doc_item.income_price * doc_item.currency_rate_value
-            else:
-                total_price = Convertor.to_decimal(total_price) + doc_item.qty * doc_item.sale_price
-                total_income = Convertor.to_decimal(total_income) + doc_item.qty * doc_item.income_price
+                    total_income = Convertor.to_decimal(
+                        total_income) + doc_item.qty * doc_item.income_price * doc_item.currency_rate_value
+                else:
+                    total_price = Convertor.to_decimal(total_price) + doc_item.qty * doc_item.sale_price
+                    total_income = Convertor.to_decimal(total_income) + doc_item.qty * doc_item.income_price
 
         total_profit = Convertor.to_decimal(total_price) - Convertor.to_decimal(total_income)
 
@@ -98,14 +99,14 @@ class BoughtStatisticView(BaseStatisticView):
         for t in transactions_data:
             t['type'] = 'transaction'
 
-        document_items_data = DocumentItemSerializer(items, many=True).data
-        for d in document_items_data:
+        documents_data = DocumentSerializer(documents, many=True).data
+        for d in documents_data:
             d['type'] = 'document_item'
 
         return {
             'total_price': total_price,
             'total_profit': total_profit,
-            'items': transactions_data + document_items_data,
+            'items': transactions_data + documents_data,
         }
 
 
@@ -123,15 +124,15 @@ class SoldStatisticView(BaseStatisticView):
             shop=shop, kind__in=['cash_loss', 'loss', 'cash_outcome'], deleted_at=None
         )
 
-        document_items = self.get_queryset()
+        documents = self.get_queryset()
 
         transactions_data = ShopTransactionSerializer(transactions, many=True).data
         for t in transactions_data:
             t['type'] = 'transaction'
 
-        document_items_data = DocumentItemSerializer(document_items, many=True).data
+        document_items_data = DocumentSerializerForStatistic(documents, many=True).data
         for d in document_items_data:
-            d['type'] = 'document_item'
+            d['type'] = 'document'
 
         return Response(
             data={
@@ -156,7 +157,7 @@ class SoldStatisticView(BaseStatisticView):
             balance_uzs = balance_uzs + balance.balance_uzs
 
         currency = CurrencyRate.objects.filter(shop=shop).order_by('-created_at').first()
-        balance_uzs = balance_uzs + balance_uzs * currency.rate
+        balance_uzs = balance_uzs + balance_usd * currency.rate
 
         return balance_uzs
 

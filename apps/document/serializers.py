@@ -9,9 +9,7 @@ class DocumentItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DocumentItem
-        exclude = (
-            'deleted_at'
-            ,)
+        exclude = ('deleted_at',)
 
     def get_product(self, obj: DocumentItem):
         product = obj.product
@@ -29,9 +27,19 @@ class DocumentItemSerializer(serializers.ModelSerializer):
 
 
 class DocumentSerializer(serializers.ModelSerializer):
+    document_items = DocumentItemSerializer(many=True, read_only=True)
+
     class Meta:
         model = Document
-        fields = "__all__"
+        exclude = ("deleted_at",)
+
+
+class DocumentSerializerForStatistic(serializers.ModelSerializer):
+    document_items = DocumentItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Document
+        exclude = ("deleted_at", "user", "shop",)
 
 
 class SaleItemSerializer(serializers.Serializer):
@@ -47,6 +55,7 @@ class BuyProductSerializer(serializers.Serializer):
     payed_money = serializers.DecimalField(max_digits=15, decimal_places=5, default=Decimal("0.0"))
     un_payed_money = serializers.DecimalField(max_digits=15, decimal_places=5, default=Decimal("0.0"))
     supplier_id = serializers.IntegerField()
+    currency_type = serializers.CharField(default="usd")
 
 
 class ClientDebtSerializer(serializers.Serializer):

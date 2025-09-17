@@ -39,6 +39,7 @@ class DocumentFactory:
     def create(self) -> Document:
         with transaction.atomic():
             document = Document.objects.create(
+                user=self.user,
                 shop=self.shop,
                 doc_type=self.doc_type
             )

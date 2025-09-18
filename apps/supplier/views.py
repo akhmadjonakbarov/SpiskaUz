@@ -112,7 +112,8 @@ class SupplierDebtPayView(GenericAPIView):
                     currency_type=currency_type,
                     currency_rate=Decimal(currency_rate.rate) if currency_rate is not None else Decimal('0.0'),
                     amount=amount,
-                    supplier=supplier
+                    supplier=supplier,
+                    transaction_type='payment'
                 )
             return Response(
                 data={

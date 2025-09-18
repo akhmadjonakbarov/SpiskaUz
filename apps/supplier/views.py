@@ -10,7 +10,7 @@ from django.db import transaction, IntegrityError
 from rest_framework.exceptions import ValidationError
 from utils.convertor import Convertor
 from .serializers import SupplierSerializer, CreateSupplierSerializer, PayDebtSerializer, DebtPaymentHistorySerializer
-from .models import Supplier, SupplierDebtBalance, DebtPaymentHistory
+from .models import Supplier, SupplierDebtBalance, Transaction
 from apps.currency_rate.models import CurrencyRate
 from apps.shops.models import Shop
 
@@ -106,7 +106,7 @@ class SupplierDebtPayView(GenericAPIView):
                         '-created_at'
                     ).first()
 
-                DebtPaymentHistory.objects.create(
+                Transaction.objects.create(
                     balance=balance_debt,
                     created_by=request.user,
                     currency_type=currency_type,
@@ -126,7 +126,7 @@ class SupplierDebtPayView(GenericAPIView):
 
 class SupplierDebtPaymentHistoryView(RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
-    queryset = DebtPaymentHistory.objects.all()
+    queryset = Transaction.objects.all()
     serializer_class = DebtPaymentHistorySerializer
 
     def get_queryset(self):

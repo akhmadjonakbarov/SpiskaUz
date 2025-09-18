@@ -32,13 +32,19 @@ class SupplierDebtBalance(BaseModel):
         return self.supplier.name
 
 
-class DebtPaymentHistory(BaseModel):
+class Transaction(BaseModel):
+    TransactionType = (
+        ('debt', 'Debt'),
+        ('payment', 'Payment')
+    )
     supplier = models.ForeignKey(
         Supplier,
         on_delete=models.CASCADE,
-        related_name="debt_payment_histories"
+        related_name="transactions"
     )
-    balance = models.ForeignKey(SupplierDebtBalance, on_delete=models.CASCADE, related_name="histories")
+    balance = models.ForeignKey(
+        SupplierDebtBalance, on_delete=models.CASCADE, related_name="histories",
+    )
     amount = models.DecimalField(
         max_digits=50, decimal_places=5,
     )
@@ -47,6 +53,9 @@ class DebtPaymentHistory(BaseModel):
     )
     currency_rate = models.DecimalField(
         max_digits=50, decimal_places=5, default=Decimal('0.0')
+    )
+    transaction_type = models.CharField(
+        choices=TransactionType, blank=True, null=True, max_length=250
     )
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
 

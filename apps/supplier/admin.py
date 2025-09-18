@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import SupplierDebtBalance, Supplier, DebtPaymentHistory
+from .models import SupplierDebtBalance, Supplier, Transaction
 from ..base.admin import BaseAdmin
 
 
@@ -14,7 +14,7 @@ class SupplierDebtBalanceAdmin(BaseAdmin):
     list_display = ('supplier', 'balance_usd', 'balance_uzs')
 
 
-@admin.register(DebtPaymentHistory)
+@admin.register(Transaction)
 class DebtPaymentHistoryAdmin(BaseAdmin):
     list_display = (
         'amount', 'currency_type', 'created_by', 'balance',

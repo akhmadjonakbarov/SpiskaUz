@@ -55,7 +55,7 @@ class BuyProductSerializer(serializers.Serializer):
     payed_money = serializers.DecimalField(max_digits=15, decimal_places=5, default=Decimal("0.0"))
     un_payed_money = serializers.DecimalField(max_digits=15, decimal_places=5, default=Decimal("0.0"))
     supplier_id = serializers.IntegerField()
-    currency_type = serializers.CharField(default="usd")
+
 
 
 class ClientDebtSerializer(serializers.Serializer):

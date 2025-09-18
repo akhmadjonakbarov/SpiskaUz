@@ -12,7 +12,7 @@ class Transaction(models.Model):
     ]
 
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    # user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField()
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     description = models.TextField(blank=True)

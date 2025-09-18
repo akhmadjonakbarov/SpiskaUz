@@ -27,7 +27,7 @@ from apps.promocodes.serializers import PromocodeSerializer
 from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance, Admin
 from apps.shops.serializers import AdminSerializer, ChangeExchangeRateSerializer, ShopAdminSerializer, \
     ShopContactSerializer, ShopSerializer
-from apps.supplier.models import Supplier, SupplierDebtBalance, DebtPaymentHistory
+from apps.supplier.models import Supplier, SupplierDebtBalance, Transaction
 from apps.transactions.models import Transaction
 from apps.transactions.serializers import TransactionSerializer
 from apps.users.serializers import AdminMemberSerializer
@@ -680,7 +680,7 @@ class ShopBalanceMixin:
             debt_balance: SupplierDebtBalance = supplier.debt_balance
             debt_balance.balance_uzs = debt_balance.balance_uzs - \
                                        Convertor.to_decimal(amount)
-            DebtPaymentHistory.objects.create(
+            Transaction.objects.create(
                 supplier=supplier, balance=debt_balance, amount=amount,
                 currency_type='uzs', currency_rate=Decimal('0.0'), created_by=supplier.created_by
             )

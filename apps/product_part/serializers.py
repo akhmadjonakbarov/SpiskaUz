@@ -15,7 +15,6 @@ class ProductPartSerializer(serializers.ModelSerializer):
     product = ProductSerializer(many=False)
     currency_rate = CurrencyRateSerializer()
     confirmed_by = UserSerializer()
-    supplier = SupplierSerializer()
     profit_as_percent = serializers.SerializerMethodField()
 
     class Meta:

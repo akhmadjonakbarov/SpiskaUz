@@ -6,6 +6,7 @@ from apps.users.models import User
 from constants.currency_choices import CURRENCY_CHOICES
 from .utils.generate_image_path import product_image_upload_path
 from apps.unit.models import Unit
+from ..supplier.models import Supplier
 
 
 class ProductGroup(BaseModelWithUser):
@@ -43,6 +44,10 @@ class Product(BaseModelWithUser):
     currency_type = models.CharField(
         max_length=3,
         choices=CURRENCY_CHOICES,
+    )
+    supplier = models.ForeignKey(
+        Supplier, on_delete=models.SET_NULL, blank=True, null=True,
+        related_name="products"
     )
 
     class Meta:

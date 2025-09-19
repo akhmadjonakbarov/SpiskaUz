@@ -7,6 +7,7 @@ from apps.document.models import DocumentItemBalance
 from apps.products.models import Product, ProductGroup, ProductImage, Report, ReportOption
 from apps.shops.models import Shop, Category
 from apps.shops.serializers import CategorySerializer
+from apps.supplier.models import Supplier
 from apps.unit.models import Unit
 from apps.unit.serializers import UnitSerializer
 from utils.convertor import Convertor
@@ -111,6 +112,7 @@ class ProductReorderSerializer(serializers.Serializer):
 
         return data
 
+
 class ProductSerializerForUser(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True)
     category = CategorySerializer(read_only=True)
@@ -193,6 +195,9 @@ class CreateProductSerializer(serializers.Serializer):
     category = serializers.IntegerField()
     unit = serializers.IntegerField()
     group = serializers.UUIDField(required=False, allow_null=True)  # <-- now optional
+    supplier = serializers.PrimaryKeyRelatedField(
+        queryset=Supplier.objects.all(),
+    )
 
     def validate_shop(self, value):
         try:
@@ -220,6 +225,14 @@ class CreateProductSerializer(serializers.Serializer):
         except ProductGroup.DoesNotExist:
             raise serializers.ValidationError("Group not found.")
 
+    def validate_supplier(self, value):
+        if not value:
+            return None
+        try:
+            return Supplier.objects.get(pk=value)
+        except Supplier.DoesNotExist:
+            raise serializers.ValidationError("Supplier not found.")
+
     def create(self, validated_data):
         request = self.context["request"]
         images = validated_data.pop("images")
@@ -227,6 +240,7 @@ class CreateProductSerializer(serializers.Serializer):
         category = validated_data.pop("category")
         unit = validated_data.pop("unit")
         group = validated_data.pop("group", None)
+        supplier = validated_data.pop('supplier', None)
 
         if group is None:
             group = ProductGroup.objects.create(
@@ -238,6 +252,7 @@ class CreateProductSerializer(serializers.Serializer):
         product = Product.objects.create(
             shop=shop,
             user=request.user,
+            supplier=supplier,
             category_id=category.id,
             unit_id=unit.id,
             group_id=group.id,
@@ -256,7 +271,9 @@ class CreateProductSerializer(serializers.Serializer):
         category = validated_data.pop("category", None)
         unit = validated_data.pop("unit", None)
         group = validated_data.pop("group", None)
-
+        supplier = validated_data.pop("supplier", None)
+        if supplier:
+            instance.supplier_id = supplier.id
         if category:
             instance.category_id = category.id
         if unit:

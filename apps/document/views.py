@@ -66,9 +66,7 @@ class BuyProductView(GenericAPIView):
                 payed_money = request.data.get('payed_money')
                 un_payed_money = request.data.get('un_payed_money')
                 note = request.data.get('note', None)
-                supplier_id = request.data.get('supplier_id')
                 currency_type = request.data.get('currency_type', None)
-                supplier = Supplier.objects.get(id=supplier_id)
                 first_part = ProductPart.objects.get(id=request.data.get("product_part_ids")[0])
                 shop = first_part.shop
 
@@ -91,10 +89,11 @@ class BuyProductView(GenericAPIView):
                 document = document_factory.create()
 
                 # Create Debt Balance
-                self.update_or_create_supplier_debt(first_part, supplier, un_payed_money, request.user)
+                self.update_or_create_supplier_debt(first_part, first_part.product.supplier, un_payed_money,
+                                                    request.user)
 
                 # Process Product Parts
-                self.process_product_parts(request, user, document, supplier)
+                self.process_product_parts(request, user, document, first_part.product.supplier)
 
             return Response({"message": "Product bought successfully."}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -149,7 +148,7 @@ class BuyProductView(GenericAPIView):
                 )
                 balance.save()
 
-            product_part.confirm(user, supplier)
+            product_part.confirm(user)
 
     def update_or_create_supplier_debt(
             self, first_part: ProductPart, supplier: Supplier,

@@ -166,9 +166,9 @@ UNFOLD = {
                         "link": reverse_lazy("admin:supplier_supplierdebtbalance_changelist"),
                     },
                     {
-                        "title": _("DebtPaymentHistory"),
+                        "title": _("Transaction"),
                         "icon": "layers",
-                        "link": reverse_lazy("admin:supplier_debtpaymenthistory_changelist"),
+                        "link": reverse_lazy("admin:supplier_Transaction_changelist"),
                     },
                 ],
             },

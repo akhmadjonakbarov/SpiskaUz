@@ -168,7 +168,7 @@ UNFOLD = {
                     {
                         "title": _("Transaction"),
                         "icon": "layers",
-                        "link": reverse_lazy("admin:supplier_Transaction_changelist"),
+                        "link": reverse_lazy("admin:supplier_transaction_changelist"),
                     },
                 ],
             },

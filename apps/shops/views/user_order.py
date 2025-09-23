@@ -10,7 +10,7 @@ from apps.shops.models import Shop
 
 class ShopUserOrderListView(GenericAPIView):
     queryset = Shop.objects.all()
-    permission_classes = [IsAuthenticated, CanViewOrder]
+    permission_classes = [IsAuthenticated, ]
     serializer_class = OrderSerializer
 
     def get(self, request, customer_id, *args, **kwargs):

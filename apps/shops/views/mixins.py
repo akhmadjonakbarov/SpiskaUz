@@ -286,7 +286,7 @@ class ShoppingCartActionMixin:
 
         cart, created = (
             Cart.objects.select_related(
-                "user",
+                "customer",
                 "shop",
                 "promocode",
             )
@@ -302,7 +302,7 @@ class ShoppingCartActionMixin:
                 "promocode__items",
                 "promocode__items__product",
             )
-            .get_or_create(user=user, shop=shop)
+            .get_or_create(customer=user, shop=shop)
         )
 
         serializer = self.get_serializer(cart)

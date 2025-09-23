@@ -9,6 +9,7 @@ from apps.currency_rate.models import CurrencyRate
 from apps.orders.models import Order
 from apps.products.models import Product
 from apps.promocodes.models import PromoCode
+from apps.supplier.models import Supplier
 from constants.currency_choices import CURRENCY_CHOICES
 
 
@@ -33,6 +34,9 @@ class Document(BaseModelWithUserAndShop):
         ('sell', 'Sell'),
     )
     doc_type = models.CharField(max_length=10, choices=DOC_TYPE)
+    supplier = models.ForeignKey(
+        Supplier, on_delete=models.SET_NULL, related_name="documents", blank=True, null=True
+    )
 
     def __str__(self):
         return f"{self.doc_type}"

@@ -26,13 +26,14 @@ class PaymentInfoData:
 class DocumentFactory:
     def __init__(
             self,
-            user, shop, doc_type,
+            user, shop, doc_type, supplier,
             payment_info_data: PaymentInfoData = None,
             payment_detail_data: PaymentDetailData = None
     ):
         self.user = user
         self.shop = shop
         self.doc_type = doc_type
+        self.supplier = supplier
         self.payment_info_data = payment_info_data
         self.payment_detail_data = payment_detail_data
 
@@ -41,7 +42,8 @@ class DocumentFactory:
             document = Document.objects.create(
                 user=self.user,
                 shop=self.shop,
-                doc_type=self.doc_type
+                doc_type=self.doc_type,
+                supplier=self.supplier
             )
 
             if self.payment_detail_data:

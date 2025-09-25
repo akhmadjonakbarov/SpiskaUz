@@ -79,3 +79,4 @@ class ConfirmShoppingCartSerializer(serializers.Serializer):
     payment_type = serializers.CharField(max_length=250)
     payed = serializers.FloatField()
     un_payed = serializers.FloatField()
+    discount = serializers.FloatField()

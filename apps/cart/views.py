@@ -95,13 +95,14 @@ class CartViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
         payment_type = request.data.get("payment_type", Decimal('0.0'))
         un_payed = request.data.get("un_payed", Decimal('0.0'))
         payed = request.data.get("payed", Decimal('0.0'))
+        discount = request.data.get("discount", Decimal('0.0'))
         try:
             with transaction.atomic():
                 order: Order = Order.objects.create(
                     customer=cart.customer,
                     shop=cart.shop,
                     status=OrderStatus.PENDING,
-                    comment=comment
+                    comment=comment, discount=discount
                 )
                 OrderPaymentDetail.objects.create(
                     payed=payed,

@@ -76,3 +76,6 @@ class CartSerializer(serializers.ModelSerializer):
 
 class ConfirmShoppingCartSerializer(serializers.Serializer):
     comment = serializers.CharField(required=False, allow_blank=True)
+    payment_type = serializers.CharField(max_length=250)
+    payed = serializers.FloatField()
+    un_payed = serializers.FloatField()

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from apps.base.models import BaseModel
 
@@ -27,8 +29,7 @@ class Order(BaseModel):
     # profit = models.DecimalField("Profit", max_digits=28, decimal_places=2, default=0)
     # comment = models.TextField("Comment", blank=True, null=True)
     # status = models.CharField("Status", max_length=20, choices=OrderStatus.choices, default=OrderStatus.PENDING)
-    # payment_method = models.CharField("Payment Method", max_length=20, choices=OrderPaymentMethod.choices,
-    #                                   default=OrderPaymentMethod.CASH)
+
     customer = models.ForeignKey("users.User", on_delete=models.SET_NULL, related_name="customer_orders",
                                  verbose_name="Customer", null=True, blank=True)
     shop = models.ForeignKey("shops.Shop", on_delete=models.CASCADE, related_name="orders", verbose_name="Shop")
@@ -40,6 +41,16 @@ class Order(BaseModel):
 
     def __str__(self):
         return f"Order #{self.id} - {self.customer} - {self.status}"
+
+
+class OrderPaymentDetail(BaseModel):
+    order = models.OneToOneField(Order, verbose_name="Order", on_delete=models.CASCADE)
+    payed = models.DecimalField(max_digits=60, decimal_places=5, default=Decimal('0.0'))
+    un_payed = models.DecimalField(max_digits=60, decimal_places=5, default=Decimal('0.0'))
+    payment_method = models.CharField(
+        "Payment Method", max_length=20, choices=OrderPaymentMethod.choices,
+        default=OrderPaymentMethod.CASH
+    )
 
 
 class OrderItem(BaseModel):

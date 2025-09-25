@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import transaction
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import mixins, viewsets
@@ -5,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from apps.orders.models import Order, OrderStatus, OrderItem
+from apps.orders.models import Order, OrderStatus, OrderItem, OrderPaymentDetail
 from apps.orders.serializers import OrderSerializer
 from apps.orders.services import OrderService
 from apps.promocodes.serializers import ApplyPromocodeSerializer
@@ -15,6 +17,8 @@ from .permissions import CanConfirmCartPermission, CanEditCartItemPermission
 from .serializers import ConfirmShoppingCartSerializer, CartItemSerializer, CartSerializer, \
     AddCartItemSerializer
 from apps.products.models import Product
+from ..currency_rate.models import CurrencyRate
+from ..customer_transaction.models import CustomerTransaction
 
 
 class CartItemViewSet(
@@ -88,6 +92,9 @@ class CartViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
         cart_items = CartItem.objects.filter(cart=cart)
 
         comment = request.data.get("comment", None)
+        payment_type = request.data.get("payment_type", Decimal('0.0'))
+        un_payed = request.data.get("un_payed", Decimal('0.0'))
+        payed = request.data.get("payed", Decimal('0.0'))
         try:
             with transaction.atomic():
                 order: Order = Order.objects.create(
@@ -96,6 +103,19 @@ class CartViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
                     status=OrderStatus.PENDING,
                     comment=comment
                 )
+                OrderPaymentDetail.objects.create(
+                    payed=payed,
+                    un_payed=un_payed,
+                    payment_type=payment_type,
+                    order=order
+                )
+                if un_payed > Decimal('0.0'):
+                    latest_currency = CurrencyRate.objects.filter(shop=cart.shop).order_by('-created_at').first()
+                    CustomerTransaction.objects.create(
+                        order=order,
+                        transaction_type='debt', amount=un_payed, customer=request.user,
+                        currency_rate=latest_currency.rate
+                    )
                 for ci in cart_items:
                     cart_item: CartItem = ci
                     OrderItem.objects.create(

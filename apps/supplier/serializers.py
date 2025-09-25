@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Supplier, Transaction
+from .models import Supplier, SupplierTransaction
 from apps.shops.models import Shop
 
 
@@ -28,6 +28,6 @@ class PayDebtSerializer(serializers.Serializer):
 
 class DebtPaymentHistorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Transaction
+        model = SupplierTransaction
         # fields = '__all__'
         exclude = ('deleted_at',)

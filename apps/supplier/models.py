@@ -1,6 +1,6 @@
 from decimal import Decimal
 from django.db import models
-from apps.base.models import BaseModel
+from apps.base.models import BaseModel, BaseModelWithShop
 from apps.users.models import User
 
 
@@ -32,7 +32,7 @@ class SupplierDebtBalance(BaseModel):
         return self.supplier.name
 
 
-class Transaction(BaseModel):
+class SupplierTransaction(BaseModelWithShop):
     TransactionType = (
         ('debt', 'Debt'),
         ('payment', 'Payment')

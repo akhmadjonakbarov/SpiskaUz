@@ -16,6 +16,8 @@ from rest_framework.response import Response
 
 from apps.cart.models import Cart
 from apps.cart.serializers import CartSerializer
+from apps.customer_transaction.models import CustomerTransaction
+from apps.customer_transaction.serializers import CustomerTransactionSerializer
 from apps.document.models import DocumentItemBalance
 from apps.document.utils.calculator import Calculator
 from apps.notifications.models import Notification, NotificationType
@@ -28,7 +30,8 @@ from apps.promocodes.serializers import PromocodeSerializer
 from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance
 from apps.shops.serializers import AdminSerializer, ChangeExchangeRateSerializer, ShopContactSerializer, ShopSerializer
 from apps.shops.serializers import ShopTransactionSerializer
-from apps.supplier.models import Supplier, SupplierDebtBalance, Transaction
+from apps.supplier.models import Supplier, SupplierDebtBalance, SupplierTransaction
+from apps.supplier.serializers import DebtPaymentHistorySerializer
 from apps.transactions.models import Transaction
 from apps.transactions.serializers import TransactionSerializer
 from apps.users.serializers import AdminMemberSerializer
@@ -588,31 +591,39 @@ class ShopHistoryActionsMixin:
         start_date = request.query_params.get("start_date")
         end_date = request.query_params.get("end_date")
 
-        transactions = Transaction.objects.filter(
-            shop=shop).select_related("user")
+        supplier_transactions = SupplierTransaction.objects.order_by('-created_at').filter(
+            shop=shop
+        )
+        customer_transaction = CustomerTransaction.objects.order_by('-created_at').filter(
+            shop=shop
+        )
 
         if start_date:
             try:
                 start_date_dt = datetime.strptime(start_date, "%Y-%m-%d")
-                transactions = transactions.filter(date__gte=start_date_dt)
+                supplier_transactions = supplier_transactions.filter(date__gte=start_date_dt)
+                customer_transaction = customer_transaction.filter(date__gte=start_date_dt)
             except ValueError:
                 return Response({"error": "start_date format must be YYYY-MM-DD"}, status=400)
 
         if end_date:
             try:
                 end_date_dt = datetime.strptime(end_date, "%Y-%m-%d")
-                transactions = transactions.filter(date__lte=end_date_dt)
+                supplier_transactions = supplier_transactions.filter(date__lte=end_date_dt)
+                customer_transaction = customer_transaction.filter(date__gte=start_date_dt)
             except ValueError:
                 return Response({"error": "end_date format must be YYYY-MM-DD"}, status=400)
 
-        profit_spent = transactions.filter(transaction_type="profit").aggregate(
+        profit_spent = supplier_transactions.filter(transaction_type="profit").aggregate(
             total=Sum("amount"))["total"] or 0
-        cash_spent = transactions.filter(transaction_type="cash").aggregate(
+        cash_spent = supplier_transactions.filter(transaction_type="cash").aggregate(
             total=Sum("amount"))["total"] or 0
-        cash_and_profit_spent = transactions.filter(transaction_type="cash_and_profit").aggregate(total=Sum("amount"))[
-                                    "total"] or 0
+        cash_and_profit_spent = \
+            supplier_transactions.filter(transaction_type="cash_and_profit").aggregate(total=Sum("amount"))[
+                "total"] or 0
         current_cash_total = \
-            transactions.filter(transaction_type__in=["cash", "cash_and_profit"]).aggregate(total=Sum("amount"))[
+            supplier_transactions.filter(transaction_type__in=["cash", "cash_and_profit"]).aggregate(
+                total=Sum("amount"))[
                 "total"] or 0
 
         statistics = {
@@ -622,10 +633,20 @@ class ShopHistoryActionsMixin:
             "current_cash_total": current_cash_total,
         }
 
-        transactions = TransactionSerializer(
-            instance=transactions, many=True, context={"request": request})
+        serialized_supplier = DebtPaymentHistorySerializer(supplier_transactions, many=True).data
+        serialized_customer = CustomerTransactionSerializer(customer_transaction, many=True).data
 
-        return Response({"transactions": transactions.data, "statistics": statistics})
+        for transaction in serialized_customer:
+            transaction['type'] = 'customer_transaction'
+        for transaction in serialized_supplier:
+            transaction['type'] = 'customer_transaction'
+
+        return Response(
+            {
+                "transactions": serialized_supplier + serialized_customer,
+                "statistics": statistics
+            }
+        )
 
 
 class ShopBalanceMixin:
@@ -679,7 +700,7 @@ class ShopBalanceMixin:
             debt_balance: SupplierDebtBalance = supplier.debt_balance
             debt_balance.balance_uzs = debt_balance.balance_uzs - \
                                        Convertor.to_decimal(amount)
-            Transaction.objects.create(
+            SupplierTransaction.objects.create(
                 supplier=supplier, balance=debt_balance, amount=amount,
                 currency_type='uzs', currency_rate=Decimal('0.0'), created_by=supplier.created_by
             )

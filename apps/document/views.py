@@ -16,7 +16,7 @@ from apps.document.utils.calculator import Calculator
 from apps.product_part.models import ProductPart
 from apps.products.models import Product
 from apps.promocodes.models import PromoCode
-from apps.supplier.models import SupplierDebtBalance, Transaction
+from apps.supplier.models import SupplierDebtBalance, SupplierTransaction
 from apps.users.models import User
 from constants.currency_choices import CURRENCY_USD
 from utils.convertor import Convertor
@@ -159,14 +159,16 @@ class BuyProductView(GenericAPIView):
 
             if first_part.product.currency_type == CURRENCY_USD:
                 supplier_debt_balance.balance_usd += Convertor.to_decimal(un_payed_money)
-                Transaction.objects.create(
+                SupplierTransaction.objects.create(
+                    shop=first_part.shop,
                     balance=supplier_debt_balance, amount=un_payed_money, currency_type='usd',
                     currency_rate=latest.rate, transaction_type='debt',
                     supplier=supplier, created_by=user
                 )
             else:
                 supplier_debt_balance.balance_uzs += Convertor.to_decimal(un_payed_money)
-                Transaction.objects.create(
+                SupplierTransaction.objects.create(
+                    shop=first_part.shop,
                     balance=supplier_debt_balance, amount=un_payed_money, currency_type='uzs',
                     currency_rate=Decimal('0.0'), transaction_type='debt',
                     supplier=supplier, created_by=user
@@ -179,7 +181,8 @@ class BuyProductView(GenericAPIView):
                     supplier=supplier,
                     balance_usd=un_payed_money
                 )
-                Transaction.objects.create(
+                SupplierTransaction.objects.create(
+                    shop=first_part.shop,
                     balance=balance, amount=un_payed_money, currency_type='usd',
                     currency_rate=latest.rate, transaction_type='debt',
                     supplier=supplier, created_by=user
@@ -189,7 +192,8 @@ class BuyProductView(GenericAPIView):
                     supplier=supplier,
                     balance_uzs=un_payed_money
                 )
-                Transaction.objects.create(
+                SupplierTransaction.objects.create(
+                    shop=first_part.shop,
                     balance=balance, amount=un_payed_money, currency_type='uzs',
                     currency_rate=Decimal('0.0'), transaction_type='debt',
                     supplier=supplier, created_by=user

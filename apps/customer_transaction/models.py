@@ -2,10 +2,10 @@ from decimal import Decimal
 
 from django.db import models
 
-from apps.base.models import BaseModel
+from apps.base.models import BaseModelWithShop
 
 
-class CustomerTransaction(BaseModel):
+class CustomerTransaction(BaseModelWithShop):
     TransactionType = (
         ('debt', 'Debt'),
         ('payment', 'Payment')

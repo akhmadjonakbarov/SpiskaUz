@@ -113,6 +113,7 @@ class CartViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
                 if un_payed > Decimal('0.0'):
                     latest_currency = CurrencyRate.objects.filter(shop=cart.shop).order_by('-created_at').first()
                     CustomerTransaction.objects.create(
+                        shop=cart.shop,
                         order=order,
                         transaction_type='debt', amount=un_payed, customer=request.user,
                         currency_rate=latest_currency.rate

@@ -76,7 +76,7 @@ class BuyProductView(GenericAPIView):
                 document_factory = DocumentFactory(
                     user=user, shop=shop,
                     doc_type='buy',
-                    supplier=first_part.supplier,
+                    supplier=supplier,
                     payment_info_data=PaymentInfoData(
                         first_part=first_part, payed_money=payed_money, un_payed_money=un_payed_money, note=note,
                         currency_type=first_part.product.currency_type

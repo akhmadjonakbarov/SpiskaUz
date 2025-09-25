@@ -16,7 +16,7 @@ from apps.shops.serializers import ShopTransactionSerializer
 
 class BaseStatisticView(GenericAPIView):
     serializer_class = None
-    queryset = DocumentItem.objects.all()
+    queryset = Document.objects.all()
     permission_classes = (IsAuthenticated,)
     doc_type = None
 

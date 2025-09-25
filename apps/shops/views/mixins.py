@@ -33,7 +33,7 @@ from apps.shops.serializers import ShopTransactionSerializer
 from apps.supplier.models import Supplier, SupplierDebtBalance, SupplierTransaction
 from apps.supplier.serializers import DebtPaymentHistorySerializer
 from apps.transactions.models import Transaction
-from apps.transactions.serializers import TransactionSerializer
+
 from apps.users.serializers import AdminMemberSerializer
 from common.filters import ProductFilter
 from common.serializers import EmptyBodySerializer

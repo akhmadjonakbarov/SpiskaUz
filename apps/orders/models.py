@@ -44,6 +44,7 @@ class Order(BaseModel):
 
 
 class OrderPaymentDetail(BaseModel):
+
     order = models.OneToOneField(Order, verbose_name="Order", on_delete=models.CASCADE)
     payed = models.DecimalField(max_digits=60, decimal_places=5, default=Decimal('0.0'))
     un_payed = models.DecimalField(max_digits=60, decimal_places=5, default=Decimal('0.0'))

@@ -27,4 +27,4 @@ class CustomerTransaction(BaseModelWithShop):
     )
 
     def __str__(self):
-        return f"{self.customer.name} - Payment: {self.amount}"
+        return f"{self.customer} - Payment: {self.amount}"

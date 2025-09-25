@@ -32,7 +32,6 @@ from apps.shops.serializers import AdminSerializer, ChangeExchangeRateSerializer
 from apps.shops.serializers import ShopTransactionSerializer
 from apps.supplier.models import Supplier, SupplierDebtBalance, SupplierTransaction
 from apps.supplier.serializers import DebtPaymentHistorySerializer
-from apps.transactions.models import Transaction
 
 from apps.users.serializers import AdminMemberSerializer
 from common.filters import ProductFilter
@@ -639,7 +638,7 @@ class ShopHistoryActionsMixin:
         for transaction in serialized_customer:
             transaction['type'] = 'customer_transaction'
         for transaction in serialized_supplier:
-            transaction['type'] = 'customer_transaction'
+            transaction['type'] = 'supplier_transaction'
 
         return Response(
             {

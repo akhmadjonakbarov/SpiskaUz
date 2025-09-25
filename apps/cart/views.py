@@ -107,7 +107,7 @@ class CartViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
                 OrderPaymentDetail.objects.create(
                     payed=payed,
                     un_payed=un_payed,
-                    payment_type=payment_type,
+                    payment_method=payment_type,
                     order=order
                 )
                 if un_payed > Decimal('0.0'):

@@ -2,8 +2,9 @@ from decimal import Decimal
 
 from django.db import transaction
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import mixins, viewsets
+from rest_framework import mixins, viewsets, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -15,7 +16,7 @@ from utils.convertor import Convertor
 from .models import PromoCode, Cart, CartItem
 from .permissions import CanConfirmCartPermission, CanEditCartItemPermission
 from .serializers import ConfirmShoppingCartSerializer, CartItemSerializer, CartSerializer, \
-    AddCartItemSerializer
+    CreateOrUpdateCartItemSerializer
 from apps.products.models import Product
 from ..currency_rate.models import CurrencyRate
 from ..customer_transaction.models import CustomerTransaction
@@ -29,9 +30,36 @@ class CartItemViewSet(
     queryset = CartItem.objects.all()
     permission_classes = [CanEditCartItemPermission, IsAuthenticated]
 
-    @swagger_auto_schema(
-        request_body=AddCartItemSerializer
-    )
+    def get_serializer(self, *args, **kwargs):
+        if self.request.method in ["POST", "PATCH"]:
+            return CreateOrUpdateCartItemSerializer(*args, **kwargs)
+        return CartItemSerializer(*args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        cart_item = self.get_object()
+
+        # ✅ extract and validate "amount"
+        amount = request.data.get("amount")
+        if amount is None:
+            raise ValidationError({"amount": "This field is required."})
+        try:
+            amount = int(amount)
+        except (TypeError, ValueError):
+            raise ValidationError({"amount": "Must be an integer."})
+        if amount < 0:
+            raise ValidationError({"amount": "Must be greater than or equal to 0."})
+
+        # ✅ save after validation
+        cart_item.amount = amount
+        cart_item.save()
+
+        return Response(
+            data={
+                "detail": CartItemSerializer(cart_item).data
+            },
+            status=status.HTTP_200_OK
+        )
+
     def create(self, request, *args, **kwargs):
         try:
             amount = request.data.get('amount', 0.0)

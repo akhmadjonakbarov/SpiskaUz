@@ -26,7 +26,7 @@ class PaymentInfoData:
 class DocumentFactory:
     def __init__(
             self,
-            user, shop, doc_type, supplier,
+            user, shop, doc_type, supplier=None,
             payment_info_data: PaymentInfoData = None,
             payment_detail_data: PaymentDetailData = None
     ):

@@ -15,10 +15,13 @@ class ShopSerializerForCart(serializers.ModelSerializer):
         )
 
 
-class AddCartItemSerializer(serializers.Serializer):
+
+class CreateOrUpdateCartItemSerializer(serializers.Serializer):
     amount = serializers.DecimalField(decimal_places=5, max_digits=50)
     product = serializers.PrimaryKeyRelatedField(
-        queryset=Product.objects.all()
+        queryset=Product.objects.all(),
+        required=False,
+        allow_null=True
     )
 
 

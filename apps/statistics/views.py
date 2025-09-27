@@ -101,7 +101,7 @@ class BoughtStatisticView(BaseStatisticView):
 
         documents_data = DocumentSerializer(documents, many=True).data
         for d in documents_data:
-            d['type'] = 'document_item'
+            d['type'] = 'document'
 
         return {
             'total_price': total_price,

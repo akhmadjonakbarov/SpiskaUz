@@ -115,7 +115,7 @@ class OrderService:
 
                     DocumentItem.objects.create(
                         document=document,
-                        product=product,
+                        product=order_item.product,
                         currency_rate=latest_currency if order_item.product.currency_type == 'usd' else None,
                         currency_rate_value=latest_currency.rate if order_item.product.currency_type == 'usd' else Decimal(
                             '0.0'),

@@ -58,7 +58,7 @@ class PaymentDetail(BaseModel):
         PromoCode, on_delete=models.CASCADE, related_name='payment_details', blank=True,
         null=True,
     )
-    promo_code_value = models.DecimalField(max_digits=15, decimal_places=5)
+    promo_code_value = models.DecimalField(max_digits=15, decimal_places=5, default=Decimal('0.0'))
 
     @property
     def shop(self):

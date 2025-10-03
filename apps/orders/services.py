@@ -88,7 +88,8 @@ class OrderService:
             )
             PaymentDetail.objects.create(
                 payment_method=order.payment_detail.payment_method, document=document,
-                discount=order.discount if order.discount is not None else Decimal('0.0')
+                discount=order.discount if order.discount is not None else Decimal('0.0'),
+                promo_code_value=Decimal('0.0')
             )
             latest_currency = CurrencyRate.objects.filter(
                 shop=document.shop

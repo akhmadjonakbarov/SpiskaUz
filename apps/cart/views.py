@@ -153,6 +153,7 @@ class CartViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
                     )
 
             serializer = OrderSerializer(order, context={"request": request})
+            cart.delete()
 
             return Response(data={
                 'message': f'Order#{order.id} created successfully',

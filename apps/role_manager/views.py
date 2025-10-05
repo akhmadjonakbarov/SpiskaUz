@@ -1,3 +1,4 @@
+from marshmallow.fields import Decimal
 from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
@@ -30,6 +31,9 @@ class SetRoleView(BaseRoleView):
         user_id = request.data.get('user')
         shop_id = request.data.get('shop')
         salary = request.data.get('salary')
+        total_commission_percent = request.data.get('total_commission_percent', Decimal('0.0'))
+        admin_commission_percent = request.data.get('admin_commission_percent', Decimal('0.0'))
+
         user = User.objects.get(id=user_id)
         shop = Shop.objects.get(id=shop_id)
 
@@ -40,7 +44,9 @@ class SetRoleView(BaseRoleView):
             existed_role.reset()
         else:
             Role.objects.create(
-                user=user, shop=shop, role=role, created_by=request.user, salary=salary
+                user=user, shop=shop, role=role, created_by=request.user, salary=salary,
+                total_commission_percent=total_commission_percent,
+                admin_commission_percent=admin_commission_percent
             )
         return Response(
             data={

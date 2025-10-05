@@ -18,6 +18,7 @@ class CreateRoleSerializer(serializers.ModelSerializer):
         model = Role
         fields = (
             'role', 'user', 'shop', 'salary',
-            'total_approved_orders_commission_percentage',
-            'admin_approved_orders_commission_percentage'
+            'total_commission_percent',
+            'admin_commission_percent'
+
         )

@@ -27,12 +27,12 @@ class Role(BaseModel):
         blank=True
     )
 
-    total_approved_orders_commission_percentage = models.DecimalField(
+    total_commission_percent = models.DecimalField(
         max_digits=5, decimal_places=2,
         verbose_name="Total Approved Orders Commission (%)",
         blank=True, null=True
     )
-    admin_approved_orders_commission_percentage = models.DecimalField(
+    admin_commission_percent = models.DecimalField(
         max_digits=5, decimal_places=2,
         verbose_name="Admin Approved Orders Commission (%)",
         blank=True, null=True

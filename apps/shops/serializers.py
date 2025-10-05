@@ -3,14 +3,12 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from apps.cart.models import Cart
 from apps.notifications.models import NotificationType
-from apps.shops.models import Shop, Category, ShopContact
-from apps.users.serializers import UserSerializer
-
-from .models import Admin, ShopBalance, ShopBalanceTransaction
 from apps.role_manager.models import Role
+from apps.shops.models import Shop, Category, ShopContact
 from apps.supplier.models import Supplier
+from apps.users.serializers import UserSerializer
+from .models import Admin, ShopBalanceTransaction
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -36,14 +34,12 @@ class ShopContactSerializer(serializers.ModelSerializer):
 
 
 class ShopSerializer(serializers.ModelSerializer):
-    owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
     share_link = serializers.SerializerMethodField()
     categories = CategorySerializer(many=True, read_only=True)
     product_count = serializers.SerializerMethodField()
     contacts = ShopContactSerializer(many=True, read_only=True)
     is_member = serializers.SerializerMethodField()
     has_notifications = serializers.SerializerMethodField()
-
     usd_exchange_rate = serializers.FloatField(write_only=True)  # or read_only=True if it's output only
     currency = serializers.SerializerMethodField()
     role = serializers.SerializerMethodField()
@@ -54,7 +50,6 @@ class ShopSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
-            "owner",
             "description",
             "image",
             "usd_exchange_rate",
@@ -98,12 +93,6 @@ class ShopSerializer(serializers.ModelSerializer):
         return shop.notifications.filter(user=user).exists()
 
     def get_share_link(self, obj):
-        request = self.context.get("request")
-
-        if request:
-            return request.build_absolute_uri(
-                reverse("shop_detail", args=[str(obj.id)])
-            )
 
         return f"http://127.0.0.1:8000/api/v1/shop/{obj.id}/"
 
@@ -142,16 +131,8 @@ class ShopSerializer(serializers.ModelSerializer):
         ).first()
         return RoleSerializer(role, many=False).data
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-
-        data["owner"] = UserSerializer(instance.owner, context={"request": self.context.get("request")}).data
-
-        return data
-
 
 class ShopDetailSerializer(serializers.ModelSerializer):
-    owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
     share_link = serializers.SerializerMethodField()
     categories = CategorySerializer(many=True, read_only=True)
     product_count = serializers.SerializerMethodField()
@@ -231,13 +212,6 @@ class ShopDetailSerializer(serializers.ModelSerializer):
         ).first()
         return RoleSerializer(role, many=False).data
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-
-        data["owner"] = UserSerializer(instance.owner, context={"request": self.context.get("request")}).data
-
-        return data
-
     def get_has_cart_item(self, instance):
         return instance.carts.all().count() > 0
 
@@ -299,3 +273,9 @@ class ShopTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShopBalanceTransaction
         fields = ('amount', 'note', 'kind', 'shop', 'supplier')
+
+
+class ShopSerializerForRole(serializers.ModelSerializer):
+    class Meta:
+        model = Shop
+        fields = "__all__"

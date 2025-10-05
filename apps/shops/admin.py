@@ -17,9 +17,7 @@ class CategoryAdmin(ModelAdmin):
 
 @admin.register(Shop)
 class ShopAdmin(ModelAdmin, GuardedModelAdmin):
-    list_display = ["pk", "short_name", "owner", "latitude", "longitude", "created_at"]
-    list_filter = ["owner"]
-    search_fields = ["name", "owner__first_name", "owner__last_name"]
+    list_display = ["pk", "short_name",  "latitude", "longitude", "created_at"]
     inlines = [ShopAdminInline]
 
     def short_name(self, obj):

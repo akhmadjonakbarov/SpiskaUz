@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from django.views.generic import DetailView
@@ -6,7 +8,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.shops.models import Shop, Category
+from apps.shops.models import Shop, Category, ShopBalance
 
 from apps.shops.serializers import ShopSerializer, ShopDetailSerializer
 from common.mixins import ActionPermissionMixin
@@ -69,13 +71,16 @@ class ShopViewSet(
         Foydalanuvchining do'konlarini olish
     """
 
-    queryset = Shop.objects.select_related("owner").prefetch_related("categories", "contacts", "products",
-                                                                     "members").filter(deleted_at=None).all().order_by(
-        "created_at")
+    queryset = Shop.objects.prefetch_related(
+        "categories",
+        "contacts",
+        "products",
+        "members"
+    ).filter(deleted_at=None).all().order_by("created_at")
     serializer_class = ShopSerializer
     parser_classes = [FormParser, MultiPartParser]
     permission_classes = [IsAuthenticated]
-    search_fields = ["name", "description", "address", "owner__first_name", "owner__last_name"]
+
     pagination_class = PageSizePagination
 
     action_permissions = {
@@ -96,12 +101,18 @@ class ShopViewSet(
             raise ValidationError({"usd_exchange_rate": "Invalid float format."})
 
         # Save the Shop
-        shop = serializer.save(owner=self.request.user)
+        shop = serializer.save()
         shop.members.add(self.request.user)
 
         Role.objects.create(
             user=self.request.user,
             role='owner', shop=shop, created_by=self.request.user,
+        )
+        ShopBalance.objects.create(
+            shop=shop,
+            created_by=self.request.user,
+            profit=Decimal('0.0'),
+            cash=Decimal('0.0')
         )
 
         category = Category.objects.filter(name="Umumiy", shops=shop).first()
@@ -125,18 +136,3 @@ class ShopViewSet(
         instance = self.get_object()
         serializer = ShopDetailSerializer(instance, many=False, context={"request": request})
         return Response(serializer.data)
-
-
-class ShopDetailView(DetailView):
-    """
-    Do'kon haqida batafsil ma'lumot ko'rish uchun View.
-
-    get:
-        Link orqali do'kon ma'lumotlarini olish
-    """
-
-    template_name = "shop/shop_detail.html"
-    queryset = Shop.objects.filter(deleted_at=None).all()
-
-    def get_object(self, queryset=None):
-        return get_object_or_404(Shop, link=self.kwargs["link"])

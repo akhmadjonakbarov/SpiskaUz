@@ -31,7 +31,6 @@ class OrderViewSet(
             "items__product__category",
             "items__product__favorited_by",
             "shop__members",
-            "shop__owner",
             "shop__contacts",
             "shop__categories",
         )
@@ -55,7 +54,7 @@ class OrderViewSet(
             "items__product__category",
             "items__product__favorited_by",
             "shop__members",
-            "shop__owner",
+
             "shop__contacts",
             "shop__categories",
         )

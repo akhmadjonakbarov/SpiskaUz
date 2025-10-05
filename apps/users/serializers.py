@@ -9,9 +9,16 @@ from ..shops.models import Shop
 
 
 class ShopSerializerForUser(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+
     class Meta:
         model = Shop
         fields = '__all__'
+
+    def get_role(self, obj):
+        user = self.context.get('user')  # current logged-in user passed from view
+        rule = Role.objects.filter(user=user, shop=obj).first()
+        return rule.role if rule else None
 
 
 class BaseUserSerializer(serializers.ModelSerializer):
@@ -34,20 +41,13 @@ class SimpleUserSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField()
     avatar = serializers.ImageField(required=False)
     phone = serializers.CharField(required=False, read_only=True)
-    shops = ShopSerializerForUser(many=True)
-    role = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = [
             "id", "first_name", "last_name",
-            "phone", "avatar", 'shops',
-            "role"
+            "phone", "avatar",
         ]
-
-    def get_role(self, obj):
-        role_user = Role.objects.filter(user=obj).first()
-        return role_user.role if role_user else None
 
 
 class AdminMemberSerializer(BaseUserSerializer):

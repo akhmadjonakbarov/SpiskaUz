@@ -13,7 +13,6 @@ class Shop(BaseModel):
     description = models.TextField("Description", max_length=1000)
     link = models.CharField("Link", max_length=32, default=generate_unique_text, unique=True)
     image = models.ImageField("Image", upload_to="shop-images/%Y/")
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Owner", related_name="shops")
     members = models.ManyToManyField(User, blank=True, related_name="subscriptions", verbose_name="Members")
     address = models.TextField("Address")
     latitude = models.CharField("Latitude", max_length=200)

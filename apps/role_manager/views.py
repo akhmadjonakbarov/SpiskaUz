@@ -32,11 +32,7 @@ class SetRoleView(BaseRoleView):
         salary = request.data.get('salary')
         user = User.objects.get(id=user_id)
         shop = Shop.objects.get(id=shop_id)
-        if shop.owner != request.user:
-            return Response(
-                {"detail": "You are not the owner of this shop."},
-                status=status.HTTP_403_FORBIDDEN
-            )
+
         existed_role = Role.objects.filter(
             role=role, user=user, shop=shop
         ).first()
@@ -57,7 +53,7 @@ class RemoveRoleView(BaseRoleView):
 
     def delete(self, request, id):
         try:
-            role = self.queryset.get(id)
+            role = self.queryset.get(id=id)
             role.soft_delete()
             return Response(
                 data={

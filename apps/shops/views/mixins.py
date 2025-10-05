@@ -27,13 +27,14 @@ from apps.products.models import Product, ProductGroup
 from apps.products.serializers import CreateProductsGroupSerializer, ProductPositionSerializer, ProductSerializer, \
     SeparateProductsSerializer, ProductSerializerForUser
 from apps.promocodes.serializers import PromocodeSerializer
+from apps.role_manager.serializer import RoleSerializer
 from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance
 from apps.shops.serializers import AdminSerializer, ChangeExchangeRateSerializer, ShopContactSerializer, ShopSerializer
 from apps.shops.serializers import ShopTransactionSerializer
 from apps.supplier.models import Supplier, SupplierDebtBalance, SupplierTransaction
 from apps.supplier.serializers import DebtPaymentHistorySerializer
 
-from apps.users.serializers import AdminMemberSerializer
+from apps.users.serializers import AdminMemberSerializer, ShopSerializerForUser
 from common.filters import ProductFilter
 from common.serializers import EmptyBodySerializer
 from utils.convertor import Convertor
@@ -89,23 +90,9 @@ class SubscriptionActionMixin:
         """Foydalanuvchiga tegishli do'konlarni olish."""
         user = request.user
 
-        # Shops owned directly
-        owned_shops = Shop.objects.filter(owner=user)
+        shops = Shop.objects.filter(roles__user=user).distinct()
 
-        # Shops where user has any role
-        role_shops = Shop.objects.filter(role__user=user)
-
-        # Union of both, without duplicates
-        shops = (owned_shops | role_shops).distinct()
-
-        page = self.paginate_queryset(shops)
-
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(shops, many=True)
-        return Response(serializer.data)
+        return Response(ShopSerializerForUser(shops, many=True, context={"user": user}).data)
 
     @swagger_auto_schema(responses={200: AdminMemberSerializer(many=True)})
     @action(methods=["GET"], detail=True, serializer_class=AdminMemberSerializer)
@@ -297,7 +284,6 @@ class ShoppingCartActionMixin:
                 "items__product__category",
                 "items__product__favorited_by",
                 "shop__members",
-                "shop__owner",
                 "shop__contacts",
                 "shop__categories",
                 "promocode__items",
@@ -483,11 +469,11 @@ class ContactActionsMixin:
 
 
 class AdminActionsMixin:
-    @action(methods=["GET"], detail=True, serializer_class=AdminSerializer)
+    @action(methods=["GET"], detail=True, serializer_class=RoleSerializer)
     def admins(self, request, *args, **kwargs):
         """Do'kon adminlar ro'yhatini olish."""
         shop = self.get_object()
-        admins = shop.admins.all()
+        admins = shop.roles.all()
         serializer = self.get_serializer(admins, many=True)
         return Response(serializer.data)
 

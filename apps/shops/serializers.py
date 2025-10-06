@@ -168,12 +168,6 @@ class ShopDetailSerializer(serializers.ModelSerializer):
         return shop.notifications.filter(user=user).exists()
 
     def get_share_link(self, obj):
-        request = self.context.get("request")
-
-        if request:
-            return request.build_absolute_uri(
-                reverse("shop_detail", args=[str(obj.id)])
-            )
 
         return f"http://127.0.0.1:8000/api/v1/shop/{obj.id}/"
 

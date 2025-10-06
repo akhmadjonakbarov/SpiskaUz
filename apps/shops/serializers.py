@@ -129,7 +129,7 @@ class ShopSerializer(serializers.ModelSerializer):
         role = Role.objects.filter(
             user=request.user, shop=obj
         ).first()
-        return RoleSerializer(role, many=False).data
+        return RoleSerializer(role, many=False, exclude_fields=['shop']).data
 
 
 class ShopDetailSerializer(serializers.ModelSerializer):

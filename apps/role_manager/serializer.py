@@ -12,6 +12,13 @@ class RoleSerializer(serializers.ModelSerializer):
         model = Role
         fields = ('role', 'user', 'shop')
 
+    def __init__(self, *args, **kwargs):
+        exclude_fields = kwargs.pop('exclude_fields', [])
+        super().__init__(*args, **kwargs)
+
+        for field in exclude_fields:
+            self.fields.pop(field, None)
+
 
 class CreateRoleSerializer(serializers.ModelSerializer):
     class Meta:

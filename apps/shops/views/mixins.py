@@ -92,7 +92,14 @@ class SubscriptionActionMixin:
 
         shops = Shop.objects.filter(roles__user=user).distinct()
 
-        return Response(ShopSerializerForUser(shops, many=True, context={"user": user}).data)
+        page = self.paginate_queryset(shops)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(shops, many=True, context={"user": user})
+        return Response(serializer.data)
 
     @swagger_auto_schema(responses={200: AdminMemberSerializer(many=True)})
     @action(methods=["GET"], detail=True, serializer_class=AdminMemberSerializer)

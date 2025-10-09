@@ -12,14 +12,9 @@ class DocumentItemSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_product(self, obj: DocumentItem):
+        from apps.products.serializers import ProductSerializer
         product = obj.product
-        return {
-            'name': product.name,
-            'unit': product.unit.name,
-            'barcode': product.barcode,
-            'category': product.category.name,
-            'currency_type': product.currency_type,
-        }
+        return ProductSerializer(product, many=False).data
 
     def get_currency_rate(self, obj):
         from apps.currency_rate.serializers import CurrencyRateSerializer

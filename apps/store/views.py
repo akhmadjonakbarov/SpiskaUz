@@ -67,8 +67,9 @@ class StoreByShop(viewsets.ViewSet):
     )
     def retrieve(self, request: Request, shop_id=None):
         product_id = request.query_params.get('product_id')
+
         queryset = DocumentItemBalance.objects.filter(
-            shop_id=shop_id, shop__in=request.user.shops.all()
+            shop_id=shop_id,
         )
         total_profit = self.calculate_profit(queryset)
         if product_id:

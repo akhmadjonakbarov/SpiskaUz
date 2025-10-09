@@ -1,3 +1,4 @@
+from apps.role_manager.models import Role
 from common.permissions import BaseHasPermission
 
 
@@ -35,4 +36,10 @@ class CanDeleteOrder(BaseHasPermission):
 
 class CanViewOrder(BaseHasPermission):
     def has_object_permission(self, request, view, obj):
-        return request.user == obj.owner or request.user.is_staff or request.user.is_superuser  #! Permission ga tekshirishni qo'shish kerak
+        role = Role.objects.filter(
+            user=request.user, shop=obj
+        ).first()
+        if role:
+            return True
+        else:
+            return request.user.is_staff or request.user.is_superuser  # ! Permission ga tekshirishni qo'shish kerak

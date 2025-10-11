@@ -207,7 +207,10 @@ class ShopDetailSerializer(serializers.ModelSerializer):
         return RoleSerializer(role, many=False).data
 
     def get_has_cart_item(self, instance):
-        return instance.carts.all().count() > 0
+        for cart in instance.carts.all():
+            if cart.cart_items.exists():
+                return True
+        return False
 
 
 class ShopAdminSerializer(ShopSerializer):

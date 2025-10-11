@@ -99,7 +99,7 @@ class BoughtStatisticView(BaseStatisticView):
         for t in transactions_data:
             t['type'] = 'transaction'
 
-        documents_data = DocumentSerializer(documents, many=True).data
+        documents_data = DocumentSerializerForStatistic(documents, many=True).data
         for d in documents_data:
             d['type'] = 'document'
 

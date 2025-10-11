@@ -31,10 +31,54 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 class DocumentSerializerForStatistic(serializers.ModelSerializer):
     document_items = DocumentItemSerializer(many=True, read_only=True)
+    admin = serializers.SerializerMethodField()
+    supplier = serializers.SerializerMethodField()
+    total_sale = serializers.SerializerMethodField()
+    total_income = serializers.SerializerMethodField()
+    total_discount = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
-        fields = "__all__"
+        exclude = ('user',)
+
+    def get_admin(self, document: Document):
+        from apps.users.serializers import UserSerializer
+        return UserSerializer(document.user, many=False).data
+
+    def get_supplier(self, document: Document):
+        from apps.supplier.serializers import SupplierSerializer
+        if document.supplier is None:
+            return None
+        return SupplierSerializer(document.supplier, many=False).data
+
+    def get_total_sale(self, document: Document):
+        total_price = Decimal('0.0')
+        for document_item in document.document_items.all():
+            item: DocumentItem = document_item
+            if item.product.currency_type == 'usd':
+                total_price = total_price + Decimal(item.sale_price) * Decimal(item.currency_rate_value) * Decimal(
+                    item.qty)
+            else:
+                total_price = total_price + Decimal(item.sale_price) * Decimal(item.qty)
+        return total_price
+
+    def get_total_income(self, document: Document):
+        total_price = Decimal('0.0')
+        for document_item in document.document_items.all():
+            item: DocumentItem = document_item
+            if item.product.currency_type == 'usd':
+                total_price = total_price + Decimal(item.income_price) * Decimal(item.currency_rate_value) * Decimal(
+                    item.qty)
+            else:
+                total_price = total_price + Decimal(item.income_price) * Decimal(item.qty)
+
+        return total_price
+
+    def get_total_discount(self, document: Document):
+        if document.doc_type == 'sell':
+            return document.payment_detail.discount
+        else:
+            return Decimal('0.0')
 
 
 class SaleItemSerializer(serializers.Serializer):

@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from django.contrib.sites.models import Site
+
 from django.db.models import Sum
 from rest_framework import serializers
 
@@ -19,10 +21,17 @@ class ProductSerializerForDocumentItem(serializers.ModelSerializer):
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductImage
         fields = "__all__"
-        read_only_fields = ["product", ]
+
+    def get_image_url(self, obj):
+        current_site = Site.objects.get_current()
+        if obj.image:
+            return f"https://{current_site.domain}{obj.image.url}"
+        return None
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -110,6 +119,7 @@ class ProductReorderSerializer(serializers.Serializer):
             raise serializers.ValidationError("Some products do not belong to this category.")
 
         return data
+
 
 class ProductSerializerForUser(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True)

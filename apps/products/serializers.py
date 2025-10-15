@@ -21,13 +21,13 @@ class ProductSerializerForDocumentItem(serializers.ModelSerializer):
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductImage
         fields = "__all__"
 
-    def get_image_url(self, obj):
+    def get_image(self, obj):
         current_site = Site.objects.get_current()
         if obj.image:
             return f"https://{current_site.domain}{obj.image.url}"

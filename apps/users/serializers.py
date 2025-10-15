@@ -1,3 +1,4 @@
+from django.contrib.sites.models import Site
 from django.db.models import Sum
 from rest_framework import serializers
 
@@ -39,7 +40,7 @@ class UserSerializer(BaseUserSerializer):
 class SimpleUserSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField()
     last_name = serializers.CharField()
-    avatar = serializers.ImageField(required=False)
+    avatar = serializers.SerializerMethodField()
     phone = serializers.CharField(required=False, read_only=True)
 
     class Meta:
@@ -48,6 +49,12 @@ class SimpleUserSerializer(serializers.ModelSerializer):
             "id", "first_name", "last_name",
             "phone", "avatar",
         ]
+
+    def get_avatar(self, user: User):
+        current_site = Site.objects.get_current()
+        if user.avatar:
+            return f"https://{current_site.domain}{user.avatar.url}"
+        return None
 
 
 class AdminMemberSerializer(BaseUserSerializer):

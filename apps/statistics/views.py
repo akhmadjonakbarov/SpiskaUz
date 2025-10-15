@@ -36,8 +36,6 @@ class BoughtStatisticView(BaseStatisticView):
         shop = self.get_shop()
         documents = self.get_queryset()
         statistics = self.get_statistics(documents, shop_id=shop.id)
-        debt_price = self.get_debts(shop)
-        statistics['debt_price'] = debt_price
 
         return Response(
             data=statistics

@@ -80,6 +80,9 @@ class DocumentSerializerForStatistic(serializers.ModelSerializer):
         else:
             return Decimal('0.0')
 
+    def get_total_debt(self, document: Document):
+        pass
+
 
 class SaleItemSerializer(serializers.Serializer):
     product_id = serializers.IntegerField()

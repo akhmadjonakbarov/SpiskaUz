@@ -61,3 +61,29 @@ class SupplierTransaction(BaseModelWithShop):
 
     def __str__(self):
         return f"{self.supplier.name} - Payment: {self.amount}"
+
+
+class DebtPurchase(BaseModelWithShop):
+    created_by = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="debt_purchases_as_creator")
+    document = models.OneToOneField("document.Document", on_delete=models.CASCADE, related_name="debt_purchase")
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name="debt_purchases_as_supplier")
+    total_money = models.DecimalField(max_digits=60, decimal_places=5)
+    remained_money = models.DecimalField(max_digits=60, decimal_places=5)
+    currency_type = models.CharField(max_length=6)
+
+    def __str__(self):
+        """Human-readable representation (for admin, shell, etc.)."""
+        return f"DebtPurchase #{self.id} by {self.created_by} from {self.supplier}"
+
+    def __repr__(self):
+        """Detailed developer representation."""
+        return (
+            f"<DebtPurchase(id={self.id}, created_by={self.created_by.id}, "
+            f"supplier={self.supplier.id}, total_money={self.total_money}, "
+            f"remained_money={self.remained_money})>"
+        )
+
+
+class PurchaseTransaction(BaseModel):
+    debt_purchase = models.OneToOneField(DebtPurchase, on_delete=models.CASCADE)
+    transaction = models.ForeignKey(SupplierTransaction, on_delete=models.CASCADE)

@@ -36,6 +36,7 @@ class DocumentSerializerForStatistic(serializers.ModelSerializer):
     total_sale = serializers.SerializerMethodField()
     total_income = serializers.SerializerMethodField()
     total_discount = serializers.SerializerMethodField()
+    total_debt = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
@@ -81,7 +82,10 @@ class DocumentSerializerForStatistic(serializers.ModelSerializer):
             return Decimal('0.0')
 
     def get_total_debt(self, document: Document):
-        pass
+        debt_purchase = getattr(document, "debt_purchase", None)
+        if debt_purchase:
+            return debt_purchase.remained_money
+        return Decimal("0.0")  # or None, depending on your logic
 
 
 class SaleItemSerializer(serializers.Serializer):

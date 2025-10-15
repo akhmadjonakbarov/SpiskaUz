@@ -1,6 +1,7 @@
 from django.db import transaction
 
 from apps.document.models import Document, PaymentDetail, PaymentInfo
+from apps.supplier.models import DebtPurchase
 
 
 class PaymentDetailData:
@@ -72,3 +73,10 @@ class DocumentFactory:
             un_payed_money=self.payment_info_data.un_payed_money, shop=document.shop,
             currency_type=self.payment_info_data.currency_type
         )
+        if self.payment_info_data.un_payed_money > 0:
+            DebtPurchase.objects.create(
+                created_by=self.user, document=document,
+                supplier=document.supplier, total_money=self.payment_info_data.un_payed_money,
+                remained_money=self.payment_info_data.un_payed_money,
+                currency_type=self.payment_info_data.currency_type
+            )

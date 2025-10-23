@@ -275,4 +275,4 @@ class ShopTransactionSerializer(serializers.ModelSerializer):
 class ShopSerializerForRole(serializers.ModelSerializer):
     class Meta:
         model = Shop
-        fields = "__all__"
+        fields = ('id', 'name', 'description', 'image')

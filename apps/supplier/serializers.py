@@ -29,5 +29,4 @@ class PayDebtSerializer(serializers.Serializer):
 class DebtPaymentHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = SupplierTransaction
-        # fields = '__all__'
         exclude = ('deleted_at',)

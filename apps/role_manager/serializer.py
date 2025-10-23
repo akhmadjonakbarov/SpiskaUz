@@ -10,7 +10,7 @@ class RoleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Role
-        fields = ('role', 'user', 'shop')
+        exclude = ('deleted_at',)
 
     def __init__(self, *args, **kwargs):
         exclude_fields = kwargs.pop('exclude_fields', [])

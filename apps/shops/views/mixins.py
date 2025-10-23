@@ -107,7 +107,7 @@ class SubscriptionActionMixin:
         """Do'konning foydalanuvchilar ro'yhatini olish."""
 
         shop = self.get_object()
-        users = shop.members.all()
+        users = shop.members.exclude(id=request.user.id)
 
         serializer = self.get_serializer(
             users, many=True, context={"shop": shop})
@@ -478,11 +478,21 @@ class ContactActionsMixin:
 class AdminActionsMixin:
     @action(methods=["GET"], detail=True, serializer_class=RoleSerializer)
     def admins(self, request, *args, **kwargs):
-        """Do'kon adminlar ro'yhatini olish."""
+        """Do'kon adminlar ro'yxatini olish."""
         shop = self.get_object()
-        admins = shop.roles.all()
-        serializer = self.get_serializer(admins, many=True)
+
+        # get all roles in this shop
+        roles = shop.roles.all()
+
+        # check if current user is the shop owner
+        if shop.roles.filter(user=request.user, role="owner").exists():
+            # exclude owner's role from the result
+            roles = roles.exclude(user=request.user)
+
+        serializer = self.get_serializer(roles, many=True)
         return Response(serializer.data)
+
+
 
 
 class ExchangeRateActionsMixin:

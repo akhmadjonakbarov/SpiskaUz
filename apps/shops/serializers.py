@@ -7,7 +7,7 @@ from apps.notifications.models import NotificationType
 from apps.role_manager.models import Role
 from apps.shops.models import Shop, Category, ShopContact
 from apps.supplier.models import Supplier
-from apps.users.serializers import UserSerializer
+from apps.users.serializers import UserSerializer, SimpleUserSerializer
 from .models import Admin, ShopBalanceTransaction
 
 
@@ -43,6 +43,7 @@ class ShopSerializer(serializers.ModelSerializer):
     usd_exchange_rate = serializers.FloatField(write_only=True)  # or read_only=True if it's output only
     currency = serializers.SerializerMethodField()
     role = serializers.SerializerMethodField()
+    owner = serializers.SerializerMethodField()
     is_open = serializers.SerializerMethodField()
 
     class Meta:
@@ -66,6 +67,7 @@ class ShopSerializer(serializers.ModelSerializer):
             "has_notifications",
             "currency",
             "role",
+            "owner",
             "is_open"
         ]
 
@@ -122,6 +124,14 @@ class ShopSerializer(serializers.ModelSerializer):
 
         return False
 
+    def get_owner(self, obj: Shop):
+
+        role = Role.objects.filter(
+            shop=obj, role='owner'
+        ).first()
+        serializer = SimpleUserSerializer(role.user)
+        return serializer.data
+
     def get_role(self, obj):
         from apps.role_manager.serializer import RoleSerializer
         request = self.context.get("request")
@@ -143,6 +153,7 @@ class ShopDetailSerializer(serializers.ModelSerializer):
     usd_exchange_rate = serializers.FloatField(write_only=True)  # or read_only=True if it's output only
     currency = serializers.SerializerMethodField()
     role = serializers.SerializerMethodField()
+    owner = serializers.SerializerMethodField()
     is_open = serializers.SerializerMethodField()
 
     class Meta:
@@ -162,6 +173,14 @@ class ShopDetailSerializer(serializers.ModelSerializer):
             return True
         else:
             return False
+
+    def get_owner(self, obj: Shop):
+
+        role = Role.objects.filter(
+            shop=obj, role='owner'
+        ).first()
+        serializer = SimpleUserSerializer(role.user)
+        return serializer.data
 
     def get_has_notifications(self, shop: Shop):
         user = self.context["request"].user

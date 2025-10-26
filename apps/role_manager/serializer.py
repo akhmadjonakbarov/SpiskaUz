@@ -1,11 +1,11 @@
 from rest_framework import serializers
 from .models import Role
 from ..shops.serializers import ShopSerializer, ShopSerializerForRole
-from ..users.serializers import UserSerializer
+from ..users.serializers import UserSerializer, SimpleUserSerializer
 
 
 class RoleSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+    user = SimpleUserSerializer()
     shop = ShopSerializerForRole()
 
     class Meta:

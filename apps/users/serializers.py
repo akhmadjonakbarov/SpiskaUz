@@ -1,8 +1,5 @@
 from django.contrib.sites.models import Site
-from django.db.models import Sum
 from rest_framework import serializers
-
-from apps.notifications.models import NotificationType
 
 from .models import User
 from ..role_manager.models import Role
@@ -161,6 +158,8 @@ class AdminMemberSerializer(serializers.ModelSerializer):
         if user.avatar:
             return f"https://{current_site.domain}{user.avatar.url}"
         return None
+
+
 
 
 class SendOTPSerializer(serializers.Serializer):

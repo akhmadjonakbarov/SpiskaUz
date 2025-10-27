@@ -29,7 +29,8 @@ from apps.products.serializers import CreateProductsGroupSerializer, ProductPosi
 from apps.promocodes.serializers import PromocodeSerializer
 from apps.role_manager.serializer import RoleSerializer
 from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance
-from apps.shops.serializers import AdminSerializer, ChangeExchangeRateSerializer, ShopContactSerializer, ShopSerializer
+from apps.shops.serializers import AdminSerializer, ChangeExchangeRateSerializer, ShopContactSerializer, ShopSerializer, \
+    ShopMemberSerializer
 from apps.shops.serializers import ShopTransactionSerializer
 from apps.supplier.models import Supplier, SupplierDebtBalance, SupplierTransaction
 from apps.supplier.serializers import DebtPaymentHistorySerializer
@@ -101,18 +102,18 @@ class SubscriptionActionMixin:
         serializer = self.get_serializer(shops, many=True, context={"user": user})
         return Response(serializer.data)
 
-    @swagger_auto_schema(responses={200: AdminMemberSerializer(many=True)})
-    @action(methods=["GET"], detail=True, serializer_class=AdminMemberSerializer)
+    @swagger_auto_schema(responses={200: ShopMemberSerializer(many=True)})
+    @action(methods=["GET"], detail=True, serializer_class=ShopMemberSerializer)
     def members(self, request, pk=None):
         """Do'konning foydalanuvchilar ro'yhatini olish."""
 
         shop = self.get_object()
-        users = shop.members.exclude(id=request.user.id)
+        Through = Shop.members.through
 
-        serializer = self.get_serializer(
-            users, many=True, context={"shop": shop})
+        qs = Through.objects.filter(shop=shop).exclude(user=request.user)
+        data = ShopMemberSerializer(qs, many=True).data
 
-        return Response(serializer.data)
+        return Response(data)
 
 
 class ProductGroupActionMixin:
@@ -491,8 +492,6 @@ class AdminActionsMixin:
 
         serializer = self.get_serializer(roles, many=True)
         return Response(serializer.data)
-
-
 
 
 class ExchangeRateActionsMixin:

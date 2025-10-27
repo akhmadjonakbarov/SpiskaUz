@@ -295,3 +295,12 @@ class ShopSerializerForRole(serializers.ModelSerializer):
     class Meta:
         model = Shop
         fields = ('id', 'name', 'description', 'image')
+
+
+class ShopMemberSerializer(serializers.ModelSerializer):
+    user = SimpleUserSerializer(read_only=True)
+    shop = ShopSerializer(read_only=True)
+
+    class Meta:
+        model = Shop.members.through      # <-- auto-created join model
+        fields = ("id", "user", "shop")

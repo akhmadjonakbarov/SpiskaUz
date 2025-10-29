@@ -1,8 +1,6 @@
-from decimal import Decimal, ROUND_HALF_UP
 from utils.convertor import Convertor
-
-
 from decimal import Decimal, ROUND_HALF_UP
+
 
 class Calculator:
     @staticmethod
@@ -16,7 +14,6 @@ class Calculator:
 
         result = ((sale_price * Decimal("100")) / income_price) - Decimal("100")
         return result.quantize(Decimal("0.00001"), rounding=ROUND_HALF_UP)
-
 
     @staticmethod
     def profit(sale_price, income_price):

@@ -111,7 +111,8 @@ class SubscriptionActionMixin:
         Through = Shop.members.through
 
         qs = Through.objects.filter(shop=shop).exclude(user=request.user)
-        data = ShopMemberSerializer(qs, many=True).data
+        data = ShopMemberSerializer(qs, many=True, context={"request": request}).data
+
 
         return Response(data)
 

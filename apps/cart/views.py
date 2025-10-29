@@ -13,6 +13,7 @@ from apps.orders.serializers import OrderSerializer
 from apps.orders.services import OrderService
 from apps.promocodes.serializers import ApplyPromocodeSerializer
 from utils.convertor import Convertor
+from .cart_helpers import CartHelpers
 from .models import PromoCode, Cart, CartItem
 from .permissions import CanConfirmCartPermission, CanEditCartItemPermission
 from .serializers import ConfirmShoppingCartSerializer, CartItemSerializer, CartSerializer, \
@@ -121,11 +122,14 @@ class CartViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
 
         comment = request.data.get("comment", None)
         payment_type = request.data.get("payment_type", Decimal('0.0'))
-        un_payed = request.data.get("un_payed", Decimal('0.0'))
         payed = request.data.get("payed", Decimal('0.0'))
         discount = request.data.get("discount", Decimal('0.0'))
+
         try:
             with transaction.atomic():
+                total_price = CartHelpers.get_total_price(cart)
+                un_payed = Decimal(total_price) - Decimal(payed)
+
                 order: Order = Order.objects.create(
                     customer=cart.customer,
                     shop=cart.shop,

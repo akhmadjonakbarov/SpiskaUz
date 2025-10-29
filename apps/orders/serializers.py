@@ -1,9 +1,15 @@
 from decimal import Decimal
 from rest_framework import serializers
-from apps.orders.models import Order, OrderItem
+from apps.orders.models import Order, OrderItem, OrderPaymentDetail
 from apps.products.serializers import ProductSerializer
 from apps.users.serializers import UserSerializer
 from utils.convertor import Convertor
+
+
+class OrderPaymentDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderPaymentDetail
+        fields = "__all__"
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -19,6 +25,7 @@ class OrderSerializer(serializers.ModelSerializer):
     admin = UserSerializer(read_only=True)
     customer = UserSerializer(read_only=True)
     total_price = serializers.SerializerMethodField()
+    payment_detail = OrderPaymentDetailSerializer()
 
     class Meta:
         model = Order

@@ -39,12 +39,12 @@ class Order(BaseModel):
     comment = models.TextField("Comment", blank=True, null=True)
     status = models.CharField("Status", max_length=20, choices=OrderStatus.choices, default=OrderStatus.PENDING)
 
+
     def __str__(self):
         return f"Order #{self.id} - {self.customer} - {self.status}"
 
 
 class OrderPaymentDetail(BaseModel):
-
     order = models.OneToOneField(Order, verbose_name="Order", on_delete=models.CASCADE, related_name="payment_detail")
     payed = models.DecimalField(max_digits=60, decimal_places=5, default=Decimal('0.0'))
     un_payed = models.DecimalField(max_digits=60, decimal_places=5, default=Decimal('0.0'))
@@ -68,3 +68,14 @@ class OrderItem(BaseModel):
 
     def __str__(self):
         return f"OrderItem(order={self.order}, product={self.product}, amount={self.amount})"
+
+
+class ProductOrderItemInfo(BaseModel):
+    order_item = models.OneToOneField(
+        OrderItem, on_delete=models.CASCADE, related_name="product_info", null=True,
+        blank=True
+    )
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    sale_price = models.DecimalField(max_digits=60, decimal_places=5)
+    income_price = models.DecimalField(max_digits=60, decimal_places=5)
+    currency_rate_value = models.DecimalField(max_digits=60, decimal_places=5, blank=True, null=True)

@@ -227,7 +227,7 @@ class ShopDetailSerializer(serializers.ModelSerializer):
 
     def get_has_cart_item(self, instance):
         for cart in instance.carts.all():
-            if cart.cart_items.exists():
+            if cart.items.exists():
                 return True
         return False
 
@@ -288,7 +288,7 @@ class ShopTransactionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShopBalanceTransaction
-        fields = ('amount', 'note', 'kind', 'shop', 'supplier')
+        fields = '__all__'
 
 
 class ShopSerializerForRole(serializers.ModelSerializer):
@@ -302,5 +302,5 @@ class ShopMemberSerializer(serializers.ModelSerializer):
     shop = ShopSerializer(read_only=True)
 
     class Meta:
-        model = Shop.members.through      # <-- auto-created join model
+        model = Shop.members.through
         fields = ("id", "user", "shop")

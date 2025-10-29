@@ -87,7 +87,7 @@ class DocumentItemBalance(BaseDocumentItem):
         Document, on_delete=models.CASCADE,
     )
     document_item = models.OneToOneField(
-        DocumentItem, on_delete=models.CASCADE, related_name="balance"
+        DocumentItem, on_delete=models.CASCADE, related_name="balance",
     )
 
     def __str__(self):

@@ -40,10 +40,10 @@ class OrderViewSet(
 
     order_service = OrderService()
 
-    action_permissions = {
-        ("cancel_order",): [CanCancelOrder],
-        ("restore_order",): [CanRestoreOrder],
-    }
+    # action_permissions = {
+    #     ("cancel_order",): [CanCancelOrder],
+    #     ("restore_order",): [CanRestoreOrder],
+    # }
 
     def list(self, request, *args, **kwargs):
         orders = (Order.objects.select_related("customer", "admin")
@@ -186,7 +186,7 @@ class OrderViewSet(
                 status=status.HTTP_200_OK,
             )
 
-    @swagger_auto_schema(request_body=EmptyBodySerializer)
+    @swagger_auto_schema()
     @action(["POST"], detail=True, url_path="restore-order")
     def restore_order(self, request, pk=None, *args, **kwargs):
         """
@@ -195,7 +195,7 @@ class OrderViewSet(
 
         order = self.get_object()
 
-        self.check_object_permissions(request=request, obj=order)
+        # self.check_object_permissions(request=request, obj=order)
 
         if order.status == OrderStatus.CANCELLED:
             self.order_service.restore_order(user=request.user, order=order)

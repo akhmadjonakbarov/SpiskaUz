@@ -18,7 +18,9 @@ class DocumentItemSerializer(serializers.ModelSerializer):
 
     def get_currency_rate(self, obj):
         from apps.currency_rate.serializers import CurrencyRateSerializer
-        return CurrencyRateSerializer(obj.currency_rate, many=False).data
+        if obj.currency_rate:
+            return CurrencyRateSerializer(obj.currency_rate, many=False).data
+        return None
 
 
 class DocumentSerializer(serializers.ModelSerializer):

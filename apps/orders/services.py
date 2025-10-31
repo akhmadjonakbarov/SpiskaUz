@@ -66,7 +66,7 @@ class OrderService:
         return order
 
     def restore_order(self, user: User, order: Order):
-        cart, _ = Cart.objects.get_or_create(user=user, shop=order.shop)
+        cart, _ = Cart.objects.get_or_create(customer=user, shop=order.shop)
 
         for item in order.items.select_related("product"):
 

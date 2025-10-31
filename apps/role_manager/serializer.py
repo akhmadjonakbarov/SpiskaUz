@@ -1,7 +1,8 @@
 from rest_framework import serializers
+
 from .models import Role
-from ..shops.serializers import ShopSerializer, ShopSerializerForRole
-from ..users.serializers import UserSerializer, SimpleUserSerializer
+from ..shops.serializers import ShopSerializerForRole
+from ..users.serializers import SimpleUserSerializer
 
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -20,7 +21,7 @@ class RoleSerializer(serializers.ModelSerializer):
             self.fields.pop(field, None)
 
 
-class CreateRoleSerializer(serializers.ModelSerializer):
+class CreateOrUpdateRoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = (

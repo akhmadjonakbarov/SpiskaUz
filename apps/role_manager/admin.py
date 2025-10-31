@@ -6,4 +6,4 @@ from ..base.admin import BaseAdmin
 
 @admin.register(Role)
 class RoleUserAdmin(BaseAdmin):
-    list_display = ('user', 'role', 'shop', 'created_by')
+    list_display = ('id', 'user', 'role', 'shop', 'created_by')

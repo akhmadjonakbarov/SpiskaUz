@@ -67,43 +67,8 @@ class OrderService:
 
     def restore_order(self, user: User, order: Order):
         cart, _ = Cart.objects.get_or_create(customer=user, shop=order.shop)
-
-        for item in order.items.select_related("product"):
-
-            product = DocumentItemBalance.objects.filter(
-                product=item.product, sale_price=item.product.sale_price,
-                income_price=item.product_info.income_price
-            ).first()
-            if product:
-                product.qty = product.qty + item.amount
-                product.save()
-            else:
-                document_order = DocumentOrder.objects.filter(order=order).first()
-                document = document_order.document
-                for item in document.document_items:
-                    doc_item: DocumentItem = item
-                    doc_item = DocumentItem.objects.filter(
-                        document__doc_type='buy',
-                        income_price=doc_item.income_price,
-                        sale_price=doc_item.sale_price,
-                        product=doc_item.product, shop=doc_item.shop, deleted_at=None
-                    ).first()
-                    balance = DocumentItemBalance.objects.create(
-                        qty=doc_item.qty, income_price=doc_item.income_price,
-                        currency_rate=doc_item.currency_rate if doc_item.currency_rate else None,
-                        currency_rate_value=doc_item.currency_rate.rate if doc_item.currency_rate else Decimal(
-                            '0.0'),
-                        profit_as_percent=doc_item.profit_as_percent, document_item=doc_item,
-                        shop=doc_item.shop, user=user,
-                        document=doc_item.document,
-                        product=doc_item.product,
-                        sale_price=doc_item.sale_price
-                    )
-                    balance.save()
-                document.hard_delete()
-
-            cart.items.get_or_create(product=item.product, amount=item.amount)
-        order.hard_delete()
+        document_order = DocumentOrder.objects.filter(order=order).first()
+        # TODO: fill this method
 
     def complete_order(self, order: Order):
         self._assert_order_status(order, [OrderStatus.PENDING, OrderStatus.ACCEPTED])
@@ -161,14 +126,6 @@ class OrderService:
                         user=document.user,
 
                     )
-                    ProductOrderItemInfo.objects.create(
-                        order_item=order_item, product=order_item.product,
-                        currency_rate_value=latest_currency.rate if order_item.product.currency_type == 'usd' else Decimal(
-                            '0.0', ),
-                        amount=Decimal(deduct_qty),
-                        income_price=balance.income_price,
-                        sale_price=balance.sale_price,
-                    )
 
                     balance.qty -= deduct_qty
                     balance.save()
@@ -178,7 +135,6 @@ class OrderService:
             order.status = OrderStatus.ACCEPTED
             order.admin = admin
             order.save()
-            order.document = document
 
             DocumentOrder.objects.create(
                 order=order, document=document

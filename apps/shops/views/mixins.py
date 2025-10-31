@@ -6,13 +6,11 @@ from django.db import transaction as django_transaction
 from django.db.models import Sum
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
-from rest_framework.response import Response
 
 from apps.cart.models import Cart
 from apps.cart.serializers import CartSerializer
@@ -29,13 +27,11 @@ from apps.products.serializers import CreateProductsGroupSerializer, ProductPosi
 from apps.promocodes.serializers import PromocodeSerializer
 from apps.role_manager.serializer import RoleSerializer
 from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance
-from apps.shops.serializers import AdminSerializer, ChangeExchangeRateSerializer, ShopContactSerializer, ShopSerializer, \
+from apps.shops.serializers import ChangeExchangeRateSerializer, ShopContactSerializer, ShopSerializer, \
     ShopMemberSerializer
 from apps.shops.serializers import ShopTransactionSerializer
 from apps.supplier.models import Supplier, SupplierDebtBalance, SupplierTransaction
-from apps.supplier.serializers import DebtPaymentHistorySerializer
-
-from apps.users.serializers import AdminMemberSerializer, ShopSerializerForUser
+from apps.supplier.serializers import DebtPaymentHistorySerializer, SupplierSerializer
 from common.filters import ProductFilter
 from common.serializers import EmptyBodySerializer
 from utils.convertor import Convertor
@@ -112,7 +108,6 @@ class SubscriptionActionMixin:
 
         qs = Through.objects.filter(shop=shop).exclude(user=request.user)
         data = ShopMemberSerializer(qs, many=True, context={"request": request}).data
-
 
         return Response(data)
 
@@ -721,3 +716,28 @@ class ShopBalanceMixin:
 
         print("[+] Transaction was created")
         return transaction
+
+
+class SupplierFilterMixin:
+    supplier_serializer_class = SupplierSerializer
+
+    @action(methods=["GET"], detail=True, url_path="suppliers")
+    def suppliers(self, request, pk=None, *args, **kwargs):
+        shop_id = pk
+        queryset = Supplier.objects.filter(shops__id=shop_id)
+
+        name = request.query_params.get("name")
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+
+        page = self.paginate_queryset(queryset)
+        serializer_class = getattr(self, "supplier_serializer_class", None)
+        if not serializer_class:
+            raise ValueError("Supplier serializer class not defined")
+
+        if page is not None:
+            serializer = serializer_class(page, many=True, context={"request": request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = serializer_class(queryset, many=True, context={"request": request})
+        return Response(serializer.data)

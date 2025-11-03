@@ -1,17 +1,14 @@
 from decimal import Decimal
-from itertools import product
-
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 from apps.cart.models import Cart
 from apps.notifications.models import Notification, NotificationType
 from apps.users.models import User
-
 from .models import Order, OrderItem, OrderPaymentMethod, OrderStatus, ProductOrderItemInfo
 from ..currency_rate.models import CurrencyRate
 from apps.document.models import Document, PaymentDetail, DocumentItem, DocumentItemBalance, DocumentOrder
-from ..document.utils.calculator import Calculator
+
 
 
 class OrderService:

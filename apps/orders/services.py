@@ -2,13 +2,12 @@ from decimal import Decimal
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
-from apps.cart.models import Cart
+from apps.cart.models import Cart, CartItem
 from apps.notifications.models import Notification, NotificationType
 from apps.users.models import User
 from .models import Order, OrderItem, OrderPaymentMethod, OrderStatus, ProductOrderItemInfo
 from ..currency_rate.models import CurrencyRate
 from apps.document.models import Document, PaymentDetail, DocumentItem, DocumentItemBalance, DocumentOrder
-
 
 
 class OrderService:
@@ -62,10 +61,14 @@ class OrderService:
 
         return order
 
-    def restore_order(self, user: User, order: Order):
+    def restore_order(self, user: User, order: Order) -> Cart:
         cart, _ = Cart.objects.get_or_create(customer=user, shop=order.shop)
-        document_order = DocumentOrder.objects.filter(order=order).first()
-        # TODO: fill this method
+        for order_item in order.items.all():
+            CartItem.objects.create(
+                cart=cart, product=order_item.product, amount=order_item.amount
+            )
+
+        return cart
 
     def complete_order(self, order: Order):
         self._assert_order_status(order, [OrderStatus.PENDING, OrderStatus.ACCEPTED])

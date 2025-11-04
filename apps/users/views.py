@@ -42,7 +42,6 @@ class AuthViewSet(viewsets.GenericViewSet):
 
     @action(["POST"], detail=False, url_path="verify-otp", url_name="verify_otp")
     def verify_otp(self, request, *args, **kwargs):
-        print(request.headers.get('shop_id'))
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

@@ -3,7 +3,6 @@ from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.response import Response
-from yaml import serialize
 
 from apps.role_manager.models import Role
 from apps.role_manager.serializer import CreateOrUpdateRoleSerializer, RoleSerializer
@@ -13,7 +12,7 @@ from apps.users.models import User
 
 class BaseRoleView(GenericAPIView):
     serializer_class = RoleSerializer
-    queryset = Role.objects.all()
+    queryset = Role.objects.filter(deleted_at=None)
     permission_classes = (IsAuthenticated,)
 
 
@@ -21,7 +20,7 @@ class RoleListView(ListAPIView, BaseRoleView):
 
     def get_queryset(self):
         if not self.request.user.is_staff:
-            return self.queryset.filter(created_by=self.request.user)
+            return self.queryset.filter(created_by=self.request.user, )
         return self.queryset.all()
 
 
@@ -99,6 +98,16 @@ class UpdateRoleView(BaseRoleView):
                     'detail': 'role does not exist'
                 }, status=status.HTTP_404_NOT_FOUND
             )
+
+
+class DetailRoleView(BaseRoleView):
+    def get(self, request, pk):
+        role = self.queryset.filter(pk=pk).first()
+        if role is None:
+            return Response(
+                data={'detail': 'Role not found'}, status=status.HTTP_200_OK
+            )
+        return Response(RoleSerializer(role, many=False).data)
 
 
 class RemoveRoleView(BaseRoleView):

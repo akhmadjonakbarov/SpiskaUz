@@ -21,7 +21,7 @@ class CartItem(BaseModel):
     amount = models.DecimalField(max_digits=10, decimal_places=3)
 
     def __str__(self):
-        return f"CartItem: product={self.product}, amount={self.amount}"
+        return f"product={self.product}, amount={self.amount}"
 
     def __repr__(self):
         return f"CartItem(product={self.product}, amount={self.amount})"

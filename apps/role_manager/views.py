@@ -111,19 +111,10 @@ class DetailRoleView(BaseRoleView):
 
 
 class RemoveRoleView(BaseRoleView):
-
     def delete(self, request, id):
         try:
             role = self.queryset.get(id=id)
             role.soft_delete()
-            return Response(
-                data={
-                    'detail': f'{role.role} was deleted successfully'
-                }, status=status.HTTP_201_CREATED
-            )
+            return Response(status=status.HTTP_204_NO_CONTENT)
         except Role.DoesNotExist:
-            return Response(
-                data={
-                    'detail': 'role does not exist'
-                }, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response(status=status.HTTP_404_NOT_FOUND)

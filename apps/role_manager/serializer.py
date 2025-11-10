@@ -30,3 +30,6 @@ class CreateOrUpdateRoleSerializer(serializers.ModelSerializer):
             'admin_commission_percent'
 
         )
+
+
+

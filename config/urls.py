@@ -31,7 +31,7 @@ api_urls = [
     path("", include("apps.unit.urls")),
     path("", include("apps.shops.urls")),
     path("", include("apps.supplier.urls")),
-
+    path("", include("apps.salary.urls")),
     path("statistics/", include('apps.statistics.urls')),
     path("documents/", include("apps.document.urls")),
     path("role-manager/", include("apps.role_manager.urls")),

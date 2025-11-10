@@ -67,7 +67,8 @@ LOCAL_APPS = [
     'apps.daily_session',
     'apps.role_manager',
     'apps.statistics',
-    'apps.customer_transaction'
+    'apps.customer_transaction',
+    'apps.salary',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

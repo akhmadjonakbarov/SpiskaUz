@@ -40,3 +40,6 @@ class Role(BaseModel):
 
     def __str__(self):
         return f"{self.role} - {self.user}"
+
+
+

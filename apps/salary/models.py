@@ -1,0 +1,15 @@
+from django.db import models
+
+from apps.base.models import BaseModel
+from apps.role_manager.models import Role
+
+
+# Create your models here.
+class SalaryTransaction(BaseModel):
+    user_role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name="transactions")
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date_paid = models.DateField(auto_now_add=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.user_role} - {self.amount} on {self.date_paid}"

@@ -1,4 +1,5 @@
-from django.urls import reverse
+from django.contrib.sites.models import Site
+
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
@@ -95,8 +96,9 @@ class ShopSerializer(serializers.ModelSerializer):
         return shop.notifications.filter(user=user).exists()
 
     def get_share_link(self, obj):
+        current_site = Site.objects.get_current()
 
-        return f"http://127.0.0.1:8000/api/v1/shop/{obj.id}/"
+        return f"https://{current_site.domain}/api/v1/shop/{obj.id}/"
 
     def get_currency(self, shop: Shop):
         from apps.currency_rate.models import CurrencyRate
@@ -187,8 +189,9 @@ class ShopDetailSerializer(serializers.ModelSerializer):
         return shop.notifications.filter(user=user).exists()
 
     def get_share_link(self, obj):
+        current_site = Site.objects.get_current()
 
-        return f"http://127.0.0.1:8000/api/v1/shop/{obj.id}/"
+        return f"https://{current_site.domain}/api/v1/shop/{obj.id}/"
 
     def get_currency(self, shop: Shop):
         from apps.currency_rate.models import CurrencyRate
@@ -225,7 +228,7 @@ class ShopDetailSerializer(serializers.ModelSerializer):
         ).first()
         return RoleSerializer(role, many=False).data
 
-    def get_has_cart_item(self, instance:Shop):
+    def get_has_cart_item(self, instance: Shop):
         for cart in instance.carts.all():
             if cart.items.exists():
                 return True

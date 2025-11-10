@@ -1,5 +1,9 @@
 from django.urls import path
+
+
 from .views import SetRoleView, RemoveRoleView, RoleListView, UpdateRoleView, DetailRoleView
+
+
 
 urlpatterns = [
     path('', RoleListView.as_view(),
@@ -13,3 +17,4 @@ urlpatterns = [
     path(
         'remove/<int:id>/', RemoveRoleView.as_view())
 ]
+

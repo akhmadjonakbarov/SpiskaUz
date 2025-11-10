@@ -6,4 +6,4 @@ from apps.salary.models import SalaryTransaction
 class SalaryTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = SalaryTransaction
-        fields = "__all__"
+        exclude = ('deleted_at',)

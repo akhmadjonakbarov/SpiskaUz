@@ -76,18 +76,14 @@ class CurrencyRateCreateView(generics.CreateAPIView):
 
         role = Role.objects.filter(deleted_at=None, user=request.user, shop_id=shop_id).first()
 
-        if role is None or role.role != 'owner':
+        if role is None or role.role != 'owner' or request.user.is_staff:
             return Response({"detail": "You don't have access to this shop."}, status=status.HTTP_403_FORBIDDEN)
-
         try:
             shop = Shop.objects.get(id=shop_id)
             currency_rate = CurrencyRate.objects.create(
                 shop=shop, user=request.user, rate=rate
             )
 
-            product_parts = ProductPart.objects.filter(
-                shop=shop_id, is_confirm=False
-            )
             balances = (
                 DocumentItemBalance.objects
                 .filter(shop=shop)
@@ -101,12 +97,6 @@ class CurrencyRateCreateView(generics.CreateAPIView):
                     balance.currency_rate_value = currency_rate.rate
 
                     balance.save(update_fields=["currency_rate", "currency_rate_value"])
-
-            # if product_parts:
-            #     for pp in product_parts:
-            #         pp.currency_rate = currency_rate
-            #         pp.currency_rate_value = currency_rate.rate
-            #         pp.save()
 
             serializer = self.get_serializer(currency_rate, many=False)
             return Response(

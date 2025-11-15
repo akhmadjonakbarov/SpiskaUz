@@ -102,11 +102,11 @@ class CurrencyRateCreateView(generics.CreateAPIView):
 
                     balance.save(update_fields=["currency_rate", "currency_rate_value"])
 
-            if product_parts:
-                for pp in product_parts:
-                    pp.currency_rate = currency_rate
-                    pp.currency_rate_value = currency_rate.rate
-                    pp.save()
+            # if product_parts:
+            #     for pp in product_parts:
+            #         pp.currency_rate = currency_rate
+            #         pp.currency_rate_value = currency_rate.rate
+            #         pp.save()
 
             serializer = self.get_serializer(currency_rate, many=False)
             return Response(

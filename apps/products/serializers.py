@@ -6,6 +6,7 @@ from django.db.models import Sum
 from rest_framework import serializers
 
 from apps.document.models import DocumentItemBalance
+from apps.product_part.models import ProductPart
 from apps.products.models import Product, ProductGroup, ProductImage, Report, ReportOption
 from apps.shops.models import Shop, Category
 from apps.shops.serializers import CategorySerializer
@@ -43,6 +44,7 @@ class ProductSerializer(serializers.ModelSerializer):
     # promocode = serializers.SerializerMethodField()
     profit_as_percent = serializers.SerializerMethodField()
     currency = serializers.SerializerMethodField()
+    income_price = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -100,6 +102,12 @@ class ProductSerializer(serializers.ModelSerializer):
             currency = CurrencyRate.objects.filter(shop=product.shop).order_by('-created_at').first()
             currency_serializer = CurrencyRateSerializer(currency)
             return currency_serializer.data
+
+    def get_income_price(self, product: Product):
+        product_part = ProductPart.objects.filter(is_confirm=True, product=product).order_by('-created_at').first()
+        if product_part is not None:
+            return product_part.income_price
+        return Decimal('0.0')
 
 
 class ProductReorderSerializer(serializers.Serializer):

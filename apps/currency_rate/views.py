@@ -8,6 +8,7 @@ from apps.document.models import DocumentItemBalance
 from apps.product_part.models import ProductPart
 from .models import CurrencyRate
 from .serializers import CurrencyRateSerializer
+from ..role_manager.models import Role
 from ..shops.models import Shop
 
 
@@ -73,7 +74,9 @@ class CurrencyRateCreateView(generics.CreateAPIView):
         if not shop_id:
             return Response({"detail": "Shop is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not self.request.user.shops.filter(id=shop_id).exists():
+        role = Role.objects.filter(deleted_at=None, user=request.user, shop_id=shop_id).first()
+
+        if role is None or role.role != 'owner':
             return Response({"detail": "You don't have access to this shop."}, status=status.HTTP_403_FORBIDDEN)
 
         try:
@@ -96,7 +99,6 @@ class CurrencyRateCreateView(generics.CreateAPIView):
                     # Update balance
                     balance.currency_rate = currency_rate
                     balance.currency_rate_value = currency_rate.rate
-
 
                     balance.save(update_fields=["currency_rate", "currency_rate_value"])
 

@@ -133,6 +133,4 @@ class SellProductSerializer(serializers.Serializer):
         allow_null=True
     )
     note = serializers.CharField(max_length=1500)
-    debt = ClientDebtSerializer(
-        required=False
-    )
+

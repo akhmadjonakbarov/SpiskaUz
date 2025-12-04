@@ -205,24 +205,16 @@ class SellProductView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
-        client_id = None
-        paid_money = None
         user = request.user
         products_data = request.data.get("products")
         discount = request.data.get("discount", 0.0)
         note = request.data.get("note", None)
         promo_code_id = request.data.get('promo_code', None)
         payment_method = request.data.get('payment_method')
-        debt = request.data.get('debt', None)
-        if debt is not None:
-            client_id = debt['client']
-            paid_money = debt['paid_money']
+
 
         promo_code = None
-        client = None
 
-        if client_id:
-            client = User.objects.get(id=client_id)
 
         if promo_code_id:
             promo_code = PromoCode.objects.get(id=promo_code_id)
@@ -245,20 +237,12 @@ class SellProductView(GenericAPIView):
                         payment_method=payment_method,
                         discount=Decimal(str(discount)),
                         promo_code=promo_code,
-                        promo_code_value=Decimal(str(promo_code.value)) if promo_code else Decimal("0.0")
+                        promo_code_value=Decimal(str(promo_code.value)) if promo_code is not None else Decimal("0.0")
                     )
                 )
 
                 document = document_factory.create()
-                if client:
-                    Debt.objects.create(
-                        created_by=request.user,
-                        client=client,
-                        paid_money=paid_money if float(paid_money) > 0 else Decimal('0.0'),
-                        document=document,
-                        shop=document.shop
-                    )
-                    print(f'[+] Debt was created for {client}')
+
 
                 latest_currency = CurrencyRate.objects.filter(
                     shop=document.shop

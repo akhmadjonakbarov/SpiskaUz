@@ -1,14 +1,12 @@
 from rest_framework import filters, viewsets
-from rest_framework.decorators import action
 from rest_framework.request import Request
-
 from apps.salary.models import SalaryTransaction
 from apps.salary.serializers import SalaryTransactionSerializer
-
 
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+
 
 class SalaryTransactionViewSet(viewsets.ModelViewSet):
     queryset = SalaryTransaction.objects.all()
@@ -25,7 +23,7 @@ class SalaryTransactionViewSet(viewsets.ModelViewSet):
         try:
             # Filter salaries where the admin is owner
             transactions = SalaryTransaction.objects.filter(
-                user_role__user__id=pk
+                user_role__role__id=pk
             )
 
             serializer = self.get_serializer(transactions, many=True)
@@ -36,4 +34,3 @@ class SalaryTransactionViewSet(viewsets.ModelViewSet):
                 {"error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
-

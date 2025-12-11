@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, viewsets
@@ -14,7 +15,8 @@ class SalaryTransactionViewSet(viewsets.ModelViewSet):
     queryset = SalaryTransaction.objects.all()
     serializer_class = SalaryTransactionSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['user_role__user__phone', 'user_role__role', 'description', 'shop']
+    search_fields = ['user_role__user__phone',
+                     'user_role__role', 'description', 'shop']
     ordering_fields = ['date_paid', 'amount']
 
     def get_serializer(self, *args, **kwargs):
@@ -115,6 +117,11 @@ class SalaryTransactionViewSet(viewsets.ModelViewSet):
         # Serialize
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
+
+    def destroy(self, request, pk=None):
+        instance = get_object_or_404(self.queryset, pk=pk)
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=["get"])
     def get_by_admin(self, request: Request, pk=None):

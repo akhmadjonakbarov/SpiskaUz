@@ -44,7 +44,6 @@ class CreateSalaryTransaction(serializers.Serializer):
 
 
 class SalaryTransactionSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = SalaryTransaction
-        exclude = ('deleted_at',)
+        exclude = "__all__"

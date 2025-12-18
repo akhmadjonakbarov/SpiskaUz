@@ -1,6 +1,9 @@
 from apps.admin_panel.models import SalaryBalance, PercentageTracker
 from apps.document.models import Document, DocumentItem
 from apps.role_manager.models import Role
+
+from decimal import Decimal
+from django.db import transaction
 from django.db.models import Prefetch
 
 
@@ -10,7 +13,7 @@ class CalculateSalaryService:
         self.user = request.user
         self.shop_id = shop_id
 
-        self.role = Role.objects.activate(user=self.user).first()
+        self.role = Role.actives.filter(user=self.user).first()
         self.salary_balance = None
 
     def get_or_create_balance(self):
@@ -19,46 +22,45 @@ class CalculateSalaryService:
         )
 
     def calculate_salary_by_user(self):
-        self.get_or_create_balance()
+        with transaction.atomic():
+            self.get_or_create_balance()
 
-        documents = (
-            Document.actives
-            .filter(
-                created_by=self.user,
-                doc_type='sell',
-            )
-            .prefetch_related(
-                Prefetch(
-                    "document_items",
-                    queryset=(
-                        DocumentItem.actives
-                        .select_related(
-                            "product",  # if FK
-                            # OR "variant__product"
-                        )
+            documents = (
+                Document.actives
+                .filter(
+                    user=self.user,
+                    doc_type='sell',
+                )
+                .select_related("payment_detail")
+                .prefetch_related(
+                    Prefetch(
+                        "document_items",
+                        queryset=DocumentItem.actives.select_related("product")
                     )
                 )
             )
-        )
 
-        total_salary = 0
+            total_salary = Decimal("0.0")
 
-        for document in documents:
-            tracker, created = PercentageTracker.objects.get_or_create(
-                document=document
-            )
-
-            if not created:
-                continue
-            document_items = (
-                document.document_items.all().prefetch_related(
-                    "product",
+            for document in documents:
+                tracker, created = PercentageTracker.objects.get_or_create(
+                    document=document
                 )
-            )
-            for item in document_items:
-                total_salary += item.outcome_price or 0
 
-        self.salary_balance.amount += total_salary
-        self.salary_balance.save(update_fields=["amount"])
+                if not created:
+                    continue
 
-        return total_salary
+                total_price = document.get_total_outcome_price_uzs()
+
+                salary_price = (
+                        Decimal(self.role.total_commission_percent)
+                        / Decimal("100")
+                        * total_price
+                )
+
+                total_salary += salary_price
+
+            self.salary_balance.balance += total_salary
+            self.salary_balance.save(update_fields=["balance"])
+
+            return total_salary

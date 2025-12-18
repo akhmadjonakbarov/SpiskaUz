@@ -53,7 +53,7 @@ class Debt(BaseModel):
         "shops.Shop", on_delete=models.CASCADE, related_name="debts", blank=True, null=True
     )
     document = models.OneToOneField(
-        "document.Document", on_delete=models.CASCADE, related_name="document"
+        "document.Document", on_delete=models.CASCADE,
     )
     client = models.ForeignKey(
         "users.User", on_delete=models.CASCADE, related_name="debts_as_client"

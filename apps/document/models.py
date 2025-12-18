@@ -15,7 +15,7 @@ from constants.currency_choices import CURRENCY_CHOICES
 
 class BaseDocumentItem(BaseModelWithUserAndShop, PriceAndQtyMixinWithPercentage):
     product = models.ForeignKey(
-        Product, on_delete=models.CASCADE,
+        "products.Product", on_delete=models.CASCADE, verbose_name="Product"
     )
     currency_rate = models.ForeignKey(
         CurrencyRate, on_delete=models.CASCADE, null=True, blank=True,
@@ -35,11 +35,29 @@ class Document(BaseModelWithUserAndShop):
     )
     doc_type = models.CharField(max_length=10, choices=DOC_TYPE)
     supplier = models.ForeignKey(
-        Supplier, on_delete=models.SET_NULL, related_name="documents", blank=True, null=True
+        Supplier, on_delete=models.SET_NULL,
+        related_name="documents", blank=True, null=True
     )
 
-    def __str__(self):
-        return f"{self.doc_type}"
+    def get_total_outcome_price_uzs(self):
+
+        if hasattr(self, "payment_detail"):
+            discount_price = self.payment_detail.total_discount
+            if discount_price and discount_price > 0:
+                return discount_price
+
+        total = Decimal("0.0")
+
+        for item in self.document_items.all():
+            line_total = item.sale_price * item.qty
+
+            # convert to UZS if needed
+            if item.product.currency_type != "UZS":
+                line_total *= item.currency_rate_value
+
+            total += line_total
+
+        return total
 
 
 class PaymentDetail(BaseModel):

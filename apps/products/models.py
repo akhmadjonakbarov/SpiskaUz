@@ -27,9 +27,15 @@ class Product(BaseModelWithUser):
         "Name", max_length=256,
     )
     description = models.TextField("Description", max_length=1000, )
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="Category")
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, verbose_name="Category",
+        blank=True, null=True, related_name="products"
+    )
     is_selected = models.BooleanField("Selected", default=False)
-    unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
+    unit = models.ForeignKey(
+        Unit, on_delete=models.CASCADE,
+        blank=True, null=True, related_name="products"
+    )
     sale_price = models.DecimalField("Sale Price", max_digits=50, decimal_places=5)
     barcode = models.CharField("Barcode", max_length=100, unique=True)
     is_active = models.BooleanField("Active", default=True)

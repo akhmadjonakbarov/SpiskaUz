@@ -1,7 +1,6 @@
 from decimal import Decimal
 from django.db import models
 from apps.base.models import BaseModel, BaseModelWithShop
-from apps.users.models import User
 
 
 class Supplier(BaseModel):
@@ -57,7 +56,7 @@ class SupplierTransaction(BaseModelWithShop):
     transaction_type = models.CharField(
         choices=TransactionType, blank=True, null=True, max_length=250
     )
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    created_by = models.ForeignKey("users.User", on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return f"{self.supplier.name} - Payment: {self.amount}"

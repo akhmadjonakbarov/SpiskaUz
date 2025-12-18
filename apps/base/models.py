@@ -1,5 +1,9 @@
-from django.db import models
 from django.utils import timezone
+from django.db import models
+from decimal import Decimal
+from django.core.validators import MinValueValidator
+
+from apps.base.managers import SoftDeleteManager
 
 
 # Create your models here.
@@ -8,8 +12,8 @@ class BaseModel(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(blank=True, null=True)
 
-    # active = 
-    # objects = models.Manager()
+    actives = SoftDeleteManager()
+    objects = models.Manager()
 
     def soft_delete(self):
         self.deleted_at = timezone.now()
@@ -45,11 +49,6 @@ class BaseModelWithUserAndShop(BaseModelWithUser, BaseModelWithShop):
         abstract = True
 
 
-from django.db import models
-from decimal import Decimal
-from django.core.validators import MinValueValidator
-
-
 class PriceAndQtyMixin(models.Model):
     qty = models.DecimalField(
         max_digits=50, decimal_places=5,
@@ -71,6 +70,7 @@ class PriceAndQtyMixin(models.Model):
 class PriceAndQtyMixinWithPercentage(PriceAndQtyMixin):
     profit_as_percent = models.DecimalField(
         max_digits=50, decimal_places=2,
+        default=Decimal('0.0'),
         validators=[
             MinValueValidator(Decimal('0.0')),
         ],

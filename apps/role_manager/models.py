@@ -10,21 +10,22 @@ class Role(BaseModel):
         ('owner', 'OWNER'),
         ('main_admin', 'MAIN_ADMIN')
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="roles")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="roles", verbose_name="Admin User")
     shop = models.ForeignKey(
-        "shops.Shop", on_delete=models.CASCADE, related_name="roles"
+        "shops.Shop", on_delete=models.CASCADE, related_name="roles", verbose_name="Shop"
     )
     salary = models.DecimalField(
-        max_digits=30, decimal_places=5, blank=True, null=True
+        max_digits=30, decimal_places=5, blank=True, null=True, verbose_name="Salary"
     )
     role = models.CharField(
-        choices=ROLES, max_length=20
+        choices=ROLES, max_length=20, verbose_name="Role", blank=True, null=True
     )
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
-        blank=True
+        blank=True,
+        verbose_name="Created By"
     )
 
     total_commission_percent = models.DecimalField(
@@ -40,6 +41,3 @@ class Role(BaseModel):
 
     def __str__(self):
         return f"{self.role} - {self.user}"
-
-
-

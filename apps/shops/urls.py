@@ -6,7 +6,7 @@ from .views.category import ShopCategoryViewSet
 from .views.contact import ShopContactViewSet
 from .views.shop import ShopViewSet
 from .views.user_converstions import ShopUserConversionListView
-from .views.user_order import ShopUserOrderListView
+
 from .views.user_payments import ShopUserPaymentsListView
 
 router = DefaultRouter()
@@ -18,7 +18,8 @@ router.register("shop-admin", ShopAdminViewset)
 
 urlpatterns = router.urls + [
 
-    path("shop/<uuid:pk>/user/<uuid:customer_id>/orders/", ShopUserOrderListView.as_view(), name="shop-user-orders"),
-    path("shop/<uuid:pk>/user/<uuid:customer_id>/payments/", ShopUserPaymentsListView.as_view(), name="shop-user-payments"),
-    path("shop/<uuid:pk>/user/<uuid:customer_id>/conversions/", ShopUserConversionListView.as_view(), name="shop-user-conversions"),
+    path("shop/<uuid:pk>/user/<uuid:customer_id>/payments/", ShopUserPaymentsListView.as_view(),
+         name="shop-user-payments"),
+    path("shop/<uuid:pk>/user/<uuid:customer_id>/conversions/", ShopUserConversionListView.as_view(),
+         name="shop-user-conversions"),
 ]

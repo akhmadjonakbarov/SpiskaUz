@@ -21,6 +21,7 @@ from .serializers import ConfirmShoppingCartSerializer, CartItemSerializer, Cart
 from apps.products.models import Product
 from ..currency_rate.models import CurrencyRate
 from ..customer_transaction.models import CustomerTransaction
+from ..shops.models import Shop
 
 
 class CartItemViewSet(
@@ -67,7 +68,8 @@ class CartItemViewSet(
             product_id = request.data.get('product')
             product = Product.objects.get(id=product_id)
             user = request.user
-
+            shop = Shop.objects.filter(id=product.shop.id).first()
+            shop.members.add(user)
             cart = Cart.objects.filter(customer=user, shop=product.shop).first()
 
             if not cart:

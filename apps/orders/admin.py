@@ -1,7 +1,7 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline
 
-from .models import Order, OrderItem
+from .models import Order, OrderItem, OrderPaymentDetail, ProductOrderItemInfo
 
 
 @admin.register(OrderItem)
@@ -28,3 +28,10 @@ class OrderAdmin(ModelAdmin):
     )
     list_filter = ("customer", "shop")
     inlines = [OrderItemInline]
+
+
+@admin.register(OrderPaymentDetail)
+class OrderPaymentDetailAdmin(ModelAdmin):
+    list_display = (
+        'order', 'payed', 'un_payed', 'payment_method'
+    )

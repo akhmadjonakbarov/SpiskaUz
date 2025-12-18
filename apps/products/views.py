@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from common.serializers import EmptyBodySerializer
+from .filters import ProductFilter
 from .models import Product, ReportOption
 from .serializers import (
     ProductSerializer, CreateProductSerializer,
@@ -156,15 +157,47 @@ class ProductViewSet(viewsets.ModelViewSet):
                 'shop_id', openapi.IN_QUERY,
                 description="Filter by shop ID",
                 type=openapi.TYPE_STRING
-            )
+            ),
+            openapi.Parameter(
+                'name', openapi.IN_QUERY,
+                description="Filter by name of Product",
+                type=openapi.TYPE_STRING
+            ),
+            openapi.Parameter(
+                'barcode', openapi.IN_QUERY,
+                description="Filter by name of Product",
+                type=openapi.TYPE_STRING
+            ),
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Items per page",
+                type=openapi.TYPE_INTEGER,
+            ),
         ]
     )
     def list(self, request: Request, *args, **kwargs):
-        products = self.get_queryset().filter(
-            is_active=True,
-            shop_id=request.query_params.get('shop_id')
+        products = (
+            self.get_queryset().filter(
+                is_active=True,
+            ).select_related(
+                "category", "shop",
+            )
         )
-        serializer = ProductSerializer(products, many=True)
+
+        filtered_qs = ProductFilter(request.GET, queryset=products)
+        page = self.paginate_queryset(filtered_qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(filtered_qs, many=True)
         return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):

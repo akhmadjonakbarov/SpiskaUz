@@ -11,7 +11,7 @@ from apps.shops.serializers import SetTelegramLinkSerializer, ShopContactSeriali
 
 class ShopContactViewSet(ModelViewSet):
     serializer_class = ShopContactSerializer
-    permission_classes = [IsAuthenticated, CanAddShopContact, CanDeleteShopContact]
+    permission_classes = [IsAuthenticated, ]
     queryset = ShopContact.objects.all()
 
     @swagger_auto_schema(request_body=SetTelegramLinkSerializer)

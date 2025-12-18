@@ -1,19 +1,6 @@
 from rest_framework import serializers
-from apps.users.models import User
 from apps.role_manager.models import Role
 from apps.salary.models import SalaryTransaction
-
-
-# class UserSerializer(serializers.ModelSerializer):
-#     full_name = serializers.SerializerMethodField()
-#
-#     class Meta:
-#         model = User
-#         fields = ("phone", "full_name")
-#
-#     def get_full_name(self, user: User):
-#         full_name = user.get_full_name()
-#         return full_name
 
 
 class CreateSalaryTransaction(serializers.Serializer):
@@ -46,4 +33,4 @@ class CreateSalaryTransaction(serializers.Serializer):
 class SalaryTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = SalaryTransaction
-        exclude = "__all__"
+        fields = "__all__"

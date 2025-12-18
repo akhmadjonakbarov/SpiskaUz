@@ -11,7 +11,7 @@ class ShopSerializerForCart(serializers.ModelSerializer):
     class Meta:
         model = Shop
         exclude = (
-            "deleted_at", "members"
+            "deleted_at", "members",
         )
 
 

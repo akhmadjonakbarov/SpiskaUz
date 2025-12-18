@@ -1,9 +1,7 @@
-import datetime
 from collections import defaultdict
 from decimal import Decimal
 
 from django.db import transaction as django_transaction
-from django.db.models import Sum
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -16,24 +14,23 @@ from rest_framework.response import Response
 
 from apps.cart.models import Cart
 from apps.cart.serializers import CartSerializer
-from apps.customer_transaction.models import CustomerTransaction
-from apps.customer_transaction.serializers import CustomerTransactionSerializer
 from apps.document.models import DocumentItemBalance
 from apps.document.utils.calculator import Calculator
 from apps.notifications.models import Notification, NotificationType
-from apps.orders.models import Order, OrderStatus
+from apps.orders.models import Order
 from apps.orders.serializers import OrderSerializer
 from apps.products.models import Product, ProductGroup
 from apps.products.serializers import CreateProductsGroupSerializer, ProductPositionSerializer, ProductSerializer, \
     SeparateProductsSerializer, ProductSerializerForUser
 from apps.promocodes.serializers import PromocodeSerializer
 from apps.role_manager.serializer import RoleSerializer
+from apps.shops.filters import OrderFilter
 from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance
 from apps.shops.serializers import ChangeExchangeRateSerializer, ShopContactSerializer, ShopSerializer, \
     ShopMemberSerializer
 from apps.shops.serializers import ShopTransactionSerializer
 from apps.supplier.models import Supplier, SupplierDebtBalance, SupplierTransaction
-from apps.supplier.serializers import DebtPaymentHistorySerializer, SupplierSerializer
+from apps.supplier.serializers import SupplierSerializer
 from common.filters import ProductFilter
 from common.serializers import EmptyBodySerializer
 from utils.convertor import Convertor
@@ -304,31 +301,65 @@ class ShoppingCartActionMixin:
 
 
 class OrderActionMixin:
+
     @swagger_auto_schema(
+        operation_summary="List shop orders",
+        operation_description="Get paginated list of orders for a shop with filtering",
         manual_parameters=[
-            openapi.Parameter("page", openapi.IN_QUERY,
-                              description="Sahifa raqami", type=openapi.TYPE_INTEGER),
-            openapi.Parameter("page_size", openapi.IN_QUERY, description="Har bir sahifadagi elementlar soni",
-                              type=openapi.TYPE_INTEGER),
+            openapi.Parameter(
+                "status",
+                openapi.IN_QUERY,
+                description="Order status (new, processing, done, canceled)",
+                type=openapi.TYPE_STRING,
+            ),
+            openapi.Parameter(
+                "customer",
+                openapi.IN_QUERY,
+                description="Customer ID",
+                type=openapi.TYPE_STRING,
+            ),
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Items per page",
+                type=openapi.TYPE_INTEGER,
+            ),
         ],
-        responses={200: ProductSerializer(many=True)},
+        responses={
+            200: OrderSerializer(many=True),
+        },
     )
-    @action(["GET"], detail=True, serializer_class=OrderSerializer)
-    def order(self, request, *args, **kwargs):
+    @action(
+        methods=["GET"],
+        detail=True,
+        serializer_class=OrderSerializer,
+        url_path="orders",
+    )
+    def orders(self, request, pk=None):
         shop = self.get_object()
-        user = request.user
 
-        queryset = Order.objects.select_related("shop", "customer", "admin").prefetch_related("items").filter(shop=shop,
-                                                                                                              customer=user).order_by(
-            "-created_at")
+        queryset = (
+            Order.objects
+            .select_related("shop", "customer", "admin")
+            .prefetch_related("items")
+            .filter(shop=shop)
+            .order_by("-created_at")
+        )
 
-        page = self.paginate_queryset(queryset)
+        filtered_qs = OrderFilter(request.GET, queryset=queryset).qs
 
+        page = self.paginate_queryset(filtered_qs)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(filtered_qs, many=True)
         return Response(serializer.data)
 
 
@@ -523,129 +554,6 @@ class PromocodeActionsMixin:
         promocodes = self.get_object().promocodes.all()
         serializer = self.get_serializer(promocodes, many=True)
         return Response(serializer.data)
-
-
-class ShopHistoryActionsMixin:
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter("start_date", openapi.IN_QUERY, description="start_date (YYYY-MM-DD)",
-                              type=openapi.TYPE_STRING),
-            openapi.Parameter("end_date", openapi.IN_QUERY, description="end_date (YYYY-MM-DD)",
-                              type=openapi.TYPE_STRING),
-        ]
-    )
-    @action(methods=["GET"], detail=True, url_path="history/orders")
-    def order_history(self, request, *args, **kwargs):
-        """Do'kon tarixini olish."""
-        shop = self.get_object()
-
-        start_date = request.query_params.get("start_date")
-        end_date = request.query_params.get("end_date")
-
-        orders = Order.objects.filter(
-            shop=shop).select_related("admin", "customer")
-
-        if start_date:
-            try:
-                start_date_dt = datetime.strptime(start_date, "%Y-%m-%d")
-                orders = orders.filter(created_at__date__gte=start_date_dt)
-            except ValueError:
-                return Response({"error": "start_date format must be YYYY-MM-DD"}, status=400)
-
-        if end_date:
-            try:
-                end_date_dt = datetime.strptime(end_date, "%Y-%m-%d")
-                orders = orders.filter(created_at__date__lte=end_date_dt)
-            except ValueError:
-                return Response({"error": "end_date format must be YYYY-MM-DD"}, status=400)
-
-        stats_orders = orders.filter(
-            status__in=[OrderStatus.ACCEPTED, OrderStatus.COMPLETED])
-
-        # statistics = stats_orders.aggregate(
-        #     total_price=Sum("total_price"),
-        #     discount=Sum("discount"),
-        #     agreed_price=Sum("agreed_price"),
-        #     debt=Sum("debt"),
-        #     total_profit=Sum("profit"),
-        # )
-
-        orders = OrderSerializer(
-            instance=orders, many=True, context={"request": request})
-
-        return Response({"orders": orders.data, })
-
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter("start_date", openapi.IN_QUERY, description="start_date (YYYY-MM-DD)",
-                              type=openapi.TYPE_STRING),
-            openapi.Parameter("end_date", openapi.IN_QUERY, description="end_date (YYYY-MM-DD)",
-                              type=openapi.TYPE_STRING),
-        ]
-    )
-    @action(methods=["GET"], detail=True, url_path="history/transactions")
-    def transaction_history(self, request, *args, **kwargs):
-        shop = self.get_object()
-
-        start_date = request.query_params.get("start_date")
-        end_date = request.query_params.get("end_date")
-
-        supplier_transactions = SupplierTransaction.objects.order_by('-created_at').filter(
-            shop=shop
-        )
-        customer_transaction = CustomerTransaction.objects.order_by('-created_at').filter(
-            shop=shop
-        )
-
-        if start_date:
-            try:
-                start_date_dt = datetime.strptime(start_date, "%Y-%m-%d")
-                supplier_transactions = supplier_transactions.filter(date__gte=start_date_dt)
-                customer_transaction = customer_transaction.filter(date__gte=start_date_dt)
-            except ValueError:
-                return Response({"error": "start_date format must be YYYY-MM-DD"}, status=400)
-
-        if end_date:
-            try:
-                end_date_dt = datetime.strptime(end_date, "%Y-%m-%d")
-                supplier_transactions = supplier_transactions.filter(date__lte=end_date_dt)
-                customer_transaction = customer_transaction.filter(date__gte=start_date_dt)
-            except ValueError:
-                return Response({"error": "end_date format must be YYYY-MM-DD"}, status=400)
-
-        profit_spent = supplier_transactions.filter(transaction_type="profit").aggregate(
-            total=Sum("amount"))["total"] or 0
-        cash_spent = supplier_transactions.filter(transaction_type="cash").aggregate(
-            total=Sum("amount"))["total"] or 0
-        cash_and_profit_spent = \
-            supplier_transactions.filter(transaction_type="cash_and_profit").aggregate(total=Sum("amount"))[
-                "total"] or 0
-        current_cash_total = \
-            supplier_transactions.filter(transaction_type__in=["cash", "cash_and_profit"]).aggregate(
-                total=Sum("amount"))[
-                "total"] or 0
-
-        statistics = {
-            "cash_spent": cash_spent,
-            "profit_spent": profit_spent,
-            "cash_and_profit_spent": cash_and_profit_spent,
-            "current_cash_total": current_cash_total,
-        }
-
-        serialized_supplier = DebtPaymentHistorySerializer(supplier_transactions, many=True).data
-        serialized_customer = CustomerTransactionSerializer(customer_transaction, many=True).data
-
-        for transaction in serialized_customer:
-            transaction['type'] = 'customer_transaction'
-        for transaction in serialized_supplier:
-            transaction['type'] = 'supplier_transaction'
-
-        return Response(
-            {
-                "transactions": serialized_supplier + serialized_customer,
-                "statistics": statistics
-            }
-        )
 
 
 class ShopBalanceMixin:

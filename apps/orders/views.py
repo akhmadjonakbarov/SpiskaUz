@@ -45,6 +45,9 @@ class OrderViewSet(
     #     ("restore_order",): [CanRestoreOrder],
     # }
 
+    def get_serializer(self, *args, **kwargs):
+        pass
+
     def list(self, request, *args, **kwargs):
         orders = (Order.objects.select_related("customer", "admin")
                   .prefetch_related(

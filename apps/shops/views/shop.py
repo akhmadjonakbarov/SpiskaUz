@@ -22,7 +22,7 @@ from .mixins import (
     ProductActionsMixin,
     ProductGroupActionMixin,
     PromocodeActionsMixin,
-    ShopHistoryActionsMixin,
+
     ShoppingCartActionMixin,
     SubscriptionActionMixin,
     ShopBalanceMixin, SupplierFilterMixin,
@@ -43,7 +43,6 @@ class ShopViewSet(
     AdminActionsMixin,
     ExchangeRateActionsMixin,
     PromocodeActionsMixin,
-    ShopHistoryActionsMixin,
     ShopBalanceMixin,
     SupplierFilterMixin
 ):

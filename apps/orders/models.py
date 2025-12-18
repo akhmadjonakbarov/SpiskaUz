@@ -18,27 +18,16 @@ class OrderPaymentMethod(models.TextChoices):
 
 
 class Order(BaseModel):
-    # customer = models.ForeignKey("users.User", on_delete=models.SET_NULL, related_name="customer_orders",
-    #                              verbose_name="Customer", null=True, blank=True)
-    # shop = models.ForeignKey("shops.Shop", on_delete=models.CASCADE, related_name="orders", verbose_name="Shop")
-    # admin = models.ForeignKey("users.User", on_delete=models.SET_NULL, null=True, blank=True,
-    #                           related_name="managed_orders", verbose_name="Admin")
-    # discount = models.DecimalField("Discount", max_digits=14, decimal_places=2, default=0)
-    # paid_amount = models.DecimalField("Paid Amount", max_digits=14, decimal_places=2, default=0)
-    # debt = models.DecimalField("Debt", max_digits=14, decimal_places=2, default=0)
-    # profit = models.DecimalField("Profit", max_digits=28, decimal_places=2, default=0)
-    # comment = models.TextField("Comment", blank=True, null=True)
-    # status = models.CharField("Status", max_length=20, choices=OrderStatus.choices, default=OrderStatus.PENDING)
-
-    customer = models.ForeignKey("users.User", on_delete=models.SET_NULL, related_name="customer_orders",
-                                 verbose_name="Customer", null=True, blank=True)
+    customer = models.ForeignKey(
+        "users.User", on_delete=models.SET_NULL, related_name="customer_orders",
+        verbose_name="Customer", null=True, blank=True,
+    )
     shop = models.ForeignKey("shops.Shop", on_delete=models.CASCADE, related_name="orders", verbose_name="Shop")
     admin = models.ForeignKey("users.User", on_delete=models.SET_NULL, null=True, blank=True,
                               related_name="managed_orders", verbose_name="Admin")
     discount = models.DecimalField("Discount", max_digits=14, decimal_places=2, default=0)
     comment = models.TextField("Comment", blank=True, null=True)
     status = models.CharField("Status", max_length=20, choices=OrderStatus.choices, default=OrderStatus.PENDING)
-
 
     def __str__(self):
         return f"Order #{self.id} - {self.customer} - {self.status}"
@@ -52,6 +41,8 @@ class OrderPaymentDetail(BaseModel):
         "Payment Method", max_length=20, choices=OrderPaymentMethod.choices,
         default=OrderPaymentMethod.CASH
     )
+
+
 
 
 class OrderItem(BaseModel):

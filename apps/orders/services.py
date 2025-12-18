@@ -80,68 +80,65 @@ class OrderService:
 
     def accept_order(self, order: Order, admin: User):
         try:
-            self._assert_order_status(order, [OrderStatus.PENDING])
-            document = Document.objects.create(
-                doc_type='sell', user=admin, shop=order.shop
-            )
-            PaymentDetail.objects.create(
-                payment_method=order.payment_detail.payment_method, document=document,
-                discount=order.discount if order.discount is not None else Decimal('0.0'),
-                promo_code_value=Decimal('0.0')
-            )
-            latest_currency = CurrencyRate.objects.filter(
-                shop=document.shop
-            ).order_by('-created_at').first()
+            with transaction.atomic():
+                self._assert_order_status(order, [OrderStatus.PENDING])
+                document = Document.objects.create(
+                    doc_type='sell', user=admin, shop=order.shop
+                )
+                PaymentDetail.objects.create(
+                    payment_method=order.payment_detail.payment_method, document=document,
+                    discount=order.discount if order.discount is not None else Decimal('0.0'),
+                    promo_code_value=Decimal('0.0')
+                )
+                latest_currency = CurrencyRate.objects.filter(
+                    shop=document.shop
+                ).order_by('-created_at').first()
 
-            for oi in order.items.all():
-                order_item: OrderItem = oi
-                sell_qty = Decimal(str(order_item.amount))
-                balances = DocumentItemBalance.objects.filter(
-                    product=order_item.product,
-                    shop=document.shop,
-                    qty__gt=0
-                ).order_by('created_at')
-
-                total_available = sum(b.qty for b in balances)
-                if Decimal(total_available) < sell_qty:
-                    raise Exception(f"Not enough stock for product {order_item.product.name}.")
-                remaining_qty = sell_qty
-                for balance in balances:
-                    if remaining_qty <= 0:
-                        break
-
-                    deduct_qty = min(balance.qty, remaining_qty)
-
-                    DocumentItem.objects.create(
-                        document=document,
+                for oi in order.items.all():
+                    order_item: OrderItem = oi
+                    sell_qty = Decimal(str(order_item.amount))
+                    balances = DocumentItemBalance.objects.filter(
                         product=order_item.product,
-                        currency_rate=latest_currency if order_item.product.currency_type == 'usd' else None,
-                        currency_rate_value=latest_currency.rate if order_item.product.currency_type == 'usd' else Decimal(
-                            '0.0'),
-                        qty=deduct_qty,
-                        income_price=balance.income_price,
-                        sale_price=balance.sale_price,
-                        profit_as_percent=balance.profit_as_percent,
                         shop=document.shop,
-                        user=document.user,
+                        qty__gt=0
+                    ).order_by('created_at')
 
-                    )
+                    total_available = sum(b.qty for b in balances)
+                    if Decimal(total_available) < sell_qty:
+                        raise Exception(f"Not enough stock for product {order_item.product.name}.")
+                    remaining_qty = sell_qty
+                    for balance in balances:
+                        if remaining_qty <= 0:
+                            break
 
-                    balance.qty -= deduct_qty
-                    balance.save()
+                        deduct_qty = min(balance.qty, remaining_qty)
 
-                    remaining_qty -= deduct_qty
+                        DocumentItem.objects.create(
+                            document=document,
+                            product=order_item.product,
+                            currency_rate=latest_currency if order_item.product.currency_type == 'usd' else None,
+                            currency_rate_value=latest_currency.rate if order_item.product.currency_type == 'usd' else Decimal(
+                                '0.0'),
+                            qty=deduct_qty,
+                            income_price=balance.income_price,
+                            sale_price=balance.sale_price,
+                            profit_as_percent=balance.profit_as_percent,
+                            shop=document.shop,
+                            user=document.user,
+                        )
+                        balance.qty -= deduct_qty
+                        balance.save()
 
-            order.status = OrderStatus.ACCEPTED
-            order.admin = admin
-            order.save()
+                        remaining_qty -= deduct_qty
 
-            DocumentOrder.objects.create(
-                order=order, document=document
-            )
+                order.status = OrderStatus.ACCEPTED
+                order.admin = admin
+                order.save()
 
-            self._create_notification(order.customer, order.shop, NotificationType.ORDER_EVENT_USER, order)
-
-            return True
+                DocumentOrder.objects.create(
+                    order=order, document=document
+                )
+                self._create_notification(order.customer, order.shop, NotificationType.ORDER_EVENT_USER, order)
+                return True
         except Exception as e:
             raise e

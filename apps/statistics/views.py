@@ -8,7 +8,7 @@ from apps.shops.models import Shop, ShopBalance, ShopBalanceTransaction
 from apps.supplier.models import Supplier
 from utils.convertor import Convertor
 from apps.document.models import DocumentItem, Document
-from apps.document.serializers import DocumentItemSerializer, DocumentSerializer, DocumentSerializerForStatistic
+from apps.document.serializers import DocumentSerializerForStatistic
 from apps.debt.models import Debt
 from django.db.models import Sum
 from apps.shops.serializers import ShopTransactionSerializer
@@ -16,13 +16,13 @@ from apps.shops.serializers import ShopTransactionSerializer
 
 class BaseStatisticView(GenericAPIView):
     serializer_class = None
-    queryset = Document.objects.all()
+    queryset = Document.actives.all()
     permission_classes = (IsAuthenticated,)
     doc_type = None
 
     def get_queryset(self):
-        return Document.objects.filter(
-            doc_type=self.doc_type, shop_id=self.kwargs['shop_id'], deleted_at=None
+        return Document.actives.filter(
+            doc_type=self.doc_type, shop_id=self.kwargs['shop_id'],
         ).order_by('-created_at')
 
     def get_shop(self):
@@ -44,7 +44,7 @@ class BoughtStatisticView(BaseStatisticView):
     @staticmethod
     def get_debts(shop):
         from apps.currency_rate.models import CurrencyRate
-        currency = CurrencyRate.objects.filter(shop=shop).order_by('-created_at').first()
+        currency = CurrencyRate.actives.filter(shop=shop).order_by('-created_at').first()
         suppliers = shop.suppliers.all()
         total_debt = Decimal('0.0')
 
@@ -85,12 +85,12 @@ class BoughtStatisticView(BaseStatisticView):
 
         total_profit = Convertor.to_decimal(total_price) - Convertor.to_decimal(total_income)
 
-        shop_profit = ShopBalance.objects.filter(shop_id=shop_id, deleted_at=None).first()
+        shop_profit = ShopBalance.actives.filter(shop_id=shop_id, deleted_at=None).first()
 
         if shop_profit is not None:
             total_profit = Convertor.to_decimal(total_profit) + Convertor.to_decimal(shop_profit.profit)
 
-        transactions = ShopBalanceTransaction.objects.filter(
+        transactions = ShopBalanceTransaction.actives.filter(
             kind__in=('profit', 'cash_profit', 'cash_income'), shop_id=shop_id
         )
         transactions_data = ShopTransactionSerializer(transactions, many=True).data
@@ -104,7 +104,6 @@ class BoughtStatisticView(BaseStatisticView):
         return {
             'total_price': total_price,
             'total_profit': total_profit,
-            'items': transactions_data + documents_data,
         }
 
 

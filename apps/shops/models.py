@@ -14,7 +14,7 @@ class Shop(BaseModel):
     link = models.CharField("Link", max_length=32, default=generate_unique_text, unique=True)
     image = models.ImageField("Image", upload_to="shop-images/%Y/")
     members = models.ManyToManyField(User, blank=True, related_name="subscriptions", verbose_name="Members")
-    address = models.TextField("Address")
+    address = models.TextField("Address", blank=True, null=True)
     latitude = models.CharField("Latitude", max_length=200)
     longitude = models.CharField("Longitude", max_length=200)
     telegram_link = models.CharField("Telegram link", max_length=256, null=True, blank=True)

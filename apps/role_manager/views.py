@@ -12,7 +12,7 @@ from apps.users.models import User
 
 class BaseRoleView(GenericAPIView):
     serializer_class = RoleSerializer
-    queryset = Role.objects.filter(deleted_at=None)
+    queryset = Role.actives.all()
     permission_classes = (IsAuthenticated,)
 
 

@@ -14,7 +14,8 @@ from rest_framework.response import Response
 
 from apps.cart.models import Cart
 from apps.cart.serializers import CartSerializer
-from apps.document.models import DocumentItemBalance
+from apps.document.models import DocumentItemBalance, Document, DocumentOrder
+from apps.document.serializers import DocumentSerializer, DocumentSerializerForStatistic
 from apps.document.utils.calculator import Calculator
 from apps.notifications.models import Notification, NotificationType
 from apps.orders.models import Order
@@ -24,7 +25,7 @@ from apps.products.serializers import CreateProductsGroupSerializer, ProductPosi
     SeparateProductsSerializer, ProductSerializerForUser
 from apps.promocodes.serializers import PromocodeSerializer
 from apps.role_manager.serializer import RoleSerializer
-from apps.shops.filters import OrderFilter
+from apps.shops.filters import OrderFilter, DocumentFilter
 from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance
 from apps.shops.serializers import ChangeExchangeRateSerializer, ShopContactSerializer, ShopSerializer, \
     ShopMemberSerializer
@@ -650,4 +651,67 @@ class SupplierFilterMixin:
             return self.get_paginated_response(serializer.data)
 
         serializer = serializer_class(queryset, many=True, context={"request": request})
+        return Response(serializer.data)
+
+
+class DocumentMixin:
+    document_serializer_class = DocumentSerializerForStatistic
+
+    @swagger_auto_schema(
+        operation_summary="List Shop Documents",
+        operation_description="Get paginated list of orders for a shop with filtering",
+        manual_parameters=[
+            openapi.Parameter(
+                "doc_type",
+                openapi.IN_QUERY,
+                description="Document status (sell, buy)",
+                type=openapi.TYPE_STRING,
+            ),
+            openapi.Parameter(
+                "supplier",
+                openapi.IN_QUERY,
+                description="Customer ID",
+                type=openapi.TYPE_STRING,
+            ),
+            openapi.Parameter(
+                "created_from",
+                openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE,
+            ),
+            openapi.Parameter(
+                "created_to",
+                openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE,
+            ),
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Items per page",
+                type=openapi.TYPE_INTEGER,
+            ),
+        ],
+        responses={200: OrderSerializer(many=True)},
+    )
+    @action(methods=["GET"], detail=True, url_path="documents")
+    def documents(self, request, pk=None, *args, **kwargs):
+        shop_id = pk
+        queryset = Document.actives.filter(shop_id=shop_id)
+        filtered_qs = DocumentFilter(request.GET, queryset=queryset).qs
+
+        page = self.paginate_queryset(filtered_qs)
+        if page is not None:
+            serializer = self.document_serializer_class(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.document_serializer_class(filtered_qs, many=True)
         return Response(serializer.data)

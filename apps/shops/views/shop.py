@@ -25,14 +25,16 @@ from .mixins import (
 
     ShoppingCartActionMixin,
     SubscriptionActionMixin,
-    ShopBalanceMixin, SupplierFilterMixin,
+    ShopBalanceMixin, SupplierFilterMixin, DocumentMixin,
 )
 from apps.currency_rate.models import CurrencyRate
 from apps.role_manager.models import Role
+from ...document.models import Document
 
 
 class ShopViewSet(
     OrderActionMixin,
+    DocumentMixin,
     ActionPermissionMixin,
     SubscriptionActionMixin,
     ProductGroupActionMixin,

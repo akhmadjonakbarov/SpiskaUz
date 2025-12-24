@@ -14,8 +14,8 @@ from rest_framework.response import Response
 
 from apps.cart.models import Cart
 from apps.cart.serializers import CartSerializer
-from apps.document.models import DocumentItemBalance, Document, DocumentOrder
-from apps.document.serializers import DocumentSerializer, DocumentSerializerForStatistic
+from apps.document.models import DocumentItemBalance, Document
+from apps.document.serializers import DocumentSerializerForStatistic
 from apps.document.utils.calculator import Calculator
 from apps.notifications.models import Notification, NotificationType
 from apps.orders.models import Order

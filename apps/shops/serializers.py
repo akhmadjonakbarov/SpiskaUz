@@ -303,7 +303,14 @@ class ShopSerializerForRole(serializers.ModelSerializer):
 class ShopMemberSerializer(serializers.ModelSerializer):
     user = SimpleUserSerializer(read_only=True)
     shop = ShopSerializer(read_only=True)
+    is_admin = serializers.SerializerMethodField()
 
     class Meta:
         model = Shop.members.through
-        fields = ("id", "user", "shop")
+        fields = ("id", "user", "shop", "is_admin")
+
+    def get_is_admin(self, obj):
+        return Role.objects.filter(
+            user=obj.user,
+            shop=obj.shop
+        ).exists()

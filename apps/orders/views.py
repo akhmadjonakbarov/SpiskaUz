@@ -10,7 +10,7 @@ from common.serializers import EmptyBodySerializer
 from utils.convertor import Convertor
 
 from .models import Order, OrderStatus
-from .permissions import CanCancelOrder, CanRestoreOrder
+
 from .serializers import CancelAcceptedOrderSerializer, OrderSerializer
 from apps.document.models import DocumentOrder, Document, DocumentItemBalance, DocumentItem
 
@@ -49,7 +49,7 @@ class OrderViewSet(
         pass
 
     def list(self, request, *args, **kwargs):
-        orders = (Order.objects.select_related("customer", "admin")
+        orders = (Order.actives.select_related("customer", "admin")
                   .prefetch_related(
             "items",
             "items__product__parts",
@@ -71,7 +71,7 @@ class OrderViewSet(
 
     def destroy(self, request, *args, **kwargs):
         """
-        Order ni o'chirish uchun
+        Delete order
         """
         instance = self.get_object()
 

@@ -2,6 +2,7 @@ from collections import defaultdict
 from decimal import Decimal
 
 from django.db import transaction as django_transaction
+from django.db.models import OuterRef, Exists
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -21,9 +22,12 @@ from apps.notifications.models import Notification, NotificationType
 from apps.orders.models import Order
 from apps.orders.serializers import OrderSerializer
 from apps.products.models import Product, ProductGroup
-from apps.products.serializers import CreateProductsGroupSerializer, ProductPositionSerializer, ProductSerializer, \
-    SeparateProductsSerializer, ProductSerializerForUser
+from apps.products.serializers import (
+    CreateProductsGroupSerializer, ProductPositionSerializer,
+    ProductSerializer, SeparateProductsSerializer, ProductSerializerForUser
+)
 from apps.promocodes.serializers import PromocodeSerializer
+from apps.role_manager.models import Role
 from apps.role_manager.serializer import RoleSerializer
 from apps.shops.filters import OrderFilter, DocumentFilter
 from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance
@@ -98,18 +102,45 @@ class SubscriptionActionMixin:
         serializer = self.get_serializer(shops, many=True, context={"user": user})
         return Response(serializer.data)
 
-    @swagger_auto_schema(responses={200: ShopMemberSerializer(many=True)})
+    @swagger_auto_schema(
+        operation_summary="List shop orders",
+        operation_description="Get paginated list of orders for a shop with filtering",
+        manual_parameters=[
+            openapi.Parameter(
+                "is_admin",
+                openapi.IN_QUERY,
+                description="Filter via IsAdmin field",
+                type=openapi.TYPE_STRING,
+            ),
+        ],
+        responses={
+            200: OrderSerializer(many=True),
+        },
+    )
     @action(methods=["GET"], detail=True, serializer_class=ShopMemberSerializer)
     def members(self, request, pk=None):
-        """Do'konning foydalanuvchilar ro'yhatini olish."""
-
         shop = self.get_object()
         Through = Shop.members.through
 
-        qs = Through.objects.filter(shop=shop).exclude(user=request.user)
-        data = ShopMemberSerializer(qs, many=True, context={"request": request}).data
+        admin_subquery = Role.objects.filter(
+            user=OuterRef("user"),
+            shop=OuterRef("shop"),
+        )
 
-        return Response(data)
+        qs = (
+            Through.objects
+            .filter(shop=shop)
+            .exclude(user=request.user)
+            .annotate(is_admin=Exists(admin_subquery))
+        )
+
+        # 🔥 filtering by is_admin
+        is_admin = request.query_params.get("is_admin")
+        if is_admin is not None:
+            qs = qs.filter(is_admin=is_admin.lower() == "true")
+
+        serializer = ShopMemberSerializer(qs, many=True, context={"request": request})
+        return Response(serializer.data)
 
 
 class ProductGroupActionMixin:

@@ -7,7 +7,7 @@ from typing import Dict
 from apps.shops.models import Shop, ShopBalance, ShopBalanceTransaction
 from apps.supplier.models import Supplier
 from utils.convertor import Convertor
-from apps.document.models import DocumentItem, Document
+from apps.document.models import DocumentItem, Document, DocumentOrder
 from apps.document.serializers import DocumentSerializerForStatistic
 from apps.debt.models import Debt
 from django.db.models import Sum
@@ -85,21 +85,10 @@ class BoughtStatisticView(BaseStatisticView):
 
         total_profit = Convertor.to_decimal(total_price) - Convertor.to_decimal(total_income)
 
-        shop_profit = ShopBalance.actives.filter(shop_id=shop_id, deleted_at=None).first()
+        shop_profit = ShopBalance.actives.filter(shop_id=shop_id).first()
 
         if shop_profit is not None:
             total_profit = Convertor.to_decimal(total_profit) + Convertor.to_decimal(shop_profit.profit)
-
-        transactions = ShopBalanceTransaction.actives.filter(
-            kind__in=('profit', 'cash_profit', 'cash_income'), shop_id=shop_id
-        )
-        transactions_data = ShopTransactionSerializer(transactions, many=True).data
-        for t in transactions_data:
-            t['type'] = 'transaction'
-
-        documents_data = DocumentSerializerForStatistic(documents, many=True).data
-        for d in documents_data:
-            d['type'] = 'document'
 
         return {
             'total_price': total_price,
@@ -113,50 +102,49 @@ class SoldStatisticView(BaseStatisticView):
 
     def get(self, request, shop_id):
         shop = self.get_shop()
+        total_price = self.get_total_price(shop)
         total_debt = self.get_total_debt(shop)
         removed_profit = self.get_total_price_removed_profit(shop)
         removed_cash = self.get_total_price_removed_cash(shop)
 
-        transactions = ShopBalanceTransaction.objects.filter(
-            shop=shop, kind__in=['cash_loss', 'loss', 'cash_outcome'], deleted_at=None
-        )
-
-        documents = self.get_queryset()
-
-        transactions_data = ShopTransactionSerializer(transactions, many=True).data
-        for t in transactions_data:
-            t['type'] = 'transaction'
-
-        document_items_data = DocumentSerializerForStatistic(documents, many=True).data
-        for d in document_items_data:
-            d['type'] = 'document'
-
         return Response(
             data={
-                'items': transactions_data + document_items_data,
+                'total_price': total_price,
                 'total_debt': total_debt,
                 'removed_profit': removed_profit,
                 'removed_cash': removed_cash
             }
         )
 
-    @staticmethod
-    def get_total_debt(shop):
-        from apps.currency_rate.models import CurrencyRate
-        suppliers = Supplier.objects.filter(shops=shop)
+    def get_total_price(self, shop):
+        total_price = Decimal('0.0')
+        documents = Document.actives.filter(shop=shop, doc_type=self.doc_type).prefetch_related("document_items")
+        for document in documents:
+            document_items = document.document_items.all()
+            for doc_item in document_items:
+                if doc_item.product.currency_type.lower() in 'usd':
+                    total_price = Convertor.to_decimal(
+                        total_price) + doc_item.qty * doc_item.sale_price * doc_item.currency_rate_value
+                else:
+                    total_price = Convertor.to_decimal(total_price) + doc_item.qty * doc_item.sale_price
 
-        balance_usd = Decimal('0.0')
-        balance_uzs = Decimal('0.0')
+        return total_price
 
-        for supplier in suppliers:
-            balance = supplier.debt_balance
-            balance_usd = balance_usd + balance.balance_usd
-            balance_uzs = balance_uzs + balance.balance_uzs
+    def get_total_debt(self, shop):
+        documents = (
+            Document.actives
+            .filter(
+                shop=shop,
+                doc_type=self.doc_type,
+                documentorder__isnull=False  # INNER JOIN
+            )
+            .select_related("documentorder", "documentorder__order")
+            .prefetch_related("document_items")
+        )
+        for document in documents:
+            order = document.order
 
-        currency = CurrencyRate.objects.filter(shop=shop).order_by('-created_at').first()
-        balance_uzs = balance_uzs + balance_usd * currency.rate
-
-        return balance_uzs
+        return Decimal('0.0')
 
     @staticmethod
     def get_total_price_removed_profit(shop) -> Decimal:

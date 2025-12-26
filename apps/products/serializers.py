@@ -104,9 +104,10 @@ class ProductSerializer(serializers.ModelSerializer):
             return currency_serializer.data
 
     def get_income_price(self, product: Product):
-        product_part = ProductPart.objects.filter(is_confirm=True, product=product).order_by('-created_at').first()
-        if product_part is not None:
-            return product_part.income_price
+        from apps.document.models import DocumentItemBalance
+        balance = DocumentItemBalance.objects.filter(product=product).order_by('-created_at').last()
+        if balance is not None:
+            return balance.income_price
         return Decimal('0.0')
 
 

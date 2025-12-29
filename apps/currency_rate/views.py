@@ -117,7 +117,8 @@ class CurrencyRateRetrieveView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return CurrencyRate.objects.filter(shop__in=self.request.user.shops.all())
+        pass
+        # return CurrencyRate.objects.filter(shop__in=self.request.user.shops.all())
 
 
 # Update View

@@ -21,7 +21,7 @@ class AuthViewSet(viewsets.GenericViewSet):
 
     @action(["POST"], detail=False, url_path="send-otp", url_name="send_otp")
     def send_otp(self, request, *args, **kwargs):
-        print(request.headers.get('ShopId'))
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

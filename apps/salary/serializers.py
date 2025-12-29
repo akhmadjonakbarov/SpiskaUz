@@ -31,6 +31,17 @@ class CreateSalaryTransaction(serializers.Serializer):
 
 
 class SalaryTransactionSerializer(serializers.ModelSerializer):
+    user_role = serializers.SerializerMethodField()
+    created_by = serializers.SerializerMethodField()
+
     class Meta:
         model = SalaryTransaction
         fields = "__all__"
+
+    def get_user_role(self, obj: SalaryTransaction):
+        from apps.role_manager.serializer import RoleSerializer
+        return RoleSerializer(obj.user_role, many=False, read_only=True).data
+
+    def get_created_by(self, obj: SalaryTransaction):
+        from apps.users.serializers import SimpleUserSerializer
+        return SimpleUserSerializer(obj.created_by, many=False, read_only=True).data

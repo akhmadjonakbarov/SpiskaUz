@@ -83,9 +83,7 @@ class ProductPartViewSet(viewsets.ModelViewSet):
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
-
         instance: ProductPart = self.get_object()
-
         if instance.is_confirm:
             return Response(
                 {'detail': 'Cannot update a confirmed ProductPart.'},

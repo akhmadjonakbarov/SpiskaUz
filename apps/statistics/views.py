@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from django.utils.dateparse import parse_date
 from typing import Dict
 from apps.shops.models import Shop, ShopBalance, ShopBalanceTransaction
+from apps.statistics.services.debt_calculator import SupplierDebtCalculatorService
 from utils.convertor import Convertor
 from apps.document.models import DocumentItem, Document, DocumentOrder
 from apps.debt.models import Debt
@@ -32,8 +33,7 @@ class BoughtStatisticView(BaseStatisticView):
     def get(self, request, shop_id):
         shop = self.get_shop()
         documents = self.get_queryset()
-        total_debt = self.get_debts(shop)
-
+        total_debt = SupplierDebtCalculatorService(shop).calculate()
         statistics = self.get_statistics(documents, shop_id=shop.id)
 
         data = {

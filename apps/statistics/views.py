@@ -5,13 +5,10 @@ from rest_framework.response import Response
 from django.utils.dateparse import parse_date
 from typing import Dict
 from apps.shops.models import Shop, ShopBalance, ShopBalanceTransaction
-from apps.supplier.models import Supplier
 from utils.convertor import Convertor
 from apps.document.models import DocumentItem, Document, DocumentOrder
-from apps.document.serializers import DocumentSerializerForStatistic
 from apps.debt.models import Debt
 from django.db.models import Sum
-from apps.shops.serializers import ShopTransactionSerializer
 
 
 class BaseStatisticView(GenericAPIView):
@@ -35,26 +32,57 @@ class BoughtStatisticView(BaseStatisticView):
     def get(self, request, shop_id):
         shop = self.get_shop()
         documents = self.get_queryset()
+        total_debt = self.get_debts(shop)
+
         statistics = self.get_statistics(documents, shop_id=shop.id)
 
+        data = {
+            'total_price': statistics.get('total_price'),
+            'total_debt': total_debt,
+            'removed_profit': Decimal('0.0'),
+            'removed_cash': Decimal('0.0'),
+        }
+
         return Response(
-            data=statistics
+            data=data
         )
+
+    def get_total_price(self, documents):
+        start_date = self.request.query_params.get("start_date")
+        end_date = self.request.query_params.get("end_date")
+
+        if start_date:
+            start_date = parse_date(start_date)  # or parse_datetime if datetime
+            documents = documents.filter(created_at__gte=start_date)
+        if end_date:
+            end_date = parse_date(end_date)
+            documents = documents.filter(created_at__lte=end_date)
+
+        total_price = Decimal('0.0')
+        for document in documents:
+            for doc_item in document.document_items.all():
+                if doc_item.product.currency_type.lower() in 'usd':
+                    total_price = Convertor.to_decimal(
+                        total_price) + doc_item.qty * doc_item.sale_price * doc_item.currency_rate_value
+                else:
+                    total_price = Convertor.to_decimal(total_price) + doc_item.qty * doc_item.sale_price
+
+        return total_price
 
     @staticmethod
     def get_debts(shop):
         from apps.currency_rate.models import CurrencyRate
-        currency = CurrencyRate.actives.filter(shop=shop).order_by('-created_at').first()
-        suppliers = shop.suppliers.all()
+        currency = (
+            CurrencyRate.actives.filter(shop=shop).order_by('-created_at').first()
+        )
         total_debt = Decimal('0.0')
 
-        if suppliers:
-            for i in suppliers:
-                balance = i.debt_balance
-                total_debt = total_debt + Convertor.to_decimal(balance.balance_uzs)
-                if balance.balance_usd > 0:
-                    total_debt = Convertor.to_decimal(total_debt) + currency.rate * Convertor.to_decimal(
-                        balance.balance_usd)
+        for i in shop.suppliers.all():
+            balance = i.debt_balance
+            total_debt += Convertor.to_decimal(balance.balance_uzs)
+            if balance.balance_usd > 0 and currency:
+                total_debt = Convertor.to_decimal(total_debt) + currency.rate * Convertor.to_decimal(
+                    balance.balance_usd)
 
         return total_debt
 
@@ -103,17 +131,23 @@ class SoldStatisticView(BaseStatisticView):
     def get(self, request, shop_id):
         shop = self.get_shop()
         total_price = self.get_total_price(shop)
-        total_debt = self.get_total_debt(shop)
+        discount = self.get_total_discount(shop)
+        total_profit = self.get_total_profit(shop)
+
         removed_profit = self.get_total_price_removed_profit(shop)
         removed_cash = self.get_total_price_removed_cash(shop)
 
+        data = {
+            'total_price': total_price,
+            'discount': discount,
+            'agreed_price': Decimal('0.0'),
+            'amount_cash': Decimal('0.0'),
+            'debt': Decimal('0.0'),
+            'total_profit': total_profit,
+        }
+
         return Response(
-            data={
-                'total_price': total_price,
-                'total_debt': total_debt,
-                'removed_profit': removed_profit,
-                'removed_cash': removed_cash
-            }
+            data=data
         )
 
     def get_total_price(self, shop):
@@ -129,6 +163,30 @@ class SoldStatisticView(BaseStatisticView):
                     total_price = Convertor.to_decimal(total_price) + doc_item.qty * doc_item.sale_price
 
         return total_price
+
+    def get_total_income_price(self, shop):
+        total_income_price = Decimal('0.0')
+        documents = Document.actives.filter(shop=shop, doc_type=self.doc_type).prefetch_related("document_items")
+        for document in documents:
+            document_items = document.document_items.all()
+            for doc_item in document_items:
+                if doc_item.product.currency_type.lower() in 'usd':
+                    total_income_price = Convertor.to_decimal(
+                        total_income_price) + doc_item.qty * doc_item.income_price * doc_item.currency_rate_value
+                else:
+                    total_income_price = Convertor.to_decimal(total_income_price) + doc_item.qty * doc_item.income_price
+        return total_income_price
+
+    def get_total_profit(self, shop):
+        return self.get_total_price(shop) - self.get_total_income_price(shop)
+
+    def get_total_discount(self, shop) -> Decimal:
+        total_discount = Decimal('0.0')
+        documents = Document.actives.filter(shop=shop, doc_type=self.doc_type).prefetch_related("document_items")
+        for document in documents:
+            payment_detail = document.payment_detail
+            total_discount = total_discount + Convertor.to_decimal(payment_detail.discount)
+        return total_discount
 
     def get_total_debt(self, shop):
         documents = (

@@ -60,7 +60,7 @@ class CalculateSalaryService:
 
                 total_salary += salary_price
 
-            self.salary_balance.balance += total_salary
-            self.salary_balance.save(update_fields=["balance"])
+            self.salary_balance.personal_salary += total_salary
+            self.salary_balance.save(update_fields=["personal_salary"])
 
             return total_salary

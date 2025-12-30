@@ -5,4 +5,4 @@ from apps.base.admin import BaseAdmin
 
 @admin.register(DailySession)
 class DailySessionAdmin(BaseAdmin):
-    list_display = ('shop', 'is_open', 'date')
+    list_display = ('id','shop', 'is_open', 'date')

@@ -12,7 +12,7 @@ from rest_framework import status
 
 
 class SalaryTransactionViewSet(viewsets.ModelViewSet):
-    queryset = SalaryTransaction.objects.all()
+    queryset = SalaryTransaction.actives.all()
     serializer_class = SalaryTransactionSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['user_role__user__phone',

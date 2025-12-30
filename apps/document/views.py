@@ -8,7 +8,6 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from apps.currency_rate.models import CurrencyRate
-from apps.debt.models import Debt
 from apps.document.factories.document_factory import DocumentFactory, PaymentInfoData, PaymentDetailData
 from apps.document.models import Document, DocumentItem, DocumentItemBalance
 from apps.document.serializers import DocumentSerializer, BuyProductSerializer, SellProductSerializer
@@ -72,20 +71,31 @@ class BuyProductView(GenericAPIView):
                 first_part = ProductPart.objects.get(id=request.data.get("product_part_ids")[0])
                 shop = first_part.shop
 
+                latest = CurrencyRate.objects.order_by('-created_at').filter(
+                    shop=first_part.shop
+                ).first()
+                converted_payed_money = payed_money
+                converted_un_payed_money = un_payed_money
+
+                if first_part.product.currency_type == CURRENCY_USD:
+                    converted_payed_money = Convertor.to_decimal(payed_money) / latest.rate
+                    converted_un_payed_money = Convertor.to_decimal(un_payed_money) / latest.rate
+
                 # Create Document
                 document_factory = DocumentFactory(
                     user=user, shop=shop,
                     doc_type='buy',
                     supplier=supplier,
                     payment_info_data=PaymentInfoData(
-                        first_part=first_part, payed_money=payed_money, un_payed_money=un_payed_money, note=note,
+                        first_part=first_part, payed_money=converted_payed_money,
+                        un_payed_money=converted_un_payed_money, note=note,
                         currency_type=first_part.product.currency_type
                     )
                 )
                 document = document_factory.create()
 
                 # Create Debt Balance
-                self.update_or_create_supplier_debt(first_part, supplier, un_payed_money, request.user)
+                self.update_or_create_supplier_debt(first_part, supplier, converted_un_payed_money, request.user)
 
                 # Process Product Parts
                 self.process_product_parts(request, user, document, supplier)
@@ -158,6 +168,7 @@ class BuyProductView(GenericAPIView):
             )
 
             if first_part.product.currency_type == CURRENCY_USD:
+
                 supplier_debt_balance.balance_usd += Convertor.to_decimal(un_payed_money)
                 SupplierTransaction.objects.create(
                     shop=first_part.shop,
@@ -212,9 +223,7 @@ class SellProductView(GenericAPIView):
         promo_code_id = request.data.get('promo_code', None)
         payment_method = request.data.get('payment_method')
 
-
         promo_code = None
-
 
         if promo_code_id:
             promo_code = PromoCode.objects.get(id=promo_code_id)
@@ -242,7 +251,6 @@ class SellProductView(GenericAPIView):
                 )
 
                 document = document_factory.create()
-
 
                 latest_currency = CurrencyRate.objects.filter(
                     shop=document.shop

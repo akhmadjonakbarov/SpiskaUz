@@ -1,7 +1,7 @@
 from collections import defaultdict
 from decimal import Decimal
 
-from django.db import transaction as django_transaction
+from django.db import transaction as django_transaction, transaction
 from django.db.models import OuterRef, Exists
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -32,7 +32,7 @@ from apps.role_manager.serializer import RoleSerializer
 from apps.shops.filters import OrderFilter, DocumentFilter
 from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance
 from apps.shops.serializers import ChangeExchangeRateSerializer, ShopContactSerializer, ShopSerializer, \
-    ShopMemberSerializer
+    ShopMemberSerializer, ShopBalanceCalculateSerializer
 from apps.shops.serializers import ShopTransactionSerializer
 from apps.supplier.models import Supplier, SupplierDebtBalance, SupplierTransaction
 from apps.supplier.serializers import SupplierSerializer
@@ -589,7 +589,7 @@ class PromocodeActionsMixin:
 
 
 class ShopBalanceMixin:
-    @swagger_auto_schema(request_body=ShopTransactionSerializer)
+    @swagger_auto_schema(request_body=ShopBalanceCalculateSerializer)
     @action(methods=['POST'], url_path="calculate-balance", detail=False)
     def calculate_balance(self, request, *args, **kwargs):
         transaction = self.create_transaction(request)
@@ -631,18 +631,21 @@ class ShopBalanceMixin:
 
     @staticmethod
     def calculate_supplier_debt(supplier_id, amount):
-        supplier = None
-        if supplier_id:
-            supplier = Supplier.objects.get(id=supplier_id)
+        with transaction.atomic():
+            supplier = None
+            if supplier_id:
+                supplier = Supplier.objects.get(id=supplier_id)
 
-        if supplier:
-            debt_balance: SupplierDebtBalance = supplier.debt_balance
-            debt_balance.balance_uzs = debt_balance.balance_uzs - \
-                                       Convertor.to_decimal(amount)
-            SupplierTransaction.objects.create(
-                supplier=supplier, balance=debt_balance, amount=amount,
-                currency_type='uzs', currency_rate=Decimal('0.0'), created_by=supplier.created_by
-            )
+            if supplier:
+                debt_balance: SupplierDebtBalance = supplier.debt_balance
+                debt_balance.balance_uzs = debt_balance.balance_uzs - \
+                                           Convertor.to_decimal(amount)
+                debt_balance.save()
+                SupplierTransaction.objects.create(
+                    supplier=supplier, balance=debt_balance, amount=amount,
+                    currency_type='uzs', currency_rate=Decimal('0.0'), created_by=supplier.created_by,
+                    transaction_type='debt'
+                )
 
     @staticmethod
     def create_transaction(request: Request) -> ShopBalanceTransaction:

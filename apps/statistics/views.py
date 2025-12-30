@@ -34,13 +34,15 @@ class BoughtStatisticView(BaseStatisticView):
         shop = self.get_shop()
         documents = self.get_queryset()
         total_debt = SupplierDebtCalculatorService(shop).calculate()
-        statistics = self.get_statistics(documents, shop_id=shop.id)
+        total_price = self.get_total_price(documents)
+        removed_profit = self.get_total_price_removed_profit(shop)
+        removed_cash = self.get_total_price_removed_cash(shop)
 
         data = {
-            'total_price': statistics.get('total_price'),
+            'total_price': total_price,
             'total_debt': total_debt,
-            'removed_profit': Decimal('0.0'),
-            'removed_cash': Decimal('0.0'),
+            'removed_profit': removed_profit,
+            'removed_cash': removed_cash,
         }
 
         return Response(
@@ -63,9 +65,9 @@ class BoughtStatisticView(BaseStatisticView):
             for doc_item in document.document_items.all():
                 if doc_item.product.currency_type.lower() in 'usd':
                     total_price = Convertor.to_decimal(
-                        total_price) + doc_item.qty * doc_item.sale_price * doc_item.currency_rate_value
+                        total_price) + doc_item.qty * doc_item.income_price * doc_item.currency_rate_value
                 else:
-                    total_price = Convertor.to_decimal(total_price) + doc_item.qty * doc_item.sale_price
+                    total_price = Convertor.to_decimal(total_price) + doc_item.qty * doc_item.income_price
 
         return total_price
 
@@ -123,6 +125,22 @@ class BoughtStatisticView(BaseStatisticView):
             'total_profit': total_profit,
         }
 
+    @staticmethod
+    def get_total_price_removed_profit(shop) -> Decimal:
+        result = ShopBalanceTransaction.objects.filter(
+            kind='loss', shop=shop
+        ).aggregate(total=Sum("amount"))
+        total = result["total"] or Decimal("0")
+        return Convertor.to_decimal(total)
+
+    @staticmethod
+    def get_total_price_removed_cash(shop) -> Decimal:
+        result = ShopBalanceTransaction.objects.filter(
+            kind='cash_loss', shop=shop
+        ).aggregate(total=Sum("amount"))
+        total = result["total"] or Decimal("0")
+        return Convertor.to_decimal(total)
+
 
 class SoldStatisticView(BaseStatisticView):
     permission_classes = (IsAuthenticated,)
@@ -133,9 +151,6 @@ class SoldStatisticView(BaseStatisticView):
         total_price = self.get_total_price(shop)
         discount = self.get_total_discount(shop)
         total_profit = self.get_total_profit(shop)
-
-        removed_profit = self.get_total_price_removed_profit(shop)
-        removed_cash = self.get_total_price_removed_cash(shop)
 
         data = {
             'total_price': total_price,
@@ -203,22 +218,6 @@ class SoldStatisticView(BaseStatisticView):
             order = document.order
 
         return Decimal('0.0')
-
-    @staticmethod
-    def get_total_price_removed_profit(shop) -> Decimal:
-        result = ShopBalanceTransaction.objects.filter(
-            kind='loss', shop=shop
-        ).aggregate(total=Sum("amount"))
-        total = result["total"] or Decimal("0")
-        return Convertor.to_decimal(total)
-
-    @staticmethod
-    def get_total_price_removed_cash(shop) -> Decimal:
-        result = ShopBalanceTransaction.objects.filter(
-            kind='cash_loss', shop=shop
-        ).aggregate(total=Sum("amount"))
-        total = result["total"] or Decimal("0")
-        return Convertor.to_decimal(total)
 
     def get_debts_price(self, shop):
         debts = Debt.objects.filter(

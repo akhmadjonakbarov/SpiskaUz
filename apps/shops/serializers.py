@@ -294,6 +294,26 @@ class ShopTransactionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ShopBalanceCalculateSerializer(serializers.Serializer):
+    supplier = serializers.PrimaryKeyRelatedField(
+        queryset=Supplier.objects.filter(deleted_at=None), required=False,
+    )
+    kind = serializers.ChoiceField(
+        choices=[
+            'loss', 'cash_loss', 'cash_profit', 'cash_income', 'cash_outcome', 'profit'
+        ]
+    )
+    amount = serializers.DecimalField(
+        max_digits=25, decimal_places=2
+    )
+    note = serializers.CharField(
+        required=False
+    )
+    shop = serializers.PrimaryKeyRelatedField(
+        queryset=Shop.actives.all()
+    )
+
+
 class ShopSerializerForRole(serializers.ModelSerializer):
     class Meta:
         model = Shop

@@ -379,8 +379,8 @@ class OrderActionMixin:
         queryset = (
             Order.objects
             .select_related("shop", "customer", "admin")
-            .prefetch_related("items")
-            .filter(shop=shop)
+            .prefetch_related("items").exclude(status="pending")
+            .filter(shop=shop, )
             .order_by("-created_at")
         )
 

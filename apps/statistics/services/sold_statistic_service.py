@@ -12,9 +12,8 @@ class SoldStatisticService:
         self.documents = documents
 
     def get_total_price(self) -> Decimal:
-        items = DocumentItem.objects.filter(
+        items = DocumentItem.actives.filter(
             document__in=self.documents,
-            deleted_at=None,
         ).select_related("product")
 
         total = Decimal("0.0")
@@ -28,9 +27,8 @@ class SoldStatisticService:
         return total
 
     def get_total_income_price(self) -> Decimal:
-        items = DocumentItem.objects.filter(
+        items = DocumentItem.actives.filter(
             document__in=self.documents,
-            deleted_at=None,
         ).select_related("product")
 
         total = Decimal("0.0")
@@ -56,7 +54,7 @@ class SoldStatisticService:
         return Convertor.to_decimal(discount)
 
     def get_total_debt(self) -> Decimal:
-        debts = Debt.objects.filter(
+        debts = Debt.actives.filter(
             shop=self.shop,
             is_paid=False,
             document__in=self.documents
@@ -77,11 +75,16 @@ class SoldStatisticService:
 
         return total - paid
 
+    def get_agreed_price(self) -> Decimal:
+        total_price = self.get_total_price()
+        discount = self.get_total_discount()
+        return total_price - discount
+
     def calculate(self) -> dict:
         return {
             "total_price": self.get_total_price(),
             "discount": self.get_total_discount(),
-            "agreed_price": Decimal("0.0"),
+            "agreed_price": self.get_agreed_price(),
             "amount_cash": Decimal("0.0"),
             "debt": self.get_total_debt(),
             "total_profit": self.get_total_profit(),

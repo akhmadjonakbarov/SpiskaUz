@@ -3,6 +3,8 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, viewsets
 from rest_framework.request import Request
+
+from apps.base.paginations import PageSizePagination
 from apps.salary.models import SalaryTransaction
 from apps.salary.serializers import SalaryTransactionSerializer, CreateSalaryTransaction
 
@@ -18,6 +20,8 @@ class SalaryTransactionViewSet(viewsets.ModelViewSet):
     search_fields = ['user_role__user__phone',
                      'user_role__role', 'description', 'shop']
     ordering_fields = ['date_paid', 'amount']
+
+    pagination_class = PageSizePagination
 
     def get_serializer(self, *args, **kwargs):
         if self.request.method == 'GET':
@@ -114,7 +118,10 @@ class SalaryTransactionViewSet(viewsets.ModelViewSet):
         for backend in self.filter_backends:
             qs = backend().filter_queryset(request, qs, self)
 
-        # Serialize
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 

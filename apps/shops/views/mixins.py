@@ -663,6 +663,27 @@ class ShopBalanceMixin:
         return transaction
 
 
+class ShopBalanceTransactionMixin:
+    transaction_serializer_class = ShopTransactionSerializer
+
+    @action(methods=["GET"], detail=True, url_path="shop-balance-transactions")
+    def shop_balance_transactions(self, request, pk=None, *args, **kwargs):
+        shop_id = pk
+        queryset = ShopBalanceTransaction.objects.filter(shop_id=shop_id)
+
+        page = self.paginate_queryset(queryset)
+        serializer_class = getattr(self, "transaction_serializer_class", None)
+        if not serializer_class:
+            raise ValueError("Transaction serializer class not defined")
+
+        if page is not None:
+            serializer = serializer_class(page, many=True, context={"request": request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = serializer_class(queryset, many=True, context={"request": request})
+        return Response(serializer.data)
+
+
 class SupplierFilterMixin:
     supplier_serializer_class = SupplierSerializer
 

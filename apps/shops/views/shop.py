@@ -8,7 +8,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.shops.models import Shop, Category, ShopBalance
+from apps.shops.models import Shop, Category, ShopBalance, ShopBalanceTransaction
 
 from apps.shops.serializers import ShopSerializer, ShopDetailSerializer
 from common.mixins import ActionPermissionMixin
@@ -25,7 +25,7 @@ from .mixins import (
 
     ShoppingCartActionMixin,
     SubscriptionActionMixin,
-    ShopBalanceMixin, SupplierFilterMixin, DocumentMixin,
+    ShopBalanceMixin, SupplierFilterMixin, DocumentMixin, ShopBalanceTransactionMixin,
 )
 from apps.currency_rate.models import CurrencyRate
 from apps.role_manager.models import Role
@@ -46,6 +46,7 @@ class ShopViewSet(
     ExchangeRateActionsMixin,
     PromocodeActionsMixin,
     ShopBalanceMixin,
+    ShopBalanceTransactionMixin,
     SupplierFilterMixin
 ):
     """

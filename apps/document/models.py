@@ -117,7 +117,7 @@ class PaymentInfo(BaseModelWithUserAndShop):
     document = models.OneToOneField(
         Document,
         related_name="payment_info",
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         blank=True,
         null=True
     )

@@ -285,6 +285,7 @@ class AdminSerializer(serializers.ModelSerializer):
 
 
 class ShopTransactionSerializer(serializers.ModelSerializer):
+    created_by = SimpleUserSerializer(read_only=True)
     supplier = serializers.PrimaryKeyRelatedField(
         queryset=Supplier.objects.filter(deleted_at=None), required=False,
     )

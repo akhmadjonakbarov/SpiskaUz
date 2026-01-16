@@ -676,10 +676,16 @@ class ShopBalanceTransactionMixin:
     @swagger_auto_schema(
         operation_summary="List shop balance transactions",
         operation_description=(
-            "Returns a paginated list of balance transactions for a specific shop. "
-            "Supports filtering by amount and date range."
+                "Returns a paginated list of balance transactions for a specific shop. "
+                "Supports filtering by amount and date range."
         ),
         manual_parameters=[
+            openapi.Parameter(
+                name="kind",
+                in_=openapi.IN_QUERY,
+                description="Filter by transaction kind",
+                type=openapi.TYPE_STRING,
+            ),
             openapi.Parameter(
                 name="amount",
                 in_=openapi.IN_QUERY,
@@ -751,7 +757,6 @@ class ShopBalanceTransactionMixin:
             context={"request": request},
         )
         return Response(serializer.data)
-
 
 
 class SupplierFilterMixin:

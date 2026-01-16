@@ -40,7 +40,7 @@ class ShopBalanceTransactionFilter(django_filters.FilterSet):
         model = ShopBalanceTransaction
         fields = [
             "amount",
-            "created_from",
+            "kind", "created_from",
             "created_to",
         ]
 

@@ -663,12 +663,6 @@ class ShopBalanceMixin:
         return transaction
 
 
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-
-
 class ShopBalanceTransactionMixin:
     transaction_serializer_class = ShopTransactionSerializer
     filterset_class = ShopBalanceTransactionFilter
@@ -686,12 +680,7 @@ class ShopBalanceTransactionMixin:
                 description="Filter by transaction kind",
                 type=openapi.TYPE_STRING,
             ),
-            openapi.Parameter(
-                name="amount",
-                in_=openapi.IN_QUERY,
-                description="Filter by transaction amount",
-                type=openapi.TYPE_STRING,
-            ),
+
             openapi.Parameter(
                 name="created_from",
                 in_=openapi.IN_QUERY,
@@ -732,7 +721,7 @@ class ShopBalanceTransactionMixin:
         serializer_class = self.transaction_serializer_class
 
         queryset = (
-            ShopBalanceTransaction.objects
+            ShopBalanceTransaction.actives
             .filter(shop_id=pk)
             .select_related("shop", "created_by")
             .order_by("-created_at")

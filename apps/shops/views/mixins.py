@@ -29,7 +29,7 @@ from apps.products.serializers import (
 from apps.promocodes.serializers import PromocodeSerializer
 from apps.role_manager.models import Role
 from apps.role_manager.serializer import RoleSerializer
-from apps.shops.filters import OrderFilter, DocumentFilter
+from apps.shops.filters import OrderFilter, DocumentFilter, ShopBalanceTransactionFilter
 from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance
 from apps.shops.serializers import ChangeExchangeRateSerializer, ShopContactSerializer, ShopSerializer, \
     ShopMemberSerializer, ShopBalanceCalculateSerializer
@@ -663,25 +663,95 @@ class ShopBalanceMixin:
         return transaction
 
 
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
+
 class ShopBalanceTransactionMixin:
     transaction_serializer_class = ShopTransactionSerializer
+    filterset_class = ShopBalanceTransactionFilter
 
-    @action(methods=["GET"], detail=True, url_path="shop-balance-transactions")
-    def shop_balance_transactions(self, request, pk=None, *args, **kwargs):
-        shop_id = pk
-        queryset = ShopBalanceTransaction.objects.filter(shop_id=shop_id)
+    @swagger_auto_schema(
+        operation_summary="List shop balance transactions",
+        operation_description=(
+            "Returns a paginated list of balance transactions for a specific shop. "
+            "Supports filtering by amount and date range."
+        ),
+        manual_parameters=[
+            openapi.Parameter(
+                name="amount",
+                in_=openapi.IN_QUERY,
+                description="Filter by transaction amount",
+                type=openapi.TYPE_STRING,
+            ),
+            openapi.Parameter(
+                name="created_from",
+                in_=openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE,
+            ),
+            openapi.Parameter(
+                name="created_to",
+                in_=openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE,
+            ),
+            openapi.Parameter(
+                name="page",
+                in_=openapi.IN_QUERY,
+                description="Page number",
+                type=openapi.TYPE_INTEGER,
+            ),
+            openapi.Parameter(
+                name="page_size",
+                in_=openapi.IN_QUERY,
+                description="Number of items per page",
+                type=openapi.TYPE_INTEGER,
+            ),
+        ],
+        responses={
+            200: ShopTransactionSerializer(many=True),
+        },
+    )
+    @action(
+        methods=["GET"],
+        detail=True,
+        url_path="shop-balance-transactions",
+    )
+    def shop_balance_transactions(self, request, pk=None):
+        serializer_class = self.transaction_serializer_class
+
+        queryset = (
+            ShopBalanceTransaction.objects
+            .filter(shop_id=pk)
+            .select_related("shop", "created_by")
+            .order_by("-created_at")
+        )
+
+        # Apply filters correctly
+        filterset = self.filterset_class(request.GET, queryset=queryset)
+        queryset = filterset.qs
 
         page = self.paginate_queryset(queryset)
-        serializer_class = getattr(self, "transaction_serializer_class", None)
-        if not serializer_class:
-            raise ValueError("Transaction serializer class not defined")
-
         if page is not None:
-            serializer = serializer_class(page, many=True, context={"request": request})
+            serializer = serializer_class(
+                page,
+                many=True,
+                context={"request": request},
+            )
             return self.get_paginated_response(serializer.data)
 
-        serializer = serializer_class(queryset, many=True, context={"request": request})
+        serializer = serializer_class(
+            queryset,
+            many=True,
+            context={"request": request},
+        )
         return Response(serializer.data)
+
 
 
 class SupplierFilterMixin:

@@ -146,7 +146,8 @@ class SubscriptionActionMixin:
 class ProductGroupActionMixin:
     @action(detail=True, methods=["GET"], url_path="product-groups")
     def products_groups(self, request, *args, **kwargs):
-        shop = self.get_object()
+
+        shop = Shop.objects.get(id=kwargs.get("pk"))
 
         # Remove notification for new products for this user and shop
         Notification.objects.filter(
@@ -156,7 +157,7 @@ class ProductGroupActionMixin:
         # Fetch products and their related data
         products = Product.objects.prefetch_related("favorited_by").select_related(
             "category", "group"
-        ).filter(shop=shop)
+        ).filter(shop_id=kwargs.get("pk"))
 
         # Fetch balance products
         balance_products = DocumentItemBalance.objects.filter(
@@ -422,8 +423,11 @@ class ProductActionsMixin:
     )
     @action(detail=True, methods=["GET"])
     def products(self, request, *args, **kwargs):
+
+        shop_id = kwargs.get("pk")
         """Do'kondagi barcha mahsulotlarni olish."""
-        queryset = self.get_object().products.prefetch_related(
+        shop = Shop.objects.get(pk=shop_id)
+        queryset = shop.products.prefetch_related(
             "images", "parts").order_by("position_number")
         filtered_qs = ProductFilter(request.GET, queryset=queryset).qs
         page = self.paginate_queryset(filtered_qs)

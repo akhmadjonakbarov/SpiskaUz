@@ -16,11 +16,6 @@ from rest_framework import status
 class SalaryTransactionViewSet(viewsets.ModelViewSet):
     queryset = SalaryTransaction.actives.all()
     serializer_class = SalaryTransactionSerializer
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['user_role__user__phone',
-                     'user_role__role', 'description', 'shop']
-    ordering_fields = ['date_paid', 'amount']
-
     pagination_class = PageSizePagination
 
     def get_serializer(self, *args, **kwargs):
@@ -106,10 +101,10 @@ class SalaryTransactionViewSet(viewsets.ModelViewSet):
             qs = qs.filter(description__icontains=description)
 
         if paid_date_from:
-            qs = qs.filter(date_paid__date__gte=paid_date_from)
+            qs = qs.filter(date_paid__gte=paid_date_from)
 
         if paid_date_to:
-            qs = qs.filter(date_paid__date__lte=paid_date_to)
+            qs = qs.filter(date_paid__lte=paid_date_to)
 
         if role:
             qs = qs.filter(user_role_id=role)

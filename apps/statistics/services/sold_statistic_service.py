@@ -42,6 +42,8 @@ class SoldStatisticService:
         return total
 
     def get_total_profit(self) -> Decimal:
+        print(f'[+] Sale price: {self.get_total_price()}')
+        print(f'[+] Income price: {self.get_total_income_price()}')
         return self.get_total_price() - self.get_total_income_price()
 
     def get_total_discount(self) -> Decimal:

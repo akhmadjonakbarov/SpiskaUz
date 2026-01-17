@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from django.db.models import Sum
+
 from apps.base.services.debt_calculator import BaseDebtCalculatorService
 
 
@@ -27,3 +29,21 @@ class SupplierDebtCalculatorService(BaseDebtCalculatorService):
 class CustomerDebtCalculatorService(BaseDebtCalculatorService):
     def calculate(self) -> Decimal:
         pass
+
+
+class ShopDebtCalculatorService(BaseDebtCalculatorService):
+    def calculate(self) -> Decimal:
+        orders = self.shop.orders.all()
+        total = Decimal("0.0")
+        for order in orders:
+            total_debt = order.transactions.filter(
+                transaction_type="debt"
+            ).aggregate(
+                total=Sum("amount")
+            )["total"] or 0
+
+            order_items = order.order_items.all()
+            for order_item in order_items:
+                pass
+
+        return total

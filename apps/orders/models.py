@@ -33,18 +33,6 @@ class Order(BaseModel):
         return f"Order #{self.id} - {self.customer} - {self.status}"
 
 
-class OrderPaymentDetail(BaseModel):
-    order = models.OneToOneField(Order, verbose_name="Order", on_delete=models.CASCADE, related_name="payment_detail")
-    payed = models.DecimalField(max_digits=60, decimal_places=5, default=Decimal('0.0'))
-    un_payed = models.DecimalField(max_digits=60, decimal_places=5, default=Decimal('0.0'))
-    payment_method = models.CharField(
-        "Payment Method", max_length=20, choices=OrderPaymentMethod.choices,
-        default=OrderPaymentMethod.CASH
-    )
-
-
-
-
 class OrderItem(BaseModel):
     order = models.ForeignKey(
         Order, on_delete=models.CASCADE, related_name="items", verbose_name="Order"
@@ -61,6 +49,16 @@ class OrderItem(BaseModel):
         return f"OrderItem(order={self.order}, product={self.product}, amount={self.amount})"
 
 
+class OrderPaymentDetail(BaseModel):
+    order = models.OneToOneField(Order, verbose_name="Order", on_delete=models.CASCADE, related_name="payment_detail")
+    payed = models.DecimalField(max_digits=60, decimal_places=5, default=Decimal('0.0'))
+    un_payed = models.DecimalField(max_digits=60, decimal_places=5, default=Decimal('0.0'))
+    payment_method = models.CharField(
+        "Payment Method", max_length=20, choices=OrderPaymentMethod.choices,
+        default=OrderPaymentMethod.CASH
+    )
+
+
 class ProductOrderItemInfo(BaseModel):
     order_item = models.OneToOneField(
         OrderItem, on_delete=models.CASCADE, related_name="product_info", null=True,
@@ -70,3 +68,10 @@ class ProductOrderItemInfo(BaseModel):
     sale_price = models.DecimalField(max_digits=60, decimal_places=5)
     income_price = models.DecimalField(max_digits=60, decimal_places=5)
     currency_rate_value = models.DecimalField(max_digits=60, decimal_places=5, blank=True, null=True)
+
+    @property
+    def total_price(self):
+        if self.order_item.product.currency_type == 'usd':
+            return self.sale_price * self.currency_rate_value * self.amount
+        else:
+            return self.sale_price * self.amount

@@ -19,14 +19,13 @@ class OrderFilter(django_filters.FilterSet):
         label="Created date to (YYYY-MM-DD)",
     )
 
-
-class Meta:
-    model = Order
-    fields = [
-        "status", "customer",
-        "created_from",
-        "created_to",
-    ]
+    class Meta:
+        model = Order
+        fields = [
+            "status", "customer",
+            "created_from",
+            "created_to",
+        ]
 
 
 class ShopBalanceTransactionFilter(django_filters.FilterSet):

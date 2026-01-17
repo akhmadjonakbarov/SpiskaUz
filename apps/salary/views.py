@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, viewsets
@@ -7,7 +8,7 @@ from rest_framework.request import Request
 from apps.base.paginations import PageSizePagination
 from apps.salary.models import SalaryTransaction
 from apps.salary.serializers import SalaryTransactionSerializer, CreateSalaryTransaction
-
+from .filters import SalaryTransactionFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
@@ -15,118 +16,109 @@ from rest_framework import status
 
 class SalaryTransactionViewSet(viewsets.ModelViewSet):
     queryset = SalaryTransaction.actives.all()
-    serializer_class = SalaryTransactionSerializer
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['user_role__user__phone',
-                     'user_role__role', 'description', 'shop']
-    ordering_fields = ['date_paid', 'amount']
-
     pagination_class = PageSizePagination
 
-    def get_serializer(self, *args, **kwargs):
-        if self.request.method == 'GET':
-            serializer_class = SalaryTransactionSerializer
-        else:
-            serializer_class = CreateSalaryTransaction
+    # ---- Filters ----
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_class = SalaryTransactionFilter
 
-        kwargs.setdefault('context', self.get_serializer_context())
-        return serializer_class(*args, **kwargs)
+    search_fields = [
+        "user_role__user__phone",
+        "user_role__role",
+        "description",
+        "user_role__shop__name",
+    ]
 
-        # Define manual parameters
+    ordering_fields = ["date_paid", "amount", "created_at"]
+    ordering = ["-date_paid"]  # default ordering
 
-    list_params = [
+    # ---- Serializer switch ----
+    def get_serializer_class(self):
+        if self.action in ["create", "update", "partial_update"]:
+            return CreateSalaryTransaction
+        return SalaryTransactionSerializer
+
+    # ---- Swagger parameters ----
+    swagger_filter_params = [
         openapi.Parameter(
-            'min_amount',
-            openapi.IN_QUERY,
-            description="minimum amount (>=)", type=openapi.TYPE_NUMBER
+            "user_role", openapi.IN_QUERY,
+            description="Filter by user_role ID",
+            type=openapi.TYPE_INTEGER
         ),
         openapi.Parameter(
-            'max_amount',
-            openapi.IN_QUERY, description="maximum amount (<=)",
+            "shop", openapi.IN_QUERY,
+            description="Filter by shop ID",
+            type=openapi.TYPE_INTEGER
+        ),
+        openapi.Parameter(
+            "min_amount", openapi.IN_QUERY,
+            description="Minimum amount (>=)",
             type=openapi.TYPE_NUMBER
         ),
         openapi.Parameter(
-            'date_from', openapi.IN_QUERY, description="date_paid from (YYYY-MM-DD)",
-            type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE
+            "max_amount", openapi.IN_QUERY,
+            description="Maximum amount (<=)",
+            type=openapi.TYPE_NUMBER
         ),
         openapi.Parameter(
-            'date_to', openapi.IN_QUERY, description="date_paid to (YYYY-MM-DD)",
+            "date_paid_from", openapi.IN_QUERY,
+            description="Paid date from (YYYY-MM-DD)",
             type=openapi.TYPE_STRING,
             format=openapi.FORMAT_DATE
         ),
         openapi.Parameter(
-            'description', openapi.IN_QUERY, description="filter by description (icontains)",
+            "date_paid_to", openapi.IN_QUERY,
+            description="Paid date to (YYYY-MM-DD)",
+            type=openapi.TYPE_STRING,
+            format=openapi.FORMAT_DATE
+        ),
+        openapi.Parameter(
+            "created_from", openapi.IN_QUERY,
+            description="Created date from (YYYY-MM-DD)",
+            type=openapi.TYPE_STRING,
+            format=openapi.FORMAT_DATE
+        ),
+        openapi.Parameter(
+            "created_to", openapi.IN_QUERY,
+            description="Created date to (YYYY-MM-DD)",
+            type=openapi.TYPE_STRING,
+            format=openapi.FORMAT_DATE
+        ),
+        openapi.Parameter(
+            "description", openapi.IN_QUERY,
+            description="Filter by description (icontains)",
             type=openapi.TYPE_STRING
         ),
         openapi.Parameter(
-            'shop', openapi.IN_QUERY, description="filter by user_role.shop id",
+            "search", openapi.IN_QUERY,
+            description="Search (phone, role, description)",
             type=openapi.TYPE_STRING
         ),
         openapi.Parameter(
-            'search', openapi.IN_QUERY, description="DRF search (phone, role, description)",
+            "ordering", openapi.IN_QUERY,
+            description="Ordering, e.g. amount or -date_paid",
             type=openapi.TYPE_STRING
         ),
         openapi.Parameter(
-            'ordering', openapi.IN_QUERY, description="ordering, e.g. amount or -date_paid",
-            type=openapi.TYPE_STRING
-        ),
-        openapi.Parameter(
-            'page', openapi.IN_QUERY, description="page number (if using pagination)",
-            type=openapi.TYPE_INTEGER
-        ),
-        openapi.Parameter(
-            'role', openapi.IN_QUERY, description="filtering transactions by role(id)",
+            "page", openapi.IN_QUERY,
+            description="Page number",
             type=openapi.TYPE_INTEGER
         ),
     ]
 
-    @swagger_auto_schema(manual_parameters=list_params, responses={200: SalaryTransactionSerializer(many=True)})
+    @swagger_auto_schema(
+        manual_parameters=swagger_filter_params,
+        responses={200: SalaryTransactionSerializer(many=True)}
+    )
     def list(self, request, *args, **kwargs):
-        qs = super().get_queryset()
-
-        # --- Extra filters ---
-        min_amount = request.query_params.get("min_amount")
-        max_amount = request.query_params.get("max_amount")
-        date_from = request.query_params.get("date_from")
-        date_to = request.query_params.get("date_to")
-        description = request.query_params.get("description")
-        shop = request.query_params.get("shop")
-        role = request.query_params.get("role")
-
-        if min_amount:
-            qs = qs.filter(amount__gte=min_amount)
-
-        if shop:
-            qs = qs.filter(user_role__shop_id=shop)
-
-        if max_amount:
-            qs = qs.filter(amount__lte=max_amount)
-
-        if description:
-            qs = qs.filter(description__icontains=description)
-
-        if date_from:
-            qs = qs.filter(date_paid__date__gte=date_from)
-
-        if date_to:
-            qs = qs.filter(date_paid__date__lte=date_to)
-
-        if role:
-            qs = qs.filter(user_role_id=role)
-
-        # --- Apply DRF Search + Ordering ---
-        for backend in self.filter_backends:
-            qs = backend().filter_queryset(request, qs, self)
-
-        page = self.paginate_queryset(qs)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+        return super().list(request, *args, **kwargs)
 
     def destroy(self, request, pk=None):
-        instance = get_object_or_404(self.queryset, pk=pk)
+        instance = self.get_object()
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

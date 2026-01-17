@@ -375,13 +375,11 @@ class OrderActionMixin:
         url_path="orders",
     )
     def orders(self, request, pk=None):
-        shop = self.get_object()
-
         queryset = (
             Order.objects
             .select_related("shop", "customer", "admin")
             .prefetch_related("items").exclude(status="pending")
-            .filter(shop=shop, )
+            .filter(shop_id=pk, )
             .order_by("-created_at")
         )
 

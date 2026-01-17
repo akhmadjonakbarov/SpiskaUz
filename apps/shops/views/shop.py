@@ -136,6 +136,6 @@ class ShopViewSet(
         )
 
     def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
+        instance = Shop.actives.get(id=kwargs["pk"])
         serializer = ShopDetailSerializer(instance, many=False, context={"request": request})
         return Response(serializer.data)

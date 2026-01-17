@@ -41,14 +41,13 @@ class ShopBalanceTransactionFilter(django_filters.FilterSet):
         label="Created date to (YYYY-MM-DD)",
     )
 
+    class Meta:
+        model = ShopBalanceTransaction
+        fields = [
 
-class Meta:
-    model = ShopBalanceTransaction
-    fields = [
-
-        "kind", "created_from",
-        "created_to",
-    ]
+            "kind", "created_from",
+            "created_to",
+        ]
 
 
 class DocumentFilter(django_filters.FilterSet):

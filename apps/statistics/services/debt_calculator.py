@@ -42,8 +42,8 @@ class ShopDebtCalculatorService(BaseDebtCalculatorService):
                 total=Sum("amount")
             )["total"] or 0
 
-            order_items = order.order_items.all()
-            for order_item in order_items:
-                pass
+            difference_of_debt = order.payment_detail.un_payed - total_debt
+            if difference_of_debt > 0:
+                total += difference_of_debt
 
         return total

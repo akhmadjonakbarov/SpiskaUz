@@ -1,8 +1,9 @@
 from decimal import Decimal
 from django.db.models import F, Sum
+
+from apps.statistics.services.debt_calculator import ShopDebtCalculatorService
 from utils.convertor import Convertor
 from apps.document.models import DocumentItem
-from apps.debt.models import Debt
 
 
 class SoldStatisticService:
@@ -56,26 +57,7 @@ class SoldStatisticService:
         return Convertor.to_decimal(discount)
 
     def get_total_debt(self) -> Decimal:
-        debts = Debt.actives.filter(
-            shop=self.shop,
-            is_paid=False,
-            document__in=self.documents
-        ).select_related("document")
-
-        total = Decimal("0.0")
-        paid = Decimal("0.0")
-
-        for debt in debts:
-            paid += Convertor.to_decimal(debt.paid_money)
-
-            items = debt.document.document_items.filter(deleted_at=None).select_related("product")
-            for item in items:
-                price = item.qty * item.sale_price
-                if item.product.currency_type.lower() == "usd":
-                    price *= item.currency_rate_value
-                total += Convertor.to_decimal(price)
-
-        return total - paid
+        return ShopDebtCalculatorService(self.shop).calculate()
 
     def get_agreed_price(self) -> Decimal:
         total_price = self.get_total_price()

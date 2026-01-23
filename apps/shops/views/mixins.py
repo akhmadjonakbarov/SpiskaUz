@@ -820,6 +820,12 @@ class DocumentMixin:
                 description="Items per page",
                 type=openapi.TYPE_INTEGER,
             ),
+            openapi.Parameter(
+                "user_id",
+                openapi.IN_QUERY,
+                description="Admin ID",
+                type=openapi.TYPE_STRING,
+            )
         ],
         responses={200: OrderSerializer(many=True)},
     )

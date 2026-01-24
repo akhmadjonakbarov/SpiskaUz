@@ -289,10 +289,17 @@ class ShopTransactionSerializer(serializers.ModelSerializer):
     supplier = serializers.PrimaryKeyRelatedField(
         queryset=Supplier.objects.filter(deleted_at=None), required=False,
     )
+    transaction_type = serializers.SerializerMethodField()
 
     class Meta:
         model = ShopBalanceTransaction
         fields = '__all__'
+
+    def get_transaction_type(self, transaction: ShopBalanceTransaction):
+        if transaction.kind in ['profit', 'cash_income', 'cash_profit']:
+            return 'income'
+        else:
+            return 'outcome'
 
 
 class ShopBalanceCalculateSerializer(serializers.Serializer):

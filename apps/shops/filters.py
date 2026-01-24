@@ -28,6 +28,8 @@ class OrderFilter(django_filters.FilterSet):
         ]
 
 
+import django_filters
+
 class ShopBalanceTransactionFilter(django_filters.FilterSet):
     created_from = django_filters.DateFilter(
         field_name="created_at",
@@ -40,13 +42,30 @@ class ShopBalanceTransactionFilter(django_filters.FilterSet):
         label="Created date to (YYYY-MM-DD)",
     )
 
+    transaction_type = django_filters.CharFilter(
+        method="filter_transaction_type",
+        label="Transaction type (income | outcome)",
+    )
+
     class Meta:
         model = ShopBalanceTransaction
         fields = [
-
-            "kind", "created_from",
+            "kind",
+            "transaction_type",
+            "created_from",
             "created_to",
         ]
+
+    def filter_transaction_type(self, queryset, name, value):
+        income_kinds = ['profit', 'cash_income', 'cash_profit']
+
+        if value == 'income':
+            return queryset.filter(kind__in=income_kinds)
+        elif value == 'outcome':
+            return queryset.exclude(kind__in=income_kinds)
+
+        return queryset
+
 
 
 class DocumentFilter(django_filters.FilterSet):

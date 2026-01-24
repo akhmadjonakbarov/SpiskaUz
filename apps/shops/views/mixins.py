@@ -8,7 +8,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.parsers import JSONParser
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -590,79 +590,161 @@ class PromocodeActionsMixin:
         return Response(serializer.data)
 
 
+# class ShopBalanceMixin:
+#     @swagger_auto_schema(request_body=ShopBalanceCalculateSerializer)
+#     @action(methods=['POST'], url_path="calculate-balance", detail=False)
+#     def calculate_balance(self, request, *args, **kwargs):
+#         transaction = self.create_transaction(request)
+#         kind = request.data.get('kind')
+#         shop = Shop.objects.get(id=request.data.get('shop'))
+#         amount = request.data.get('amount')
+#         balance: ShopBalance = shop.balance
+#         supplier_id = request.data.get('supplier', None)
+#
+#         with django_transaction.atomic():
+#             if kind == 'profit':
+#                 balance.profit = balance.profit + Convertor.to_decimal(amount)
+#             if kind == 'cash_income':
+#                 balance.cash = balance.cash + Convertor.to_decimal(amount)
+#             if kind == 'cash_profit':
+#                 balance.profit = balance.profit + Convertor.to_decimal(amount)
+#                 balance.cash = balance.cash + Convertor.to_decimal(amount)
+#
+#             if kind == 'loss':
+#                 balance.profit = balance.profit - Convertor.to_decimal(amount)
+#                 self.calculate_supplier_debt(supplier_id, amount)
+#
+#             if kind == 'cash_outcome':
+#                 balance.cash = balance.cash - Convertor.to_decimal(amount)
+#                 self.calculate_supplier_debt(supplier_id, amount)
+#
+#             if kind == 'cash_loss':
+#                 balance.cash = balance.cash - Convertor.to_decimal(amount)
+#                 balance.profit = balance.profit - Convertor.to_decimal(amount)
+#                 self.calculate_supplier_debt(supplier_id, amount)
+#
+#             balance.save()
+#
+#         serializer = ShopTransactionSerializer(transaction, many=False)
+#
+#         return Response(
+#             serializer.data,
+#         )
+#
+#     @staticmethod
+#     def calculate_supplier_debt(supplier_id, amount):
+#         with transaction.atomic():
+#             supplier = None
+#             if supplier_id:
+#                 supplier = Supplier.objects.get(id=supplier_id)
+#
+#             if supplier:
+#                 debt_balance: SupplierDebtBalance = supplier.debt_balance
+#                 debt_balance.balance_uzs = debt_balance.balance_uzs - \
+#                                            Convertor.to_decimal(amount)
+#                 debt_balance.save()
+#                 SupplierTransaction.objects.create(
+#                     supplier=supplier, balance=debt_balance, amount=amount,
+#                     currency_type='uzs', currency_rate=Decimal('0.0'), created_by=supplier.created_by,
+#                     transaction_type='debt'
+#                 )
+#
+#     @staticmethod
+#     def create_transaction(request: Request) -> ShopBalanceTransaction:
+#         kind = request.data.get('kind')
+#         amount = request.data.get('amount')
+#         note = request.data.get('note')
+#         shop_id = request.data.get('shop')
+#         shop = Shop.objects.get(id=shop_id)
+#         transaction = ShopBalanceTransaction.objects.create(
+#             created_by=request.user,
+#             amount=amount, note=note, shop=shop, kind=kind
+#         )
+#
+#         print("[+] Transaction was created")
+#         return transaction
+
 class ShopBalanceMixin:
     @swagger_auto_schema(request_body=ShopBalanceCalculateSerializer)
-    @action(methods=['POST'], url_path="calculate-balance", detail=False)
-    def calculate_balance(self, request, *args, **kwargs):
-        transaction = self.create_transaction(request)
-        kind = request.data.get('kind')
-        shop = Shop.objects.get(id=request.data.get('shop'))
-        amount = request.data.get('amount')
+    @action(
+        methods=["POST"],
+        url_path="calculate-balance",
+        detail=False,
+        parser_classes=[JSONParser, FormParser, MultiPartParser],
+    )
+    def calculate_balance(self, request: Request, *args, **kwargs):
+        # ✅ Validate input first
+        input_serializer = ShopBalanceCalculateSerializer(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+        data = input_serializer.validated_data
+
+        kind = data["kind"]
+        amount = Convertor.to_decimal(data["amount"])
+        shop: Shop = data["shop"]
+        supplier = data.get("supplier")
+
         balance: ShopBalance = shop.balance
-        supplier_id = request.data.get('supplier', None)
 
         with django_transaction.atomic():
-            if kind == 'profit':
-                balance.profit = balance.profit + Convertor.to_decimal(amount)
-            if kind == 'cash_income':
-                balance.cash = balance.cash + Convertor.to_decimal(amount)
-            if kind == 'cash_profit':
-                balance.profit = balance.profit + Convertor.to_decimal(amount)
-                balance.cash = balance.cash + Convertor.to_decimal(amount)
+            # ✅ Create transaction record
+            transaction = ShopBalanceTransaction.objects.create(
+                created_by=request.user,
+                amount=amount,
+                note=data.get("note"),
+                shop=shop,
+                kind=kind,
+            )
 
-            if kind == 'loss':
-                balance.profit = balance.profit - Convertor.to_decimal(amount)
-                self.calculate_supplier_debt(supplier_id, amount)
+            # ✅ Balance calculations
+            if kind == "profit":
+                balance.profit += amount
 
-            if kind == 'cash_outcome':
-                balance.cash = balance.cash - Convertor.to_decimal(amount)
-                self.calculate_supplier_debt(supplier_id, amount)
+            elif kind == "cash_income":
+                balance.cash += amount
 
-            if kind == 'cash_loss':
-                balance.cash = balance.cash - Convertor.to_decimal(amount)
-                balance.profit = balance.profit - Convertor.to_decimal(amount)
-                self.calculate_supplier_debt(supplier_id, amount)
+            elif kind == "cash_profit":
+                balance.profit += amount
+                balance.cash += amount
+
+            elif kind == "loss":
+                balance.profit -= amount
+                self.calculate_supplier_debt(supplier, amount)
+
+            elif kind == "cash_outcome":
+                balance.cash -= amount
+                self.calculate_supplier_debt(supplier, amount)
+
+            elif kind == "cash_loss":
+                balance.cash -= amount
+                balance.profit -= amount
+                self.calculate_supplier_debt(supplier, amount)
 
             balance.save()
 
-        serializer = ShopTransactionSerializer(transaction, many=False)
+        output_serializer = ShopTransactionSerializer(transaction)
+        return Response(output_serializer.data)
 
-        return Response(
-            serializer.data,
-        )
-
-    @staticmethod
-    def calculate_supplier_debt(supplier_id, amount):
-        with transaction.atomic():
-            supplier = None
-            if supplier_id:
-                supplier = Supplier.objects.get(id=supplier_id)
-
-            if supplier:
-                debt_balance: SupplierDebtBalance = supplier.debt_balance
-                debt_balance.balance_uzs = debt_balance.balance_uzs - \
-                                           Convertor.to_decimal(amount)
-                debt_balance.save()
-                SupplierTransaction.objects.create(
-                    supplier=supplier, balance=debt_balance, amount=amount,
-                    currency_type='uzs', currency_rate=Decimal('0.0'), created_by=supplier.created_by,
-                    transaction_type='debt'
-                )
+    # ------------------------------------------------------------------
 
     @staticmethod
-    def create_transaction(request: Request) -> ShopBalanceTransaction:
-        kind = request.data.get('kind')
-        amount = request.data.get('amount')
-        note = request.data.get('note')
-        shop_id = request.data.get('shop')
-        shop = Shop.objects.get(id=shop_id)
-        transaction = ShopBalanceTransaction.objects.create(
-            created_by=request.user,
-            amount=amount, note=note, shop=shop, kind=kind
-        )
+    def calculate_supplier_debt(supplier: Supplier | None, amount: Decimal):
+        if not supplier:
+            return
 
-        print("[+] Transaction was created")
-        return transaction
+        with django_transaction.atomic():
+            debt_balance: SupplierDebtBalance = supplier.debt_balance
+            debt_balance.balance_uzs -= Convertor.to_decimal(amount)
+            debt_balance.save()
+
+            SupplierTransaction.objects.create(
+                supplier=supplier,
+                balance=debt_balance,
+                amount=amount,
+                currency_type="uzs",
+                currency_rate=Decimal("0.0"),
+                created_by=supplier.created_by,
+                transaction_type="debt",
+            )
 
 
 class ShopBalanceTransactionMixin:
@@ -682,7 +764,12 @@ class ShopBalanceTransactionMixin:
                 description="Filter by transaction kind",
                 type=openapi.TYPE_STRING,
             ),
-
+            openapi.Parameter(
+                name="transaction_type",
+                in_=openapi.IN_QUERY,
+                description="Filter by transaction type (income, outcome)",
+                type=openapi.TYPE_STRING,
+            ),
             openapi.Parameter(
                 name="created_from",
                 in_=openapi.IN_QUERY,

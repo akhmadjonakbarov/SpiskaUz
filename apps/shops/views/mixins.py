@@ -46,7 +46,7 @@ class SubscriptionActionMixin:
     @action(detail=True, methods=["POST"], parser_classes=[JSONParser])
     def join(self, request, *args, **kwargs):
         """Foydalanuvchini do'konga a'zo qilish."""
-        shop = self.get_object()
+        shop = Shop.actives.get(id=kwargs['pk'])
         user = request.user
 
         if user not in shop.members.all():
@@ -59,7 +59,7 @@ class SubscriptionActionMixin:
     @action(detail=True, methods=["POST"], parser_classes=[JSONParser])
     def leave(self, request, *args, **kwargs):
         """Foydalanuvchini do'kondan chiqarish."""
-        shop = self.get_object()
+        shop = Shop.actives.get(id=kwargs.get("pk"))
         user = request.user
 
         if user in shop.members.all():
@@ -119,7 +119,7 @@ class SubscriptionActionMixin:
     )
     @action(methods=["GET"], detail=True, serializer_class=ShopMemberSerializer)
     def members(self, request, pk=None):
-        shop = self.get_object()
+        shop = Shop.objects.get(id=pk)
         Through = Shop.members.through
 
         admin_subquery = Role.objects.filter(
@@ -261,7 +261,7 @@ class ProductGroupActionMixin:
     @action(["PUT"], detail=True, url_path="merge-products", serializer_class=CreateProductsGroupSerializer,
             parser_classes=[JSONParser])
     def merge_products(self, request, *args, **kwargs):
-        shop = self.get_object()
+        shop = Shop.actives.get(id=kwargs.get("pk"))
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -287,7 +287,6 @@ class ProductGroupActionMixin:
     @action(["PUT"], detail=True, url_path="separate-product", serializer_class=SeparateProductsSerializer,
             parser_classes=[JSONParser])
     def separate_product(self, request, *args, **kwargs):
-        self.get_object()
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -306,7 +305,7 @@ class ShoppingCartActionMixin:
             permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, *args, **kwargs):
         user = request.user
-        shop = self.get_object()
+        shop = Shop.actives.get(id=kwargs.get("pk"))
 
         cart, created = (
             Cart.objects.select_related(
@@ -466,7 +465,7 @@ class ProductActionsMixin:
     @action(detail=True, methods=["GET"], url_path="products-groups-user")
     def products_groups_user(self, request, *args, **kwargs):
         """Do'kondagi barcha mahsulotlarni guruhlar bo'yicha olish."""
-        queryset = self.get_object().products.prefetch_related(
+        queryset = Shop.actives.get(id=kwargs.get("pk")).products.prefetch_related(
             "images", "parts").order_by("position_number")
         products = ProductFilter(request.GET, queryset=queryset).qs
 
@@ -509,7 +508,7 @@ class ProductActionsMixin:
             serializer_class=ProductPositionSerializer, parser_classes=[JSONParser])
     def update_products_order(self, request, *args, **kwargs):
         """Mahsulotlar tartibini yangilash."""
-        shop = self.get_object()
+        shop = Shop.actives.get(id=kwargs.get("pk"))
         serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
 
@@ -532,7 +531,7 @@ class ContactActionsMixin:
     @action(methods=["GET"], detail=True, serializer_class=ShopContactSerializer)
     def contacts(self, request, *args, **kwargs):
         """Do'kondagi barcha kontaktlarni olish."""
-        shop = self.get_object()
+        shop = Shop.actives.get(id=kwargs.get("pk"))
         contacts = shop.contacts.all()
         serializer = ShopContactSerializer(
             contacts, many=True, context={"request": request})
@@ -543,7 +542,7 @@ class AdminActionsMixin:
     @action(methods=["GET"], detail=True, serializer_class=RoleSerializer)
     def admins(self, request, *args, **kwargs):
         """Do'kon adminlar ro'yxatini olish."""
-        shop = self.get_object()
+        shop = Shop.actives.get(id=kwargs.get("pk"))
 
         # get all roles in this shop
         roles = shop.roles.all()
@@ -564,7 +563,7 @@ class ExchangeRateActionsMixin:
     def change_exchange_rate(self, request, *args, **kwargs):
         """Do'konning valyuta kursini yangilash."""
         self.check_permissions(request)
-        shop = self.get_object()
+        shop = Shop.actives.get(id=kwargs.get("pk"))
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -585,7 +584,7 @@ class PromocodeActionsMixin:
     @action(methods=["GET"], detail=True, serializer_class=PromocodeSerializer)
     def promocodes(self, request, *args, **kwargs):
         """Do'kondagi promokodlarni olish."""
-        promocodes = self.get_object().promocodes.all()
+        promocodes = Shop.actives.get(id=kwargs.get("pk")).promocodes.all()
         serializer = self.get_serializer(promocodes, many=True)
         return Response(serializer.data)
 

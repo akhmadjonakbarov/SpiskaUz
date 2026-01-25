@@ -7,7 +7,7 @@ from apps.base.models import BaseModelWithUserAndShop, BaseModel, PriceAndQtyMix
 
 from apps.currency_rate.models import CurrencyRate
 from apps.orders.models import Order
-from apps.products.models import Product
+
 from apps.promocodes.models import PromoCode
 from apps.supplier.models import Supplier
 from constants.currency_choices import CURRENCY_CHOICES
@@ -29,7 +29,7 @@ class BaseDocumentItem(BaseModelWithUserAndShop, PriceAndQtyMixinWithPercentage)
 
 
 class Document(BaseModelWithUserAndShop):
-    shop = models.ForeignKey("shops.Shop", on_delete=models.SET_NULL, null=True, blank=True, related_name="documents")
+    shop = models.ForeignKey("shops.Shop", on_delete=models.CASCADE, null=True, blank=True, related_name="documents")
     DOC_TYPE = (
         ('buy', 'Buy'),
         ('sell', 'Sell'),

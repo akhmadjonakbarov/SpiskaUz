@@ -1,5 +1,5 @@
 from django.db import models
-
+from decimal import Decimal
 from apps.base.models import BaseModel
 from apps.users.models import User
 
@@ -15,7 +15,7 @@ class Role(BaseModel):
         "shops.Shop", on_delete=models.CASCADE, related_name="roles", verbose_name="Shop"
     )
     salary = models.DecimalField(
-        max_digits=30, decimal_places=5, blank=True, null=True, verbose_name="Salary"
+        max_digits=30, decimal_places=5, blank=True, null=True, verbose_name="Salary", default=Decimal("0.0")
     )
     role = models.CharField(
         choices=ROLES, max_length=20, verbose_name="Role", blank=True, null=True

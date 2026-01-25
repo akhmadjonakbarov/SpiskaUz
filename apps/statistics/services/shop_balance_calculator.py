@@ -1,9 +1,6 @@
 from decimal import Decimal
-
 from django.db.models import Sum
-
 from apps.shops.models import ShopBalanceTransaction
-
 from utils.convertor import Convertor
 
 

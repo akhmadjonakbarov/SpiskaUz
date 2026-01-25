@@ -59,8 +59,8 @@ class DeleteSellDocumentView(GenericAPIView):
     serializer_class = DocumentSerializer
     queryset = Document.objects.all()
 
-    def delete(self, request, id):
-        document = self.get_queryset().filter(id=id).first()
+    def delete(self, request, pk):
+        document = self.get_queryset().filter(id=pk).first()
         if document is None:
             return Response({"message": "Document not found."}, status=status.HTTP_404_NOT_FOUND)
 

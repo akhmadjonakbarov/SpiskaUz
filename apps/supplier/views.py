@@ -131,7 +131,10 @@ class SupplierDebtPaymentHistoryView(RetrieveAPIView):
     serializer_class = DebtPaymentHistorySerializer
 
     def get_queryset(self):
-        supplier_id = self.kwargs['pk']
-        return self.queryset.filter(
-            supplier_id=supplier_id
-        )
+        # supplier_id = self.kwargs['pk']
+        # return self.queryset.filter(
+        #     supplier_id=supplier_id
+        # )
+        return Response(data={
+            "message": "Debt history has been created"
+        })

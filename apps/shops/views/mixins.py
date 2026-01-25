@@ -907,7 +907,7 @@ class DocumentMixin:
                 type=openapi.TYPE_INTEGER,
             ),
             openapi.Parameter(
-                "user_id",
+                "user",
                 openapi.IN_QUERY,
                 description="Admin ID",
                 type=openapi.TYPE_STRING,
@@ -916,9 +916,10 @@ class DocumentMixin:
         responses={200: OrderSerializer(many=True)},
     )
     @action(methods=["GET"], detail=True, url_path="documents")
-    def documents(self, request, pk=None, *args, **kwargs):
-        shop_id = pk
-        queryset = Document.actives.filter(shop_id=shop_id)
+    def documents(self, request,  *args, **kwargs):
+        shop = Shop.actives.get(id=kwargs.get("pk"))
+
+        queryset = Document.actives.filter(shop=shop)
         filtered_qs = DocumentFilter(request.GET, queryset=queryset).qs
 
         page = self.paginate_queryset(filtered_qs)

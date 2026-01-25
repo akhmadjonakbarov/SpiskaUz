@@ -70,7 +70,7 @@ class ShopBalanceTransactionFilter(django_filters.FilterSet):
 
 class DocumentFilter(django_filters.FilterSet):
     doc_type = django_filters.CharFilter(field_name="doc_type")
-    user = django_filters.CharFilter(field_name="user_id")
+    user = django_filters.CharFilter(field_name="user")
     created_from = django_filters.DateFilter(
         field_name="created_at",
         lookup_expr="date__gte",

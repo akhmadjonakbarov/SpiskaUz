@@ -922,7 +922,7 @@ class DocumentMixin:
                 type=openapi.TYPE_INTEGER,
             ),
             openapi.Parameter(
-                "user",
+                "user_id",
                 openapi.IN_QUERY,
                 description="Admin ID",
                 type=openapi.TYPE_STRING,

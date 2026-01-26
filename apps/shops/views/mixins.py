@@ -381,19 +381,18 @@ class OrderActionMixin:
     )
     def orders(self, request, pk):
         exclude = request.query_params.get("exclude")
+        queryset = (
+            Order.objects
+            .select_related("shop", "customer", "admin")
+            .prefetch_related("items")
+            .filter(shop_id=pk)
+            .order_by("-created_at")
+        )
         if exclude is not None:
             queryset = (
                 Order.objects
                 .select_related("shop", "customer", "admin")
                 .prefetch_related("items").exclude(status=exclude)
-                .filter(shop_id=pk)
-                .order_by("-created_at")
-            )
-        else:
-            queryset = (
-                Order.objects
-                .select_related("shop", "customer", "admin")
-                .prefetch_related("items").exclude(status="pending")
                 .filter(shop_id=pk)
                 .order_by("-created_at")
             )

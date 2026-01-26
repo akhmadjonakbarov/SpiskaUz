@@ -11,7 +11,7 @@ from rest_framework.response import Response
 
 from apps.document.models import Document
 from apps.shops.models import Shop
-from apps.statistics.selectors.document_selector import DocumentSelector
+from apps.statistics.selectors.document_selector import DocumentSelector, ShopBalanceTransactionSelector
 from apps.statistics.services.bought_statistic_service import BoughtStatisticService
 from apps.statistics.services.sold_statistic_service import SoldStatisticService
 
@@ -60,7 +60,7 @@ class BoughtStatisticView(BaseStatisticView):
             from_date=from_date,
             to_date=to_date
         )
-        data = BoughtStatisticService(shop, documents).calculate()
+        data = BoughtStatisticService(shop, documents, ).calculate(from_date=from_date, to_date=to_date)
 
         return Response(
             data=data
@@ -95,7 +95,10 @@ class SoldStatisticView(BaseStatisticView):
             to_date=to_date
         )
 
-        data = SoldStatisticService(shop, documents).calculate()
+        shop_balance_transactions = ShopBalanceTransactionSelector.filter_shop_balance_transactions(
+            shop=shop, from_date=from_date, to_date=to_date
+        )
+        data = SoldStatisticService(shop, documents, shop_balance_transactions).calculate()
 
         return Response(
             data=data

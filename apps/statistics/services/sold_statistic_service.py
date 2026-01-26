@@ -1,7 +1,7 @@
 from decimal import Decimal
-from django.db.models import F, Sum
-
+from django.db.models import Sum
 from apps.shops.models import ShopBalance
+from apps.shops.services.shop_balance_calculator import ShopBalanceTransactionCalculatorService
 from apps.statistics.services.debt_calculator import ShopDebtCalculatorService
 from utils.convertor import Convertor
 from apps.document.models import DocumentItem
@@ -9,9 +9,10 @@ from apps.document.models import DocumentItem
 
 class SoldStatisticService:
 
-    def __init__(self, shop, documents):
+    def __init__(self, shop, documents, shop_balance_transactions):
         self.shop = shop
         self.documents = documents
+        self.shop_balance_transactions = shop_balance_transactions
 
     def get_total_price(self) -> Decimal:
         items = DocumentItem.actives.filter(
@@ -47,8 +48,9 @@ class SoldStatisticService:
         print(f'[+] Sale price: {self.get_total_price()}')
         print(f'[+] Income price: {self.get_total_income_price()}')
         total_profit_from_products = self.get_total_price() - self.get_total_income_price()
-        shop_balance:ShopBalance = self.shop.balance
-        return shop_balance.profit + total_profit_from_products
+        profit = ShopBalanceTransactionCalculatorService(
+            self.shop_balance_transactions).calculate_final_result().get('profit')
+        return profit + total_profit_from_products
 
     def get_total_discount(self) -> Decimal:
         discount = (
@@ -68,8 +70,9 @@ class SoldStatisticService:
         return total_price - discount
 
     def get_amount_cash(self) -> Decimal:
-        shop_balance:ShopBalance = self.shop.balance
-        total_price = shop_balance.cash
+        cash = ShopBalanceTransactionCalculatorService(
+            self.shop_balance_transactions).calculate_final_result().get('cash')
+        total_price = cash
         return total_price
 
     def calculate(self) -> dict:

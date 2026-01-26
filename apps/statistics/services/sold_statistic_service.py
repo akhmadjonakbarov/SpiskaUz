@@ -1,6 +1,7 @@
 from decimal import Decimal
 from django.db.models import F, Sum
 
+from apps.shops.models import ShopBalance
 from apps.statistics.services.debt_calculator import ShopDebtCalculatorService
 from utils.convertor import Convertor
 from apps.document.models import DocumentItem
@@ -45,7 +46,9 @@ class SoldStatisticService:
     def get_total_profit(self) -> Decimal:
         print(f'[+] Sale price: {self.get_total_price()}')
         print(f'[+] Income price: {self.get_total_income_price()}')
-        return self.get_total_price() - self.get_total_income_price()
+        total_profit_from_products = self.get_total_price() - self.get_total_income_price()
+        shop_balance:ShopBalance = self.shop.balance
+        return shop_balance.profit + total_profit_from_products
 
     def get_total_discount(self) -> Decimal:
         discount = (
@@ -64,12 +67,17 @@ class SoldStatisticService:
         discount = self.get_total_discount()
         return total_price - discount
 
+    def get_amount_cash(self) -> Decimal:
+        shop_balance:ShopBalance = self.shop.balance
+        total_price = shop_balance.cash
+        return total_price
+
     def calculate(self) -> dict:
         return {
             "total_price": self.get_total_price(),
             "discount": self.get_total_discount(),
             "agreed_price": self.get_agreed_price(),
-            "amount_cash": Decimal("0.0"),
+            "amount_cash": self.get_amount_cash(),
             "debt": self.get_total_debt(),
             "total_profit": self.get_total_profit(),
         }

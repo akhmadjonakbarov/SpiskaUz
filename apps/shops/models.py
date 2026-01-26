@@ -1,4 +1,6 @@
 import uuid
+from decimal import Decimal
+
 from django.db import models
 from django.db.models import Sum
 from apps.base.models import BaseModel, BaseModelWithUser, TransactionType
@@ -96,10 +98,10 @@ class ShopBalance(BaseModel):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="shop_balances")
     shop = models.OneToOneField(Shop, on_delete=models.CASCADE, related_name="balance")
     profit = models.DecimalField(
-        max_digits=50, decimal_places=5,
+        max_digits=50, decimal_places=5, default=Decimal("0.0")
     )
     cash = models.DecimalField(
-        max_digits=50, decimal_places=5
+        max_digits=50, decimal_places=5, default=Decimal("0.0")
     )
 
     def __str__(self):

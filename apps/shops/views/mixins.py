@@ -345,6 +345,12 @@ class OrderActionMixin:
                 type=openapi.TYPE_STRING,
             ),
             openapi.Parameter(
+                "exclude",
+                openapi.IN_QUERY,
+                description="Order status (new, processing, done, canceled)",
+                type=openapi.TYPE_STRING,
+            ),
+            openapi.Parameter(
                 "customer",
                 openapi.IN_QUERY,
                 description="Customer ID",
@@ -373,14 +379,24 @@ class OrderActionMixin:
         serializer_class=OrderSerializer,
         url_path="orders",
     )
-    def orders(self, request, pk=None):
-        queryset = (
-            Order.objects
-            .select_related("shop", "customer", "admin")
-            .prefetch_related("items").exclude(status="pending")
-            .filter(shop_id=pk, )
-            .order_by("-created_at")
-        )
+    def orders(self, request, pk):
+        exclude = request.query_params.get("exclude")
+        if exclude is not None:
+            queryset = (
+                Order.objects
+                .select_related("shop", "customer", "admin")
+                .prefetch_related("items").exclude(status=exclude)
+                .filter(shop_id=pk)
+                .order_by("-created_at")
+            )
+        else:
+            queryset = (
+                Order.objects
+                .select_related("shop", "customer", "admin")
+                .prefetch_related("items").exclude(status="pending")
+                .filter(shop_id=pk)
+                .order_by("-created_at")
+            )
 
         filtered_qs = OrderFilter(request.GET, queryset=queryset).qs
 
@@ -669,13 +685,13 @@ class ShopBalanceMixin:
         methods=["POST"],
         url_path="calculate-balance",
         detail=False,
-        parser_classes=[JSONParser, FormParser, MultiPartParser],
     )
-    def calculate_balance(self, request: Request, *args, **kwargs):
-        # ✅ Validate input first
+    def calculate_balance(self, request: Request):
+
         input_serializer = ShopBalanceCalculateSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
         data = input_serializer.validated_data
+        print(data)
 
         kind = data["kind"]
         amount = Convertor.to_decimal(data["amount"])
@@ -916,7 +932,7 @@ class DocumentMixin:
         responses={200: OrderSerializer(many=True)},
     )
     @action(methods=["GET"], detail=True, url_path="documents")
-    def documents(self, request,  *args, **kwargs):
+    def documents(self, request, *args, **kwargs):
         shop = Shop.actives.get(id=kwargs.get("pk"))
 
         queryset = Document.actives.filter(shop=shop)

@@ -26,7 +26,7 @@ class BoughtStatisticService:
     def calculate(self, from_date=None, to_date=None) -> dict:
         return {
             "total_price": self.get_total_price(),
-            "total_debt": SupplierDebtCalculatorService(self.shop).calculate(),
+            "total_debt": SupplierDebtCalculatorService(self.shop).calculate(from_date, to_date),
             "removed_profit": ShopBalanceCalculatorService.calculate_removed_price(
                 self.shop, "loss", from_date, to_date
             ),

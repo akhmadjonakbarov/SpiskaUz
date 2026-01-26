@@ -6,7 +6,7 @@ from apps.base.services.debt_calculator import BaseDebtCalculatorService
 
 
 class SupplierDebtCalculatorService(BaseDebtCalculatorService):
-    def calculate(self) -> Decimal:
+    def calculate(self, from_date=None, to_date=None) -> Decimal:
         total = Decimal("0.0")
         currency = self._get_currency_rate()
 
@@ -15,6 +15,11 @@ class SupplierDebtCalculatorService(BaseDebtCalculatorService):
             .select_related("debt_balance")
             .all()
         )
+
+        if from_date:
+            suppliers = suppliers.filter(created_at__gte=from_date)
+        if to_date:
+            suppliers = suppliers.filter(created_at__lt=to_date)
 
         for supplier in suppliers:
             balance = supplier.debt_balance

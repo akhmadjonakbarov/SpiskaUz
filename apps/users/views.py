@@ -17,52 +17,98 @@ from .serializers import RefreshTokenSerializer, SendOTPSerializer, UserSerializ
 class AuthViewSet(viewsets.GenericViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [
+        permissions.AllowAny,
+    ]
 
     @action(["POST"], detail=False, url_path="send-otp", url_name="send_otp")
     def send_otp(self, request, *args, **kwargs):
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         phone = serializer.validated_data["phone"]
+        user, _ = User.objects.get_or_create(phone=phone)
 
-        user, created = User.objects.get_or_create(phone=phone)
-        otp_code = "555555"  # str(random.randint(100000, 999999))
+        otp_code = "555555"
 
-        otp, created = OTP.objects.update_or_create(user=user, defaults={"code": otp_code, "created_at": now()})
+        otp = OTP.objects.filter(user=user).first()
 
-        if not created and (now() - otp.created_at) < timedelta(minutes=1):
-            return Response({"detail": "OTP allaqachon yuborilgan. Iltimos, keyinroq urinib ko'ring."},
-                            status=status.HTTP_429_TOO_MANY_REQUESTS)
+        # ⏱️ Rate limit: 20 seconds
+        if otp and (now() - otp.created_at) < timedelta(seconds=2):
+            return Response(
+                {"detail": "OTP allaqachon yuborilgan. Iltimos, 20 soniya kuting."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+
+        # Create or update OTP AFTER check
+        OTP.objects.update_or_create(
+            user=user,
+            defaults={
+                "code": otp_code,
+                "created_at": now()
+            }
+        )
 
         # send_otp_code(phone, otp_code)
 
-        return Response({"detail": "OTP muvaffaqiyatli yuborildi."}, status=status.HTTP_200_OK)
+        return Response(
+            {"detail": "OTP muvaffaqiyatli yuborildi."},
+            status=status.HTTP_200_OK
+        )
 
     @action(["POST"], detail=False, url_path="verify-otp", url_name="verify_otp")
     def verify_otp(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        phone, code = serializer.validated_data["phone"], serializer.validated_data["otp"]
+        phone = serializer.validated_data["phone"]
+        code = serializer.validated_data["otp"]
 
         try:
             user = User.objects.get(phone=phone)
-            otp = OTP.objects.get(user=user, code=code)
-        except (User.DoesNotExist, OTP.DoesNotExist):
-            return Response({"detail": "Telefon raqami yoki OTP kodi noto'g'ri."}, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "Telefon raqami yoki OTP kodi noto'g'ri."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        otp = OTP.objects.filter(user=user).first()
+
+        if not otp:
+            return Response(
+                {"detail": "OTP topilmadi. Iltimos, qaytadan yuboring."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if otp.is_expired():
-            return Response({"detail": "OTP kodi muddati tugagan."}, status=status.HTTP_400_BAD_REQUEST)
+            otp.delete()
+            return Response(
+                {"detail": "OTP kodi muddati tugagan."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
+        if otp.code != code:
+            return Response(
+                {"detail": "OTP kodi noto'g'ri."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ✅ OTP correct → consume it
         otp.delete()
 
         refresh = RefreshToken.for_user(user)
 
-        return Response({"refresh": str(refresh), "access": str(refresh.access_token),
-                         "user": SimpleUserSerializer(instance=user, context={"request": request}).data},
-                        status=status.HTTP_200_OK)
+        return Response(
+            {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+                "user": SimpleUserSerializer(
+                    instance=user,
+                    context={"request": request}
+                ).data
+            },
+            status=status.HTTP_200_OK
+        )
 
     @action(["POST"], detail=False, url_path="refresh-token", url_name="refresh_token")
     def refresh_token(self, request, *args, **kwargs):

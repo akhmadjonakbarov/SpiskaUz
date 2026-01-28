@@ -1,14 +1,16 @@
 from decimal import Decimal
 
+from apps.shops.services.shop_balance_calculator import ShopBalanceTransactionCalculatorService
 from apps.statistics.services.debt_calculator import SupplierDebtCalculatorService
 from apps.statistics.services.shop_balance_calculator import ShopBalanceCalculatorService
 from utils.convertor import Convertor
 
 
 class BoughtStatisticService:
-    def __init__(self, shop, documents):
+    def __init__(self, shop, documents, shop_balance_transactions):
         self.shop = shop
         self.documents = documents
+        self.shop_balance_transactions = shop_balance_transactions
 
     def get_total_price(self) -> Decimal:
         total = Decimal("0.0")
@@ -27,10 +29,15 @@ class BoughtStatisticService:
         return {
             "total_price": self.get_total_price(),
             "total_debt": SupplierDebtCalculatorService(self.shop).calculate(from_date, to_date),
-            "removed_profit": ShopBalanceCalculatorService.calculate_removed_price(
-                self.shop, "loss", from_date, to_date
-            ),
-            "removed_cash": ShopBalanceCalculatorService.calculate_removed_price(
-                self.shop, "cash_loss", from_date, to_date
-            ),
+            # "removed_profit": ShopBalanceCalculatorService.calculate_removed_price(
+            #     self.shop, "loss", from_date, to_date
+            # ),
+            "removed_profit": ShopBalanceTransactionCalculatorService(
+                self.shop_balance_transactions).get_total_profit_losses(),
+            # "removed_cash": ShopBalanceCalculatorService.calculate_removed_price(
+            #     self.shop, "cash_loss", from_date, to_date
+            # ),
+            "removed_cash": ShopBalanceTransactionCalculatorService(
+                self.shop_balance_transactions
+            ).get_total_cash_losses()
         }

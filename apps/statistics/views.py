@@ -60,7 +60,17 @@ class BoughtStatisticView(BaseStatisticView):
             from_date=from_date,
             to_date=to_date
         )
-        data = BoughtStatisticService(shop, documents, ).calculate(from_date=from_date, to_date=to_date)
+
+        shop_balance_transactions = ShopBalanceTransactionSelector.filter_shop_balance_transactions(
+            shop=shop, from_date=from_date, to_date=to_date
+        )
+
+        data = BoughtStatisticService(
+            shop, documents, shop_balance_transactions
+        ).calculate(
+            from_date=from_date,
+            to_date=to_date
+        )
 
         return Response(
             data=data

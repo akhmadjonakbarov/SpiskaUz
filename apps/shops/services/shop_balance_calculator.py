@@ -18,13 +18,10 @@ class ShopBalanceTransactionCalculatorService:
     # Generic helpers
     # --------------------------------------------------
 
-    def _sum_by_kind(self, kinds: list[str]) -> Decimal:
-        value = (
-            self.transactions
-            .filter(kind__in=kinds)
-            .aggregate(total=Sum("amount"))
-            .get("total")
-        )
+    def _sum_by_kind(self, kinds: list[str], ) -> Decimal:
+        qs = self.transactions.filter(kind__in=kinds)
+
+        value = qs.aggregate(total=Sum("amount"))["total"]
         return value or Decimal("0.0")
 
     # --------------------------------------------------
@@ -67,6 +64,21 @@ class ShopBalanceTransactionCalculatorService:
             TransactionType.CASH_OUTCOME,
             TransactionType.CASH_LOSS,
         ])
+
+    def get_total_cash_losses(self, ) -> Decimal:
+        return self._sum_by_kind(
+            [
+                TransactionType.CASH_LOSS,
+            ],
+
+        )
+
+    def get_total_profit_losses(self) -> Decimal:
+        return self._sum_by_kind(
+            [
+                TransactionType.LOSS,
+            ],
+        )
 
     def get_total_cash(self) -> Decimal:
         """

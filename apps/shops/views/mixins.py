@@ -711,26 +711,29 @@ class ShopBalanceMixin:
 
             # ✅ Balance calculations
             if kind == "profit":
-                balance.profit += amount
+                pass
+                # balance.profit += amount
 
             elif kind == "cash_income":
-                balance.cash += amount
+                pass
+                # balance.cash += amount
 
             elif kind == "cash_profit":
-                balance.profit += amount
-                balance.cash += amount
+                pass
+                # balance.profit += amount
+                # balance.cash += amount
 
             elif kind == "loss":
-                balance.profit -= amount
+                # balance.profit -= amount
                 self.calculate_supplier_debt(supplier, amount)
 
             elif kind == "cash_outcome":
-                balance.cash -= amount
+                # balance.cash -= amount
                 self.calculate_supplier_debt(supplier, amount)
 
             elif kind == "cash_loss":
-                balance.cash -= amount
-                balance.profit -= amount
+                # balance.cash -= amount
+                # balance.profit -= amount
                 self.calculate_supplier_debt(supplier, amount)
 
             balance.save()

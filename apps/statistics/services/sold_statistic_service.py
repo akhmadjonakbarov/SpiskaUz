@@ -49,7 +49,7 @@ class SoldStatisticService:
         print(f'[+] Income price: {self.get_total_income_price()}')
         total_profit_from_products = self.get_total_price() - self.get_total_income_price()
         profit = ShopBalanceTransactionCalculatorService(
-            self.shop_balance_transactions).calculate_final_result().get('profit')
+            self.shop_balance_transactions).get_total_income()
         return profit + total_profit_from_products
 
     def get_total_discount(self) -> Decimal:
@@ -71,7 +71,7 @@ class SoldStatisticService:
 
     def get_amount_cash(self) -> Decimal:
         cash = ShopBalanceTransactionCalculatorService(
-            self.shop_balance_transactions).calculate_final_result().get('cash')
+            self.shop_balance_transactions).get_total_cash()
         total_price = cash
         return total_price
 

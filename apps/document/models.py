@@ -58,6 +58,8 @@ class Document(BaseModelWithUserAndShop):
 
             total += line_total
 
+        print(f"[+] Total: {total}")
+
         return total
 
 

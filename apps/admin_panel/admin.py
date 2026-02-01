@@ -4,4 +4,4 @@ from .models import SalaryBalance
 
 @admin.register(SalaryBalance)
 class SalaryBalanceAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('id','balance', 'personal_salary', 'global_salary')

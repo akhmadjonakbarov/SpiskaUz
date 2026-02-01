@@ -2,7 +2,7 @@ from decimal import Decimal
 from django.test import TestCase
 
 from apps.admin_panel.models import SalaryBalance
-from apps.admin_panel.services import CalculateSalaryService
+from apps.admin_panel.services import SalaryCalculatorService
 from apps.document.models import DocumentItem, Document, PaymentDetail
 from apps.products.models import Product
 from apps.role_manager.models import Role
@@ -63,12 +63,12 @@ class CalculateSalaryServiceTest(TestCase):
             shop=self.shop
         )
 
-        service = CalculateSalaryService(
+        service = SalaryCalculatorService(
             request=self._mock_request(self.user),
             shop_id=self.shop.id
         )
 
-        total_salary = service.calculate_salary_by_user()
+        total_salary = service.calculate_personal_salary()
 
         self.assertEqual(total_salary, Decimal("2000"))
         self.assertEqual(
@@ -92,12 +92,12 @@ class CalculateSalaryServiceTest(TestCase):
             doc_type="sell",
         )
 
-        service = CalculateSalaryService(
+        service = SalaryCalculatorService(
             request=self._mock_request(self.user),
             shop_id=self.shop.id
         )
 
-        self.assertEqual(service.calculate_salary_by_user(), Decimal("0"))
+        self.assertEqual(service.calculate_personal_salary(), Decimal("0"))
 
     def test_discount_price_used_for_shop(self):
         document = Document.objects.create(
@@ -123,9 +123,9 @@ class CalculateSalaryServiceTest(TestCase):
             payment_method="cash"
         )
 
-        service = CalculateSalaryService(
+        service = SalaryCalculatorService(
             request=self._mock_request(self.user),
             shop_id=self.shop.id
         )
 
-        self.assertEqual(service.calculate_salary_by_user(), Decimal("5000"))
+        self.assertEqual(service.calculate_personal_salary(), Decimal("5000"))

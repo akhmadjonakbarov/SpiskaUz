@@ -7,7 +7,7 @@ from django.db import transaction
 from django.db.models import Prefetch
 
 
-class CalculateSalaryService:
+class SalaryCalculatorService:
     def __init__(self, request, shop_id=None):
         self.request = request
         self.user = request.user
@@ -21,7 +21,8 @@ class CalculateSalaryService:
             role=self.role
         )
 
-    def calculate_salary_by_user(self):
+    def calculate_personal_salary(self):
+
         with transaction.atomic():
             self.get_or_create_balance()
 
@@ -53,14 +54,19 @@ class CalculateSalaryService:
                 total_price = document.get_total_outcome_price_uzs()
 
                 salary_price = (
-                        Decimal(self.role.total_commission_percent)
-                        / Decimal("100")
+                        Decimal(self.role.admin_commission_percent)
+                        / Decimal("100.00")
                         * total_price
                 )
+                print(f"[+] Salary: {salary_price}")
 
                 total_salary += salary_price
 
+            print(f"[+] Total Salary: {total_salary}")
             self.salary_balance.personal_salary += total_salary
             self.salary_balance.save(update_fields=["personal_salary"])
 
             return total_salary
+
+    def calculate_global_salary(self):
+        pass

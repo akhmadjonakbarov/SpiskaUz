@@ -17,7 +17,8 @@ class CashHistoryViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         if user.is_authenticated:
-            return CashHistory.objects.select_related("shop").filter(Q(shop__owner=user) | Q(shop__admins__user=user)).distinct()
+            pass
+            # return CashHistory.objects.select_related("shop").filter(Q(shop__owner=user) | Q(shop__admins__user=user)).distinct()
 
         return self.queryset
 

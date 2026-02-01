@@ -1,10 +1,12 @@
 from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import filters, viewsets
+from rest_framework import filters, viewsets, permissions
 from rest_framework.request import Request
 
 from apps.base.paginations import PageSizePagination
+from apps.role_manager.models import Role
+from apps.role_manager.serializer import RoleSerializer
 from apps.salary.models import SalaryTransaction
 from apps.salary.serializers import SalaryTransactionSerializer, CreateSalaryTransaction
 
@@ -115,6 +117,15 @@ class SalaryTransactionViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        user_role = request.data.get("user_role")
+        role = Role.objects.get(id=user_role)
+        serializer = RoleSerializer(role, many=False)
+        print(
+            serializer.data,
+        )
+        return Response(request.data)
 
     def destroy(self, request, pk=None):
         instance = get_object_or_404(self.queryset, pk=pk)

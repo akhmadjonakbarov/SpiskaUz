@@ -7,6 +7,8 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from apps.admin_panel.services import SalaryCalculatorService
 from apps.currency_rate.models import CurrencyRate
 from apps.document.factories.document_factory import DocumentFactory, PaymentInfoData, PaymentDetailData
 from apps.document.models import Document, DocumentItem, DocumentItemBalance
@@ -236,6 +238,8 @@ class SellProductView(GenericAPIView):
         promo_code_id = request.data.get('promo_code', None)
         payment_method = request.data.get('payment_method')
 
+        shop_id = None
+
         promo_code = None
 
         if promo_code_id:
@@ -249,6 +253,7 @@ class SellProductView(GenericAPIView):
                 # Get first product to determine shop
                 first_item = products_data[0]
                 product = Product.objects.get(id=first_item.get("product_id"))
+                shop_id = product.shop.id
 
                 document_factory = DocumentFactory(
                     user=user,
@@ -318,7 +323,11 @@ class SellProductView(GenericAPIView):
 
                         remaining_qty -= deduct_qty
 
+                if shop_id is not None:
+                    SalaryCalculatorService(request, shop_id).calculate_personal_salary()
+
             return Response({"message": "Product sold successfully."}, status=status.HTTP_200_OK)
 
         except Exception as e:
+            print(f"Error: {e}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

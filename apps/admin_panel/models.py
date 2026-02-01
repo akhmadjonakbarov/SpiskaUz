@@ -6,7 +6,8 @@ from apps.base.models import BaseModel
 # Create your models here.
 class SalaryBalance(BaseModel):
     role = models.OneToOneField(
-        "role_manager.Role", on_delete=models.CASCADE, verbose_name="Role", related_name="balance_as_salary"
+        "role_manager.Role", on_delete=models.CASCADE,
+        verbose_name="Role", related_name="balance_as_salary"
     )
     balance = models.DecimalField(
         max_digits=25,

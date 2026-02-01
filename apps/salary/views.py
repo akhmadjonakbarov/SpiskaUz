@@ -1,9 +1,14 @@
+from ctypes import kind
+
+from django.db import transaction
 from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import filters, viewsets, permissions
 from rest_framework.request import Request
 
+from apps.admin_panel.models import SalaryBalance
+from apps.base.models import TransactionType
 from apps.base.paginations import PageSizePagination
 from apps.role_manager.models import Role
 from apps.role_manager.serializer import RoleSerializer
@@ -13,6 +18,8 @@ from apps.salary.serializers import SalaryTransactionSerializer, CreateSalaryTra
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+
+from apps.shops.models import ShopBalance, ShopBalanceTransaction
 
 
 class SalaryTransactionViewSet(viewsets.ModelViewSet):
@@ -120,14 +127,36 @@ class SalaryTransactionViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         user_role = request.data.get("user_role")
+        amount = request.data.get("amount")
+        description = request.data.get("description")
         role = Role.objects.get(id=user_role)
         serializer = RoleSerializer(role, many=False)
-        print(
-            serializer.data,
-        )
-        return Response(request.data)
+        with transaction.atomic():
+            salary_transaction = SalaryTransaction.objects.create(
+                user_role=role,
+                amount=amount,
+                description=description,
+            )
+            salary_balance = role.balance_as_salary
+            total_salary = salary_balance.personal_salary + salary_balance.balance + salary_balance.global_salary
+            shop = ShopBalance.objects.get(id=role.shop.id)
+            shop_balance = shop.balance
+            shop_balance.cash = shop_balance.cash - total_salary
+            shop_balance.save()
+            ShopBalanceTransaction.objects.create(
+                created_by=request.user,
+                shop=shop,
+                balance=shop_balance,
+                amount=total_salary,
+                note=description,
+                kind=TransactionType.CASH_LOSS
+            )
 
-    def destroy(self, request, pk=None):
+        return Response(
+            salary_transaction.data, status=status.HTTP_201_CREATED,
+        )
+
+    def destroy(self, request, pk):
         instance = get_object_or_404(self.queryset, pk=pk)
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -1,23 +1,21 @@
+from decimal import Decimal
 
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import filters, viewsets, permissions
+from rest_framework import status
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
+from rest_framework.response import Response
 
-from apps.admin_panel.models import SalaryBalance
 from apps.base.models import TransactionType
 from apps.base.paginations import PageSizePagination
 from apps.role_manager.models import Role
-from apps.role_manager.serializer import RoleSerializer
 from apps.salary.models import SalaryTransaction
 from apps.salary.serializers import SalaryTransactionSerializer, CreateSalaryTransaction
-
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework import status
-
 from apps.shops.models import ShopBalance, ShopBalanceTransaction
 
 
@@ -125,38 +123,79 @@ class SalaryTransactionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
-        user_role = request.data.get("user_role")
-        amount = request.data.get("amount")
-        description = request.data.get("description")
-        role = Role.objects.get(id=user_role)
-        serializer = RoleSerializer(role, many=False)
+        try:
+            role_id = request.data["user_role"]
+            amount = Decimal(request.data["amount"])
+        except (KeyError, ValueError):
+            raise ValidationError("Invalid role or amount")
+
+        description = request.data.get("description", "")
+
+        if amount <= 0:
+            raise ValidationError("Amount must be greater than zero")
+
         with transaction.atomic():
+
+            # 🔒 Lock role & salary balance
+            role = (
+                Role.objects
+                .select_for_update()
+                .select_related("balance_as_salary", "shop")
+                .filter(id=role_id)
+                .first()
+            )
+
+            if not role or not hasattr(role, "balance_as_salary"):
+                raise ValidationError("Role or salary balance not found")
+
+            salary_balance = role.balance_as_salary
+
+            total_salary = (
+                    salary_balance.personal_salary +
+                    salary_balance.balance +
+                    salary_balance.global_salary
+            )
+
+            if amount > total_salary:
+                raise ValidationError("Insufficient salary balance")
+
+            # 🔒 Lock shop balance
+            shop_balance = (
+                ShopBalance.objects
+                .select_for_update()
+                .get(id=role.shop.id)
+                .balance
+            )
+
+            if shop_balance.cash < amount:
+                raise ValidationError("Shop has insufficient cash")
+
+            # 1️⃣ Create salary transaction
             salary_transaction = SalaryTransaction.objects.create(
                 user_role=role,
                 amount=amount,
                 description=description,
             )
-            salary_balance = role.balance_as_salary
-            total_salary = salary_balance.personal_salary + salary_balance.balance + salary_balance.global_salary
-            shop = ShopBalance.objects.get(id=role.shop.id)
-            shop_balance = shop.balance
-            shop_balance.cash = shop_balance.cash - total_salary
-            shop_balance.save()
+
+            # 2️⃣ Deduct shop cash (ONLY amount)
+            shop_balance.cash -= amount
+            shop_balance.save(update_fields=["cash"])
+
+            # 3️⃣ Log shop balance transaction
             ShopBalanceTransaction.objects.create(
                 created_by=request.user,
-                shop=shop,
+                shop=role.shop,
                 balance=shop_balance,
-                amount=total_salary,
+                amount=amount,
                 note=description,
                 kind=TransactionType.CASH_LOSS
             )
 
-        return Response(
-            salary_transaction.data, status=status.HTTP_201_CREATED,
-        )
+        serializer = SalaryTransactionSerializer(salary_transaction)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def destroy(self, request, pk):
-        instance = get_object_or_404(self.queryset, pk=pk)
+    def destroy(self, request, *args, **kwargs):
+        instance = get_object_or_404(self.queryset, pk=kwargs.get('pk'))
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

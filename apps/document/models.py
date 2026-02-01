@@ -36,7 +36,7 @@ class Document(BaseModelWithUserAndShop):
     )
     doc_type = models.CharField(max_length=10, choices=DOC_TYPE)
     supplier = models.ForeignKey(
-        Supplier, on_delete=models.SET_NULL,
+        Supplier, on_delete=models.CASCADE,
         related_name="documents", blank=True, null=True
     )
 

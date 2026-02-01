@@ -59,14 +59,66 @@ class DocumentListView(GenericAPIView):
 
 class DeleteSellDocumentView(GenericAPIView):
     serializer_class = DocumentSerializer
-    queryset = Document.objects.all()
+    queryset = Document.actives.all()
 
     def delete(self, request, pk):
         document = self.get_queryset().filter(id=pk).first()
         if document is None:
             return Response({"message": "Document not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        document.soft_delete()
+        document_items = document.document_item_set.all()
+        with transaction.atomic():
+            for document_item in document_items:
+                doc_item: DocumentItem = document_item
+                product_balance: DocumentItemBalance = DocumentItemBalance.objects.filter(
+                    product=doc_item.product,
+                    shop=doc_item.shop,
+                    currency_rate=doc_item.currency_rate,
+                    income_price=doc_item.income_price
+                ).select_for_update().first()
+                print(f"Product Balance: {product_balance}")
+                if product_balance:
+                    product_balance.qty += Decimal(str(doc_item.qty))
+                    product_balance.save()
+
+                else:
+                    # 1️⃣ Create new document (stock IN)
+                    refurbish_document = Document.objects.create(
+                        doc_type='buy',  # stock comes back
+                        shop=document.shop,
+                        user=request.user,
+                        supplier=None,
+                    )
+                    # Create document item
+                    refurbish_item = DocumentItem.objects.create(
+                        document=refurbish_document,
+                        product=doc_item.product,
+                        qty=doc_item.qty,
+                        income_price=doc_item.income_price,
+                        sale_price=doc_item.sale_price,
+                        currency_rate=doc_item.currency_rate,
+                        currency_rate_value=doc_item.currency_rate_value,
+                        profit_as_percent=doc_item.profit_as_percent,
+                        shop=doc_item.shop,
+                        user=doc_item.user,
+                    )
+
+                    # Create balance record (restore stock)
+                    DocumentItemBalance.objects.create(
+                        document=refurbish_document,
+                        document_item=refurbish_item,
+                        product=doc_item.product,
+                        qty=Decimal(doc_item.qty),  # ⬅️ stock IN
+                        income_price=doc_item.income_price,
+                        sale_price=doc_item.sale_price,
+                        currency_rate=doc_item.currency_rate,
+                        currency_rate_value=doc_item.currency_rate_value,
+                        profit_as_percent=doc_item.profit_as_percent,
+                        shop=doc_item.shop,
+                        user=doc_item.user,
+                    )
+                doc_item.soft_delete()
+            document.soft_delete()
         return Response({"message": "Document deleted successfully."}, status=status.HTTP_200_OK)
 
 

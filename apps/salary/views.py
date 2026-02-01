@@ -1,4 +1,3 @@
-from ctypes import kind
 
 from django.db import transaction
 from django.shortcuts import get_object_or_404

@@ -1,19 +1,20 @@
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.shortcuts import get_object_or_404
-from django.views.generic import DetailView
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.shops.models import Shop, Category, ShopBalance, ShopBalanceTransaction
-
+from apps.currency_rate.models import CurrencyRate
+from apps.role_manager.models import Role
+from apps.shops.models import Shop, Category, ShopBalance
 from apps.shops.serializers import ShopSerializer, ShopDetailSerializer
 from common.mixins import ActionPermissionMixin
 from common.paginations import PageSizePagination
-
+from .filters import ShopFilter
 from .mixins import (
     AdminActionsMixin,
     ContactActionsMixin,
@@ -27,9 +28,6 @@ from .mixins import (
     SubscriptionActionMixin,
     ShopBalanceMixin, SupplierFilterMixin, DocumentMixin, ShopBalanceTransactionMixin,
 )
-from apps.currency_rate.models import CurrencyRate
-from apps.role_manager.models import Role
-from ...document.models import Document
 
 
 class ShopViewSet(
@@ -74,12 +72,12 @@ class ShopViewSet(
         Foydalanuvchining do'konlarini olish
     """
 
-    queryset = Shop.objects.prefetch_related(
+    queryset = Shop.actives.prefetch_related(
         "categories",
         "contacts",
         "products",
         "members"
-    ).filter(deleted_at=None).all().order_by("created_at")
+    ).all().order_by("created_at")
     serializer_class = ShopSerializer
     parser_classes = [FormParser, MultiPartParser]
     permission_classes = [IsAuthenticated]
@@ -90,6 +88,43 @@ class ShopViewSet(
         # ("update_products_order", "merge_products"): [CanEditDeleteShop],
         ("join", "leave", "create"): [IsAuthenticated],
     }
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                "name",
+                openapi.IN_QUERY,
+                description="Search in shop name",
+                type=openapi.TYPE_STRING,
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        # apply django-filter
+        queryset = ShopFilter(
+            request.GET,
+            queryset=queryset
+        ).qs
+
+        # apply pagination
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = ShopSerializer(
+                page,
+                many=True,
+                context={"request": request},
+            )
+            return self.get_paginated_response(serializer.data)
+
+        # fallback (pagination disabled)
+        serializer = ShopSerializer(
+            queryset,
+            many=True,
+            context={"request": request},
+        )
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         # Pop usd_exchange_rate from the validated data

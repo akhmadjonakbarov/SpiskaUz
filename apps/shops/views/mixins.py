@@ -766,7 +766,7 @@ class ShopBalanceMixin:
 
 class ShopBalanceTransactionMixin:
     transaction_serializer_class = ShopTransactionSerializer
-    filterset_class = ShopBalanceTransactionFilter
+
 
     @swagger_auto_schema(
         operation_summary="List shop balance transactions",
@@ -834,7 +834,7 @@ class ShopBalanceTransactionMixin:
         )
 
         # Apply filters correctly
-        filterset = self.filterset_class(request.GET, queryset=queryset)
+        filterset = ShopBalanceTransactionFilter(request.GET, queryset=queryset)
         queryset = filterset.qs
 
         page = self.paginate_queryset(queryset)

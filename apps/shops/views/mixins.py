@@ -368,6 +368,20 @@ class OrderActionMixin:
                 description="Items per page",
                 type=openapi.TYPE_INTEGER,
             ),
+            openapi.Parameter(
+                name="from_date",
+                in_=openapi.IN_QUERY,
+                description="Start date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE,
+            ),
+            openapi.Parameter(
+                name="to_date",
+                in_=openapi.IN_QUERY,
+                description="End date (YYYY-MM-DD)",
+                type=openapi.TYPE_STRING,
+                format=openapi.FORMAT_DATE,
+            ),
         ],
         responses={
             200: OrderSerializer(many=True),
@@ -604,80 +618,6 @@ class PromocodeActionsMixin:
         return Response(serializer.data)
 
 
-# class ShopBalanceMixin:
-#     @swagger_auto_schema(request_body=ShopBalanceCalculateSerializer)
-#     @action(methods=['POST'], url_path="calculate-balance", detail=False)
-#     def calculate_balance(self, request, *args, **kwargs):
-#         transaction = self.create_transaction(request)
-#         kind = request.data.get('kind')
-#         shop = Shop.objects.get(id=request.data.get('shop'))
-#         amount = request.data.get('amount')
-#         balance: ShopBalance = shop.balance
-#         supplier_id = request.data.get('supplier', None)
-#
-#         with django_transaction.atomic():
-#             if kind == 'profit':
-#                 balance.profit = balance.profit + Convertor.to_decimal(amount)
-#             if kind == 'cash_income':
-#                 balance.cash = balance.cash + Convertor.to_decimal(amount)
-#             if kind == 'cash_profit':
-#                 balance.profit = balance.profit + Convertor.to_decimal(amount)
-#                 balance.cash = balance.cash + Convertor.to_decimal(amount)
-#
-#             if kind == 'loss':
-#                 balance.profit = balance.profit - Convertor.to_decimal(amount)
-#                 self.calculate_supplier_debt(supplier_id, amount)
-#
-#             if kind == 'cash_outcome':
-#                 balance.cash = balance.cash - Convertor.to_decimal(amount)
-#                 self.calculate_supplier_debt(supplier_id, amount)
-#
-#             if kind == 'cash_loss':
-#                 balance.cash = balance.cash - Convertor.to_decimal(amount)
-#                 balance.profit = balance.profit - Convertor.to_decimal(amount)
-#                 self.calculate_supplier_debt(supplier_id, amount)
-#
-#             balance.save()
-#
-#         serializer = ShopTransactionSerializer(transaction, many=False)
-#
-#         return Response(
-#             serializer.data,
-#         )
-#
-#     @staticmethod
-#     def calculate_supplier_debt(supplier_id, amount):
-#         with transaction.atomic():
-#             supplier = None
-#             if supplier_id:
-#                 supplier = Supplier.objects.get(id=supplier_id)
-#
-#             if supplier:
-#                 debt_balance: SupplierDebtBalance = supplier.debt_balance
-#                 debt_balance.balance_uzs = debt_balance.balance_uzs - \
-#                                            Convertor.to_decimal(amount)
-#                 debt_balance.save()
-#                 SupplierTransaction.objects.create(
-#                     supplier=supplier, balance=debt_balance, amount=amount,
-#                     currency_type='uzs', currency_rate=Decimal('0.0'), created_by=supplier.created_by,
-#                     transaction_type='debt'
-#                 )
-#
-#     @staticmethod
-#     def create_transaction(request: Request) -> ShopBalanceTransaction:
-#         kind = request.data.get('kind')
-#         amount = request.data.get('amount')
-#         note = request.data.get('note')
-#         shop_id = request.data.get('shop')
-#         shop = Shop.objects.get(id=shop_id)
-#         transaction = ShopBalanceTransaction.objects.create(
-#             created_by=request.user,
-#             amount=amount, note=note, shop=shop, kind=kind
-#         )
-#
-#         print("[+] Transaction was created")
-#         return transaction
-
 class ShopBalanceMixin:
     @swagger_auto_schema(request_body=ShopBalanceCalculateSerializer)
     @action(
@@ -788,14 +728,14 @@ class ShopBalanceTransactionMixin:
                 type=openapi.TYPE_STRING,
             ),
             openapi.Parameter(
-                name="created_from",
+                name="from_date",
                 in_=openapi.IN_QUERY,
                 description="Start date (YYYY-MM-DD)",
                 type=openapi.TYPE_STRING,
                 format=openapi.FORMAT_DATE,
             ),
             openapi.Parameter(
-                name="created_to",
+                name="to_date",
                 in_=openapi.IN_QUERY,
                 description="End date (YYYY-MM-DD)",
                 type=openapi.TYPE_STRING,
@@ -899,14 +839,14 @@ class DocumentMixin:
                 type=openapi.TYPE_STRING,
             ),
             openapi.Parameter(
-                name="created_from",
+                name="from_date",
                 in_=openapi.IN_QUERY,
                 description="Start date (YYYY-MM-DD)",
                 type=openapi.TYPE_STRING,
                 format=openapi.FORMAT_DATE,
             ),
             openapi.Parameter(
-                name="created_to",
+                name="to_date",
                 in_=openapi.IN_QUERY,
                 description="End date (YYYY-MM-DD)",
                 type=openapi.TYPE_STRING,

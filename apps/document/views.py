@@ -66,7 +66,7 @@ class DeleteSellDocumentView(GenericAPIView):
         if document is None:
             return Response({"message": "Document not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        document_items = document.document_item_set.all()
+        document_items = document.document_items.all()
         with transaction.atomic():
             for document_item in document_items:
                 doc_item: DocumentItem = document_item

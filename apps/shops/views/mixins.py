@@ -707,7 +707,6 @@ class ShopBalanceMixin:
 class ShopBalanceTransactionMixin:
     transaction_serializer_class = ShopTransactionSerializer
 
-
     @swagger_auto_schema(
         operation_summary="List shop balance transactions",
         operation_description=(
@@ -877,7 +876,7 @@ class DocumentMixin:
     def documents(self, request, *args, **kwargs):
         shop = Shop.actives.get(id=kwargs.get("pk"))
 
-        queryset = Document.actives.filter(shop=shop)
+        queryset = Document.objects.filter(shop=shop)
         filtered_qs = DocumentFilter(request.GET, queryset=queryset).qs
 
         page = self.paginate_queryset(filtered_qs)

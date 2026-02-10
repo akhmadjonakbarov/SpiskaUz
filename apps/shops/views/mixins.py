@@ -31,8 +31,10 @@ from apps.role_manager.models import Role
 from apps.role_manager.serializer import RoleSerializer
 from apps.shops.filters import OrderFilter, DocumentFilter, ShopBalanceTransactionFilter
 from apps.shops.models import ShopBalanceTransaction, Shop, ShopBalance
-from apps.shops.serializers import ChangeExchangeRateSerializer, ShopContactSerializer, ShopSerializer, \
+from apps.shops.serializers import (
+    ChangeExchangeRateSerializer, ShopContactSerializer, ShopSerializer, \
     ShopMemberSerializer, ShopBalanceCalculateSerializer
+)
 from apps.shops.serializers import ShopTransactionSerializer
 from apps.supplier.models import Supplier, SupplierDebtBalance, SupplierTransaction
 from apps.supplier.serializers import SupplierSerializer

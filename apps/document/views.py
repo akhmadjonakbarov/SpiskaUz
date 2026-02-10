@@ -108,7 +108,7 @@ class DeleteSellDocumentView(GenericAPIView):
                         document=refurbish_document,
                         document_item=refurbish_item,
                         product=doc_item.product,
-                        qty=Decimal(doc_item.qty),  # ⬅️ stock IN
+                        qty=Decimal(doc_item.qty),
                         income_price=doc_item.income_price,
                         sale_price=doc_item.sale_price,
                         currency_rate=doc_item.currency_rate,
@@ -229,53 +229,54 @@ class BuyProductView(GenericAPIView):
         latest = CurrencyRate.objects.order_by('-created_at').filter(
             shop=first_part.shop
         ).first()
+        converted_currency = None
         try:
             supplier_debt_balance = SupplierDebtBalance.objects.get(
                 supplier=supplier
             )
 
             if first_part.product.currency_type == CURRENCY_USD:
+                converted_currency = Convertor.to_decimal(un_payed_money) * Convertor.to_decimal(latest.currency_rate)
+                # supplier_debt_balance.balance_usd += Convertor.to_decimal(un_payed_money)
+                # SupplierTransaction.objects.create(
+                #     shop=first_part.shop,
+                #     balance=supplier_debt_balance, amount=un_payed_money, currency_type='usd',
+                #     currency_rate=latest.rate, transaction_type='debt',
+                #     supplier=supplier, created_by=user
+                # )
 
-                supplier_debt_balance.balance_usd += Convertor.to_decimal(un_payed_money)
-                SupplierTransaction.objects.create(
-                    shop=first_part.shop,
-                    balance=supplier_debt_balance, amount=un_payed_money, currency_type='usd',
-                    currency_rate=latest.rate, transaction_type='debt',
-                    supplier=supplier, created_by=user
-                )
-            else:
-                supplier_debt_balance.balance_uzs += Convertor.to_decimal(un_payed_money)
-                SupplierTransaction.objects.create(
-                    shop=first_part.shop,
-                    balance=supplier_debt_balance, amount=un_payed_money, currency_type='uzs',
-                    currency_rate=Decimal('0.0'), transaction_type='debt',
-                    supplier=supplier, created_by=user
-                )
+            supplier_debt_balance.balance_uzs += Convertor.to_decimal(converted_currency)
+            SupplierTransaction.objects.create(
+                shop=first_part.shop,
+                balance=supplier_debt_balance, amount=converted_currency, currency_type='uzs',
+                currency_rate=Decimal('0.0'), transaction_type='debt',
+                supplier=supplier, created_by=user
+            )
             supplier_debt_balance.save()
         except SupplierDebtBalance.DoesNotExist:
             if first_part.product.currency_type == CURRENCY_USD:
+                converted_currency = Convertor.to_decimal(un_payed_money) * Convertor.to_decimal(latest.currency_rate)
+                # balance = SupplierDebtBalance.objects.create(
+                #     supplier=supplier,
+                #     balance_usd=un_payed_money
+                # )
+                # SupplierTransaction.objects.create(
+                #     shop=first_part.shop,
+                #     balance=balance, amount=un_payed_money, currency_type='usd',
+                #     currency_rate=latest.rate, transaction_type='debt',
+                #     supplier=supplier, created_by=user
+                # )
 
-                balance = SupplierDebtBalance.objects.create(
-                    supplier=supplier,
-                    balance_usd=un_payed_money
-                )
-                SupplierTransaction.objects.create(
-                    shop=first_part.shop,
-                    balance=balance, amount=un_payed_money, currency_type='usd',
-                    currency_rate=latest.rate, transaction_type='debt',
-                    supplier=supplier, created_by=user
-                )
-            else:
-                balance = SupplierDebtBalance.objects.create(
-                    supplier=supplier,
-                    balance_uzs=un_payed_money
-                )
-                SupplierTransaction.objects.create(
-                    shop=first_part.shop,
-                    balance=balance, amount=un_payed_money, currency_type='uzs',
-                    currency_rate=Decimal('0.0'), transaction_type='debt',
-                    supplier=supplier, created_by=user
-                )
+            balance = SupplierDebtBalance.objects.create(
+                supplier=supplier,
+                balance_uzs=converted_currency
+            )
+            SupplierTransaction.objects.create(
+                shop=first_part.shop,
+                balance=balance, amount=converted_currency, currency_type='uzs',
+                currency_rate=Decimal('0.0'), transaction_type='debt',
+                supplier=supplier, created_by=user
+            )
 
 
 class SellProductView(GenericAPIView):

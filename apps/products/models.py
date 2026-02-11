@@ -1,3 +1,4 @@
+import os
 import uuid
 from django.db import models
 from apps.base.models import BaseModel, BaseModelWithUser
@@ -7,6 +8,10 @@ from constants.currency_choices import CURRENCY_CHOICES
 from .utils.generate_image_path import product_image_upload_path
 from apps.unit.models import Unit
 
+from django.db import models
+from PIL import Image
+from io import BytesIO
+from django.core.files.base import ContentFile
 
 class ProductGroup(BaseModelWithUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -79,6 +84,41 @@ class ProductImage(BaseModel):
         verbose_name = "Product Image"
         verbose_name_plural = "Product Images"
         ordering = ("order",)
+
+    def save(self, *args, **kwargs):
+        # Compress only on first upload
+        if not self.pk and self.image:
+            self.image = self.compress_image(self.image)
+
+        super().save(*args, **kwargs)
+
+    def compress_image(self, image):
+        img = Image.open(image)
+
+        # Convert to RGB if needed
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+
+        # Resize (better for e-commerce)
+        max_size = (1600, 1600)
+        img.thumbnail(max_size, Image.LANCZOS)
+
+        output = BytesIO()
+
+        # Dynamically reduce quality until < 1MB
+        quality = 85
+        img.save(output, format="JPEG", quality=quality, optimize=True)
+
+        while output.tell() > 1024 * 1024 and quality > 40:
+            output = BytesIO()
+            quality -= 5
+            img.save(output, format="JPEG", quality=quality, optimize=True)
+
+        output.seek(0)
+
+        filename = os.path.splitext(image.name)[0] + ".jpg"
+
+        return ContentFile(output.read(), name=filename)
 
     def __str__(self):
         return f"Image of {self.product.name if self.product else 'Unknown Product'}"

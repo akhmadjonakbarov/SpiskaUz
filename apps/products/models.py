@@ -95,21 +95,22 @@ class ProductImage(BaseModel):
     def compress_image(self, image):
         img = Image.open(image)
 
-        # Convert to RGB if needed
+        # Convert to RGB (important for PNG)
         if img.mode in ("RGBA", "P"):
             img = img.convert("RGB")
 
-        # Resize (better for e-commerce)
+        # Resize to max 1600x1600
         max_size = (1600, 1600)
         img.thumbnail(max_size, Image.LANCZOS)
 
         output = BytesIO()
 
-        # Dynamically reduce quality until < 1MB
+        # Start with good quality
         quality = 85
         img.save(output, format="JPEG", quality=quality, optimize=True)
 
-        while output.tell() > 1024 * 1024 and quality > 40:
+        # Dynamically reduce quality until ≤ 500 KB
+        while output.tell() > 500 * 1024 and quality > 30:
             output = BytesIO()
             quality -= 5
             img.save(output, format="JPEG", quality=quality, optimize=True)

@@ -85,41 +85,41 @@ class ProductImage(BaseModel):
         verbose_name_plural = "Product Images"
         ordering = ("order",)
 
-    def save(self, *args, **kwargs):
-        # Compress only on first upload
-        if not self.pk and self.image:
-            self.image = self.compress_image(self.image)
-
-        super().save(*args, **kwargs)
-
-    def compress_image(self, image):
-        img = Image.open(image)
-
-        # Convert to RGB (important for PNG)
-        if img.mode in ("RGBA", "P"):
-            img = img.convert("RGB")
-
-        # Resize to max 1600x1600
-        max_size = (1600, 1600)
-        img.thumbnail(max_size, Image.LANCZOS)
-
-        output = BytesIO()
-
-        # Start with good quality
-        quality = 85
-        img.save(output, format="JPEG", quality=quality, optimize=True)
-
-        # Dynamically reduce quality until ≤ 500 KB
-        while output.tell() > 500 * 1024 and quality > 30:
-            output = BytesIO()
-            quality -= 5
-            img.save(output, format="JPEG", quality=quality, optimize=True)
-
-        output.seek(0)
-
-        filename = os.path.splitext(image.name)[0] + ".jpg"
-
-        return ContentFile(output.read(), name=filename)
+    # def save(self, *args, **kwargs):
+    #     # Compress only on first upload
+    #     if not self.pk and self.image:
+    #         self.image = self.compress_image(self.image)
+    #
+    #     super().save(*args, **kwargs)
+    #
+    # def compress_image(self, image):
+    #     img = Image.open(image)
+    #
+    #     # Convert to RGB (important for PNG)
+    #     if img.mode in ("RGBA", "P"):
+    #         img = img.convert("RGB")
+    #
+    #     # Resize to max 1600x1600
+    #     max_size = (1600, 1600)
+    #     img.thumbnail(max_size, Image.LANCZOS)
+    #
+    #     output = BytesIO()
+    #
+    #     # Start with good quality
+    #     quality = 85
+    #     img.save(output, format="JPEG", quality=quality, optimize=True)
+    #
+    #     # Dynamically reduce quality until ≤ 500 KB
+    #     while output.tell() > 500 * 1024 and quality > 30:
+    #         output = BytesIO()
+    #         quality -= 5
+    #         img.save(output, format="JPEG", quality=quality, optimize=True)
+    #
+    #     output.seek(0)
+    #
+    #     filename = os.path.splitext(image.name)[0] + ".jpg"
+    #
+    #     return ContentFile(output.read(), name=filename)
 
     def __str__(self):
         return f"Image of {self.product.name if self.product else 'Unknown Product'}"

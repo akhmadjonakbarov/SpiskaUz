@@ -1,17 +1,14 @@
-import os
 import uuid
+
 from django.db import models
+
 from apps.base.models import BaseModel, BaseModelWithUser
 from apps.shops.models import Shop, Category
+from apps.unit.models import Unit
 from apps.users.models import User
 from constants.currency_choices import CURRENCY_CHOICES
 from .utils.generate_image_path import product_image_upload_path
-from apps.unit.models import Unit
 
-from django.db import models
-from PIL import Image
-from io import BytesIO
-from django.core.files.base import ContentFile
 
 class ProductGroup(BaseModelWithUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

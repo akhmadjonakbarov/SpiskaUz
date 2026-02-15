@@ -4,7 +4,7 @@ from django.db import models
 from apps.base.models import BaseModel
 from apps.products.models import Product
 from apps.shops.models import Shop
-from apps.users.models import User
+
 
 class PromoCode(BaseModel):
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="promocodes")

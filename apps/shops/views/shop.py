@@ -23,10 +23,9 @@ from .mixins import (
     ProductActionsMixin,
     ProductGroupActionMixin,
     PromocodeActionsMixin,
-
     ShoppingCartActionMixin,
     SubscriptionActionMixin,
-    ShopBalanceMixin, SupplierFilterMixin, DocumentMixin, ShopBalanceTransactionMixin,
+    ShopBalanceMixin, SupplierFilterMixin, DocumentMixin, ShopBalanceTransactionMixin, CustomersMixin,
 )
 
 
@@ -45,7 +44,8 @@ class ShopViewSet(
     PromocodeActionsMixin,
     ShopBalanceMixin,
     ShopBalanceTransactionMixin,
-    SupplierFilterMixin
+    SupplierFilterMixin,
+    CustomersMixin
 ):
     """
     Do'konlarni boshqarish uchun ViewSet.

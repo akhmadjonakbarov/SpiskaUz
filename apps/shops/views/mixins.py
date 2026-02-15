@@ -38,6 +38,7 @@ from apps.shops.serializers import (
 from apps.shops.serializers import ShopTransactionSerializer
 from apps.supplier.models import Supplier, SupplierDebtBalance, SupplierTransaction
 from apps.supplier.serializers import SupplierSerializer
+from apps.users.serializers import CustomerSerializer
 from common.filters import ProductFilter
 from common.serializers import EmptyBodySerializer
 from utils.convertor import Convertor
@@ -888,3 +889,26 @@ class DocumentMixin:
 
         serializer = self.document_serializer_class(filtered_qs, many=True)
         return Response(serializer.data)
+
+
+class CustomersMixin:
+    @action(methods=["GET"], detail=True, url_path="customers")
+    def customers(self, request, *args, **kwargs):
+        shop: Shop = Shop.actives.get(id=kwargs.get("pk"))
+        if shop is None:
+            return Response(status=status.HTTP_404_NOT_FOUND, data={
+                "detail": "shop not found",
+            })
+        try:
+            members = shop.members.all()
+            serializer = CustomerSerializer(members, many=True)
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            print(f"[-] Error: {e}")
+            return Response(
+                {"detail": f"[-] Error: {e}"}, status=status.HTTP_400_BAD_REQUEST
+            )

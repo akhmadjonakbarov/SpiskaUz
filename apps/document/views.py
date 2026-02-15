@@ -236,7 +236,7 @@ class BuyProductView(GenericAPIView):
             )
 
             if first_part.product.currency_type == CURRENCY_USD:
-                converted_currency = Convertor.to_decimal(un_payed_money) * Convertor.to_decimal(latest.currency_rate)
+                converted_currency = Convertor.to_decimal(un_payed_money) * Convertor.to_decimal(latest.rate)
                 # supplier_debt_balance.balance_usd += Convertor.to_decimal(un_payed_money)
                 # SupplierTransaction.objects.create(
                 #     shop=first_part.shop,
@@ -255,7 +255,7 @@ class BuyProductView(GenericAPIView):
             supplier_debt_balance.save()
         except SupplierDebtBalance.DoesNotExist:
             if first_part.product.currency_type == CURRENCY_USD:
-                converted_currency = Convertor.to_decimal(un_payed_money) * Convertor.to_decimal(latest.currency_rate)
+                converted_currency = Convertor.to_decimal(un_payed_money) * Convertor.to_decimal(latest.rate)
                 # balance = SupplierDebtBalance.objects.create(
                 #     supplier=supplier,
                 #     balance_usd=un_payed_money

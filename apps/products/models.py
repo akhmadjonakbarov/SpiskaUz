@@ -64,6 +64,36 @@ class Product(BaseModelWithUser):
     def __int__(self) -> int:
         return int(self.pk)
 
+#
+# class ProductImage(BaseModel):
+#     product = models.ForeignKey(
+#         Product,
+#         on_delete=models.CASCADE,
+#         related_name="images",
+#         verbose_name="Product",
+#         null=True,
+#         blank=True
+#     )
+#     image = models.ImageField("Product Image", upload_to=product_image_upload_path)
+#     order = models.IntegerField(default=0)
+#
+#     class Meta:
+#         verbose_name = "Product Image"
+#         verbose_name_plural = "Product Images"
+#         ordering = ("order",)
+#
+#
+#
+#     def __str__(self):
+#         return f"Image of {self.product.name if self.product else 'Unknown Product'}"
+
+
+import sys
+from io import BytesIO
+from PIL import Image, ImageOps
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.db import models
+
 
 class ProductImage(BaseModel):
     product = models.ForeignKey(
@@ -82,45 +112,56 @@ class ProductImage(BaseModel):
         verbose_name_plural = "Product Images"
         ordering = ("order",)
 
-    # def save(self, *args, **kwargs):
-    #     # Compress only on first upload
-    #     if not self.pk and self.image:
-    #         self.image = self.compress_image(self.image)
-    #
-    #     super().save(*args, **kwargs)
-    #
-    # def compress_image(self, image):
-    #     img = Image.open(image)
-    #
-    #     # Convert to RGB (important for PNG)
-    #     if img.mode in ("RGBA", "P"):
-    #         img = img.convert("RGB")
-    #
-    #     # Resize to max 1600x1600
-    #     max_size = (1600, 1600)
-    #     img.thumbnail(max_size, Image.LANCZOS)
-    #
-    #     output = BytesIO()
-    #
-    #     # Start with good quality
-    #     quality = 85
-    #     img.save(output, format="JPEG", quality=quality, optimize=True)
-    #
-    #     # Dynamically reduce quality until ≤ 500 KB
-    #     while output.tell() > 500 * 1024 and quality > 30:
-    #         output = BytesIO()
-    #         quality -= 5
-    #         img.save(output, format="JPEG", quality=quality, optimize=True)
-    #
-    #     output.seek(0)
-    #
-    #     filename = os.path.splitext(image.name)[0] + ".jpg"
-    #
-    #     return ContentFile(output.read(), name=filename)
+    def save(self, *args, **kwargs):
+        # 1. Check if there is an image and if it's a new file being uploaded
+        if self.image and (not self.pk or self._image_changed()):
+            self.image = self.compress_image(self.image)
+
+        super().save(*args, **kwargs)
+
+    def _image_changed(self):
+        """Checks if the image file has actually changed to avoid re-compressing."""
+        old_obj = ProductImage.objects.filter(pk=self.pk).first()
+        return old_obj.image != self.image if old_obj else True
+
+    def compress_image(self, uploaded_image):
+        img = Image.open(uploaded_image)
+
+        # 2. Fix Orientation: Prevent the photo from rotating
+        img = ImageOps.exif_transpose(img)
+
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+
+        output = BytesIO()
+        quality = 90
+
+        # 3. Targeted Compression Loop
+        while True:
+            output.seek(0)
+            output.truncate(0)
+            img.save(output, format='JPEG', quality=quality)
+
+            file_size = output.tell()
+
+            # Target: Stop if under 500KB or if quality gets too low
+            # 512000 bytes = 500 KB
+            if file_size <= 512000 or quality <= 20:
+                break
+            quality -= 5
+
+        output.seek(0)
+        return InMemoryUploadedFile(
+            output,
+            'ImageField',
+            f"{self.image.name.split('.')[0]}.jpg",
+            'image/jpeg',
+            sys.getsizeof(output),
+            None
+        )
 
     def __str__(self):
         return f"Image of {self.product.name if self.product else 'Unknown Product'}"
-
 
 class ReportOption(models.Model):
     parent = models.ForeignKey("self", on_delete=models.CASCADE, related_name="options", verbose_name="Parent",

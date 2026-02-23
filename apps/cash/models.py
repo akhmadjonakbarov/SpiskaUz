@@ -12,7 +12,6 @@ class CashPaymentMethod(models.TextChoices):
 
 
 class CashHistory(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="cash_history", verbose_name="Shop")
     payment_method = models.CharField(max_length=10, choices=CashPaymentMethod.choices, default=CashPaymentMethod.CASH)
     comment = models.TextField(verbose_name="Comment", null=True, blank=True)

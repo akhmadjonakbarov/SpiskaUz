@@ -11,7 +11,6 @@ from .utils.generate_image_path import product_image_upload_path
 
 
 class ProductGroup(BaseModelWithUser):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name="product_groups", verbose_name="Shop")
     position = models.IntegerField("Position", default=0)
 
@@ -63,6 +62,7 @@ class Product(BaseModelWithUser):
 
     def __int__(self) -> int:
         return int(self.pk)
+
 
 #
 # class ProductImage(BaseModel):
@@ -162,6 +162,7 @@ class ProductImage(BaseModel):
 
     def __str__(self):
         return f"Image of {self.product.name if self.product else 'Unknown Product'}"
+
 
 class ReportOption(models.Model):
     parent = models.ForeignKey("self", on_delete=models.CASCADE, related_name="options", verbose_name="Parent",

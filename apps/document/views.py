@@ -43,7 +43,7 @@ class DocumentListView(GenericAPIView):
         manual_parameters=[
             openapi.Parameter(
                 'shop_id', openapi.IN_QUERY, description="Filter by shop ID",
-                type=openapi.TYPE_STRING
+                type=openapi.TYPE_INTEGER
             ),
             openapi.Parameter(
                 'product_id', openapi.IN_QUERY, description="Filter by product ID",

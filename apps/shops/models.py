@@ -10,6 +10,7 @@ from common.utils import generate_unique_text
 
 
 class Shop(BaseModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField("Name", max_length=256)
     description = models.TextField("Description", max_length=1000)
     link = models.CharField("Link", max_length=32, default=generate_unique_text, unique=True)

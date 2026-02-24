@@ -17,5 +17,5 @@ class SupplierDebtBalanceAdmin(BaseAdmin):
 @admin.register(SupplierTransaction)
 class DebtPaymentHistoryAdmin(BaseAdmin):
     list_display = (
-        'amount', 'currency_type', 'created_by', 'balance',
+        'amount', 'currency_type', 'created_by', 'balance','transaction_type'
     )

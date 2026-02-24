@@ -1,7 +1,7 @@
 from django.db import models
 
 from apps.shops.models import Shop
-from apps.users.models import User
+
 
 
 class Transaction(models.Model):

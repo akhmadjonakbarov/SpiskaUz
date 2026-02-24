@@ -22,7 +22,10 @@ class SoldStatisticService:
         total = Decimal("0.0")
 
         for item in items:
-            price = item.qty * item.sale_price
+            if item.product.discount > Decimal("0.0"):
+                price = item.qty * (item.sale_price - (item.sale_price * item.product.discount / 100))
+            else:
+                price = item.qty * item.sale_price
             if item.product.currency_type.lower() == "usd":
                 price *= item.currency_rate_value
             total += Convertor.to_decimal(price)

@@ -169,6 +169,7 @@ class BuyProductView(GenericAPIView):
 
             return Response({"message": "Product bought successfully."}, status=status.HTTP_200_OK)
         except Exception as e:
+            print(e)
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def process_product_parts(self, request, user, document, supplier):
@@ -229,7 +230,7 @@ class BuyProductView(GenericAPIView):
         latest = CurrencyRate.objects.order_by('-created_at').filter(
             shop=first_part.shop
         ).first()
-        converted_currency = None
+        converted_currency = Decimal("0.0")
         try:
             supplier_debt_balance = SupplierDebtBalance.objects.get(
                 supplier=supplier

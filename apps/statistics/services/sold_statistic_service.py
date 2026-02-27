@@ -1,10 +1,11 @@
 from decimal import Decimal
+
 from django.db.models import Sum
-from apps.shops.models import ShopBalance
+
+from apps.document.models import DocumentItem
 from apps.shops.services.shop_balance_calculator import ShopBalanceTransactionCalculatorService
 from apps.statistics.services.debt_calculator import ShopDebtCalculatorService
 from utils.convertor import Convertor
-from apps.document.models import DocumentItem
 
 
 class SoldStatisticService:

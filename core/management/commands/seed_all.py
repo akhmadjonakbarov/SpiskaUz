@@ -17,6 +17,14 @@ User = get_user_model()
 fake = Faker()
 
 
+def generate_uz_phone():
+    """Generates a random unique phone number in +998XXXXXXXXX format."""
+    # Common codes: 90, 91, 93, 94, 95, 97, 98, 99, 33, 77
+    code = random.choice(['90', '91', '93', '94', '95', '97', '98', '99', '33', '77', '88'])
+    number = "".join([str(random.randint(0, 9)) for _ in range(7)])
+    return f"+998{code}{number}"
+
+
 class Command(BaseCommand):
     help = 'Seeds Shops with specific Member-to-Role logic and Currency Rates'
 
@@ -43,7 +51,7 @@ class Command(BaseCommand):
         # 2. CREATE 50 TOTAL USERS
         all_users = []
         for _ in range(50):
-            u = user_model.objects.create(phone=fake.unique.phone_number()[:20], first_name=fake.first_name())
+            u = user_model.objects.create(phone=generate_uz_phone(), first_name=fake.first_name())
             u.set_password("password123")
             u.save()
             all_users.append(u)

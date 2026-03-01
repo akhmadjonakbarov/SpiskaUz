@@ -2,7 +2,7 @@ from rest_framework import viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 
-from apps.shops.models import Category
+from apps.products.models import Category
 from apps.shops.serializers import CategorySerializer
 
 

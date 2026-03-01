@@ -7,8 +7,8 @@ from rest_framework import serializers
 
 from apps.document.models import DocumentItemBalance
 from apps.product_part.models import ProductPart
-from apps.products.models import Product, ProductGroup, ProductImage, Report, ReportOption
-from apps.shops.models import Shop, Category
+from apps.products.models import Product, ProductGroup, ProductImage, Report, ReportOption, Category
+from apps.shops.models import Shop
 from apps.shops.serializers import CategorySerializer
 from apps.unit.models import Unit
 from apps.unit.serializers import UnitSerializer

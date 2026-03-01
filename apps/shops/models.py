@@ -43,24 +43,6 @@ class Shop(BaseModel):
         return self.orders.filter(status=OrderStatus.COMPLETED).aggregate(total=Sum("profit"))["total"] or 0
 
 
-class Category(BaseModelWithUser):
-    name = models.CharField("Name", max_length=256)
-    shops = models.ManyToManyField(
-        Shop,
-        related_name="categories",
-        verbose_name="Shops",
-        blank=True,
-    )
-    image = models.ImageField("Image", upload_to="shop-category-images/",
-                              default="shop-category-images/default-image.png")
-    can_delete = models.BooleanField(default=True)
-
-    class Meta:
-        verbose_name = "Category"
-        verbose_name_plural = "Categories"
-
-    def __str__(self):
-        return self.name
 
 
 class ShopContact(models.Model):

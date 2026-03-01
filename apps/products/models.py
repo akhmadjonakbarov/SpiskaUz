@@ -1,9 +1,13 @@
-import uuid
+import sys
+from decimal import Decimal
+from io import BytesIO
 
+from PIL import Image, ImageOps
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models
 
 from apps.base.models import BaseModel, BaseModelWithUser
-from apps.shops.models import Shop, Category
+from apps.shops.models import Shop
 from apps.unit.models import Unit
 from apps.users.models import User
 from constants.currency_choices import CURRENCY_CHOICES
@@ -20,6 +24,26 @@ class ProductGroup(BaseModelWithUser):
 
     def __str__(self):
         return str(self.pk)
+
+
+class Category(BaseModelWithUser):
+    name = models.CharField("Name", max_length=256)
+    shops = models.ManyToManyField(
+        Shop,
+        related_name="categories",
+        verbose_name="Shops",
+        blank=True,
+    )
+    image = models.ImageField("Image", upload_to="shop-category-images/",
+                              default="shop-category-images/default-image.png")
+    can_delete = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
+
+    def __str__(self):
+        return self.name
 
 
 class Product(BaseModelWithUser):
@@ -40,7 +64,7 @@ class Product(BaseModelWithUser):
     sale_price = models.DecimalField("Sale Price", max_digits=50, decimal_places=5)
     barcode = models.CharField("Barcode", max_length=100, unique=True)
     is_active = models.BooleanField("Active", default=True)
-    discount = models.DecimalField("Discount", max_digits=50, decimal_places=5)
+    discount = models.DecimalField("Discount", max_digits=50, decimal_places=5, default=Decimal("0"))
     position_number = models.IntegerField("Position", default=0)
     group = models.ForeignKey(
         ProductGroup, on_delete=models.CASCADE,
@@ -62,37 +86,6 @@ class Product(BaseModelWithUser):
 
     def __int__(self) -> int:
         return int(self.pk)
-
-
-#
-# class ProductImage(BaseModel):
-#     product = models.ForeignKey(
-#         Product,
-#         on_delete=models.CASCADE,
-#         related_name="images",
-#         verbose_name="Product",
-#         null=True,
-#         blank=True
-#     )
-#     image = models.ImageField("Product Image", upload_to=product_image_upload_path)
-#     order = models.IntegerField(default=0)
-#
-#     class Meta:
-#         verbose_name = "Product Image"
-#         verbose_name_plural = "Product Images"
-#         ordering = ("order",)
-#
-#
-#
-#     def __str__(self):
-#         return f"Image of {self.product.name if self.product else 'Unknown Product'}"
-
-
-import sys
-from io import BytesIO
-from PIL import Image, ImageOps
-from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.db import models
 
 
 class ProductImage(BaseModel):

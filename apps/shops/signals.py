@@ -5,7 +5,7 @@ from django.dispatch import receiver
 
 from common.utils import assign_perms
 
-from .models import Admin, Shop, Category, ShopBalance
+from .models import Admin, Shop, ShopBalance
 
 
 # @receiver(post_save, sender=Shop)

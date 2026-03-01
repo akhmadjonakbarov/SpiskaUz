@@ -2,7 +2,7 @@ from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from unfold.admin import ModelAdmin, TabularInline
 
-from .models import Admin as ShopAdminModel, Shop, Category, ShopBalance, ShopBalanceTransaction
+from .models import Admin as ShopAdminModel, Shop, ShopBalance, ShopBalanceTransaction
 
 
 class ShopAdminInline(TabularInline):
@@ -10,9 +10,6 @@ class ShopAdminInline(TabularInline):
     extra = 0
 
 
-@admin.register(Category)
-class CategoryAdmin(ModelAdmin):
-    list_display = ('id', 'name')
 
 
 @admin.register(Shop)

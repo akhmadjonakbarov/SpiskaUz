@@ -1,7 +1,7 @@
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from unfold.admin import ModelAdmin, TabularInline
-
+from apps.products.models import Category
 from .models import Product, ProductGroup, ProductImage, Report, ReportOption
 from ..product_part.models import ProductPart
 
@@ -14,6 +14,11 @@ class ProductImageInline(TabularInline):
 class ProductPartInline(TabularInline):
     model = ProductPart
     extra = 1
+
+
+@admin.register(Category)
+class CategoryAdmin(ModelAdmin, GuardedModelAdmin):
+    pass
 
 
 @admin.register(Product)

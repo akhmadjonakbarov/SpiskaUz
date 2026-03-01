@@ -10,7 +10,7 @@ from rest_framework.response import Response
 
 from apps.currency_rate.models import CurrencyRate
 from apps.role_manager.models import Role
-from apps.shops.models import Shop, Category, ShopBalance
+from apps.shops.models import Shop,  ShopBalance
 from apps.shops.serializers import ShopSerializer, ShopDetailSerializer
 from common.mixins import ActionPermissionMixin
 from common.paginations import PageSizePagination
@@ -27,6 +27,7 @@ from .mixins import (
     SubscriptionActionMixin,
     ShopBalanceMixin, SupplierFilterMixin, DocumentMixin, ShopBalanceTransactionMixin, CustomersMixin,
 )
+from ...products.models import Category
 
 
 class ShopViewSet(

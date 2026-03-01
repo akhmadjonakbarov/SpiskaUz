@@ -6,7 +6,7 @@ from rest_framework.validators import UniqueTogetherValidator
 
 from apps.notifications.models import NotificationType
 from apps.role_manager.models import Role
-from apps.shops.models import Shop,  ShopContact
+from apps.shops.models import Shop, ShopContact
 from apps.supplier.models import Supplier
 from apps.users.serializers import UserSerializer, SimpleUserSerializer
 
@@ -133,6 +133,8 @@ class ShopSerializer(serializers.ModelSerializer):
         role = Role.objects.filter(
             shop=obj, role='owner'
         ).first()
+        if role is None:
+            return None
         serializer = SimpleUserSerializer(role.user)
         return serializer.data
 

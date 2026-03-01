@@ -81,7 +81,7 @@ class Command(BaseCommand):
                 Role.objects.create(
                     user=member,
                     shop=shop,
-                    role=random.choice(['cashier_admin', 'owner']),
+                    role=random.choice(['cashier_admin', 'owner']).lower(),
                     salary=Decimal('3500000.00'),
                     created_by=admin_user
                 )

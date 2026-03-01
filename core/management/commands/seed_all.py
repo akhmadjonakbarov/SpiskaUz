@@ -63,7 +63,7 @@ class Command(BaseCommand):
             shop = Shop.objects.create(
                 name=f"Shop {i + 1}: {fake.company()}",
                 description=fake.catch_phrase(),
-                latitude="41.31", longitude="69.24"
+                latitude="41.31", longitude="69.24", image="shop-images/default.jpg",
             )
 
             # --- ADDING CURRENCY RATE FOR SHOP ---

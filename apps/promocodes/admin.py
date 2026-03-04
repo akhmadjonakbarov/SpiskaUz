@@ -2,11 +2,11 @@ from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 from unfold.admin import ModelAdmin, TabularInline
 
-from .models import PromoCode, PromocodeItem, PromocodeUsage
+from .models import PromoCode, PromoCodeItem, PromoCodeUsage
 
 
 class PromocodeItemInline(TabularInline):
-    model = PromocodeItem
+    model = PromoCodeItem
     extra = 1
 
     def get_extra(self, request, obj=..., **kwargs):
@@ -33,8 +33,8 @@ class PromocodeAdmin(ModelAdmin):
     active.boolean = True
 
 
-@admin.register(PromocodeUsage)
+@admin.register(PromoCodeUsage)
 class PromocodeUsageAdmin(GuardedModelAdmin):
-    list_display = ["pk", "promocode", "user", "used_at"]
-    list_filter = ["promocode", "user"]
-    search_fields = ["promocode__code", "user__username"]
+    list_display = ["pk", "promo_code", "user", "used_at"]
+    list_filter = ["promo_code", "user"]
+    search_fields = ["promo_code__code", "user__username"]

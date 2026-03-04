@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from apps.orders.models import Order, OrderStatus, OrderItem, OrderPaymentDetail
 from apps.orders.serializers import OrderSerializer
 from apps.orders.services import OrderService
-from apps.promocodes.serializers import ApplyPromocodeSerializer
+from apps.promocodes.serializers import ApplyPromoCodeSerializer
 from utils.convertor import Convertor
 from .cart_helpers import CartHelpers
 from .models import PromoCode, Cart, CartItem
@@ -174,15 +174,15 @@ class CartViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Gen
                 }
             )
 
-    @swagger_auto_schema(request_body=ApplyPromocodeSerializer)
-    @action(detail=True, methods=["POST"], url_path="apply-promocode", serializer_class=ApplyPromocodeSerializer)
+    @swagger_auto_schema(request_body=ApplyPromoCodeSerializer)
+    @action(detail=True, methods=["POST"], url_path="apply-promocode", serializer_class=ApplyPromoCodeSerializer)
     def apply_promocode(self, request, pk=None):
         cart = self.get_object()
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        cart.promocode = PromoCode.objects.get(code=serializer.validated_data["code"])
+        cart.promo_code = PromoCode.objects.get(code=serializer.validated_data["code"])
         cart.save()
 
         return Response({"message": "Promocode savatga muvaffaqqiyatli biriktirildi"}, status=200)

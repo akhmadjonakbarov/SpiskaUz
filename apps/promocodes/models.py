@@ -12,6 +12,10 @@ class PromoCode(BaseModel):
         RegexValidator(regex=r"^[A-Za-z0-9]+$",
                        message="Code faqat harf va raqamlardan tashkil topishi kerak. Bo'sh joyga ruxsat yo'q.")])
     is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(
+        "users.User", on_delete=models.CASCADE, related_name="promocode_created_by",
+        null=True, blank=True
+    )
 
     def __str__(self) -> str:
         return f"PromoCode({self.shop.id}, {self.code})"
@@ -19,26 +23,26 @@ class PromoCode(BaseModel):
     class Meta:
         unique_together = ["shop", "code"]
 
-    def can_use_promocode(self, user):
+    def can_use_promo_code(self, user):
         return not self.usages.filter(user=user).exists()
 
 
-class PromocodeItem(models.Model):
-    promocode = models.ForeignKey(PromoCode, on_delete=models.CASCADE, related_name="items")
+class PromoCodeItem(models.Model):
+    promo_code = models.ForeignKey(PromoCode, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     discount = models.IntegerField(validators=[MinValueValidator(0)], default=0)
 
     class Meta:
-        unique_together = ["promocode", "product"]
+        unique_together = ["promo_code", "product"]
 
     def __str__(self):
-        return f"PromocodeItem({self.product.name}, {self.discount})"
+        return f"PromoCodeItem({self.product.name}, {self.discount})"
 
 
-class PromocodeUsage(models.Model):
-    promocode = models.ForeignKey(PromoCode, on_delete=models.CASCADE, related_name="usages")
-    user = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="promocode_usages")
+class PromoCodeUsage(models.Model):
+    promo_code = models.ForeignKey(PromoCode, on_delete=models.CASCADE, related_name="usages")
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="promo_code_usages")
     used_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"PromocodeUsage({self.promocode.code}, {self.user.get_full_name()})"
+        return f"PromoCodeUsage({self.promo_code.code}, {self.user.get_full_name()})"

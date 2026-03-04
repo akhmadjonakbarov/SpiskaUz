@@ -70,6 +70,7 @@ LOCAL_APPS = [
     'apps.customer_transaction',
     'apps.salary',
     'apps.admin_panel',
+    'apps.game',
     'core'
 ]
 

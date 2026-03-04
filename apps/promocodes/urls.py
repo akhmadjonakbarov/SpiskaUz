@@ -1,9 +1,9 @@
 from rest_framework.routers import DefaultRouter
 
-from .views import PromocodeItemViewSet, PromocodeViewSet
+from .views import PromoCodeItemViewSet, PromoCodeViewSet
 
 router = DefaultRouter()
-router.register("promocode", PromocodeViewSet)
-router.register("promocode-item", PromocodeItemViewSet)
+router.register("promocode", PromoCodeViewSet)
+router.register("promocode-item", PromoCodeItemViewSet)
 
 urlpatterns = router.urls + []

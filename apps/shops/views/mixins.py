@@ -26,7 +26,7 @@ from apps.products.serializers import (
     CreateProductsGroupSerializer, ProductPositionSerializer,
     ProductSerializer, SeparateProductsSerializer, ProductSerializerForUser
 )
-from apps.promocodes.serializers import PromocodeSerializer
+from apps.promocodes.serializers import PromoCodeSerializer
 from apps.role_manager.models import Role
 from apps.role_manager.serializer import RoleSerializer
 from apps.shops.filters import OrderFilter, DocumentFilter, ShopBalanceTransactionFilter
@@ -613,7 +613,7 @@ class ExchangeRateActionsMixin:
 
 
 class PromocodeActionsMixin:
-    @action(methods=["GET"], detail=True, serializer_class=PromocodeSerializer)
+    @action(methods=["GET"], detail=True, serializer_class=PromoCodeSerializer)
     def promocodes(self, request, *args, **kwargs):
         """Do'kondagi promokodlarni olish."""
         promocodes = Shop.actives.get(id=kwargs.get("pk")).promocodes.all()

@@ -3,7 +3,9 @@ from rest_framework import serializers
 
 from apps.cart.models import Cart
 
-from .models import PromoCode, PromocodeItem
+from .models import PromoCode, PromoCodeItem
+from ..products.models import Product
+from ..shops.models import Shop
 
 
 class CartField(serializers.CurrentUserDefault):
@@ -11,43 +13,45 @@ class CartField(serializers.CurrentUserDefault):
         return serializer_field.context["view"].kwargs["pk"]
 
 
-class PromocodeItemSerializer(serializers.ModelSerializer):
+class PromoCodeItemSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PromocodeItem
-        exclude = ["promocode"]
+        model = PromoCodeItem
+        exclude = ["promo_code"]
 
 
-class PromocodeSerializer(serializers.ModelSerializer):
-    items = PromocodeItemSerializer(many=True, required=False)
+class PromoCodeSerializer(serializers.ModelSerializer):
+    # items = PromoCodeItemSerializer(many=True, required=False)
 
     class Meta:
         model = PromoCode
         fields = "__all__"
 
-    def create(self, validated_data):
-        items_data = validated_data.pop("items", [])
-        promocode = super().create(validated_data)
 
-        try:
-            PromocodeItem.objects.bulk_create(PromocodeItem(promocode=promocode, **item_data) for item_data in items_data)
-
-        except Exception as e:
-            promocode.delete()
-            raise serializers.ValidationError({"error": str(e)}) from e
-
-        return promocode
+class PromoCodeCreateItemSerializer(serializers.Serializer):
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    discount = serializers.DecimalField(max_digits=20, decimal_places=5)
 
 
-class ApplyPromocodeSerializer(serializers.Serializer):
+class PromoCodeCreateSerializer(serializers.Serializer):
+    items = PromoCodeCreateItemSerializer(many=True, required=False)
+    shop = serializers.PrimaryKeyRelatedField(queryset=Shop.objects.all())
+
+
+class ApplyPromoCodeSerializer(serializers.Serializer):
     current_user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     cart = serializers.HiddenField(default=CartField())
     code = serializers.CharField(max_length=256)
 
     def validate(self, attrs):
         cart = get_object_or_404(Cart, pk=attrs["cart"])
-        promocode = get_object_or_404(PromoCode, code=attrs["code"], shop=cart.shop)
+        promo_code = get_object_or_404(PromoCode, code=attrs["code"], shop=cart.shop)
 
-        if not promocode.can_use_promocode(attrs["current_user"]):
+        if not promo_code.can_use_promo_code(attrs["current_user"]):
             raise serializers.ValidationError("Siz ushbu promokoddan allaqachon foydalangansiz.")
 
         return attrs
+
+
+class PromoCodeItemSearchSerializer(serializers.Serializer):
+    promo_code = serializers.CharField(max_length=256)
+    product_id = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())

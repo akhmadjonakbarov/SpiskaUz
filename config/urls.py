@@ -27,6 +27,7 @@ api_urls = [
     path("", include("apps.products.urls")),
     path("", include("apps.product_part.urls")),
     path("", include("apps.promocodes.urls")),
+    path("", include("apps.game.urls")),
     path("", include("apps.currency_rate.urls")),
     path("", include("apps.unit.urls")),
     path("", include("apps.shops.urls")),

@@ -2,7 +2,7 @@ from collections import defaultdict
 from decimal import Decimal
 
 from django.db import transaction as django_transaction, transaction
-from django.db.models import OuterRef, Exists
+from django.db.models import OuterRef, Exists, Count
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -900,7 +900,10 @@ class CustomersMixin:
                 "detail": "shop not found",
             })
         try:
-            members = shop.members.all()
+            members = shop.members.annotate(
+                order_count=Count('customer_orders')
+            ).filter(order_count__gt=0)
+
             serializer = CustomerSerializer(members, many=True)
             return Response(
                 serializer.data,

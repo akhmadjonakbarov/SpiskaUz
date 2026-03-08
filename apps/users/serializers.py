@@ -89,9 +89,8 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = "__all__"
+        fields = ('id', 'first_name', 'last_name', 'phone', 'orders')
 
     def get_orders(self, obj):
-        # Import inside the method to prevent circular loops
         from apps.orders.serializers import OrderSerializer
         return OrderSerializer(obj.customer_orders.all(), many=True).data

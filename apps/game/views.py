@@ -41,7 +41,7 @@ class SeasonViewSet(viewsets.ModelViewSet):
 
         # Create Items
         SeasonItem.objects.bulk_create([
-            SeasonItem(season=season, price=Decimal(p))
+            SeasonItem(season=season, price=p)
             for p in items_list
         ])
 

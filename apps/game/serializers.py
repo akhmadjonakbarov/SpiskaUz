@@ -21,7 +21,7 @@ class GameUserBalanceSerializer(serializers.ModelSerializer):
 
 
 class GameItemSerializer(serializers.ModelSerializer):
-    price = serializers.DecimalField(source='season_item.price', max_digits=10, decimal_places=2, read_only=True)
+    price = serializers.IntegerField(source='season_item.price', read_only=True)
 
     class Meta:
         model = GameItem
@@ -46,7 +46,7 @@ class SeasonSerializer(serializers.ModelSerializer):
 class SeasonCreateSerializer(serializers.Serializer):
     name = serializers.CharField(required=True)
     shop = serializers.PrimaryKeyRelatedField(queryset=Shop.objects.all())
-    limit_price = serializers.FloatField(write_only=True)
+    limit_price = serializers.IntegerField(write_only=True)
     end_date = serializers.DateTimeField(write_only=True)  # Changed to DateTime to match model
     has_debt = serializers.BooleanField(default=False)
 

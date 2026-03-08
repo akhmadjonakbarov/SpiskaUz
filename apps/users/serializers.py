@@ -94,7 +94,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     def get_debt(self, customer: User):
         orders = Order.objects.select_related('payment_detail').filter(customer=customer)
-        debt = []
+
         total = 0
         for order in orders:
             payment_detail = order.payment_detail

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status
@@ -5,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction
 from .models import Season, SeasonItem, GameUserBalance, GameItem
-from .serializers import SeasonSerializer, ApplyPrizeSerializer, GameUserBalanceSerializer
+from .serializers import SeasonSerializer, ApplyPrizeSerializer, GameUserBalanceSerializer, SeasonCreateSerializer
 
 
 class SeasonViewSet(viewsets.ModelViewSet):
@@ -20,9 +22,45 @@ class SeasonViewSet(viewsets.ModelViewSet):
             return qr.filter(shop_id=shop_id)
         return qr
 
+    def get_serializer_class(self):
+        # Use the specific creation serializer for POST requests
+        if self.action == 'create':
+            return SeasonCreateSerializer
+        return SeasonSerializer
+
+    @transaction.atomic
     def perform_create(self, serializer):
-        # Just pass the user; the Serializer's .create() handles the rest
-        serializer.save(user=self.request.user)
+        # Extract data
+        items_list = serializer.validated_data.pop('items', [])
+
+        # Create Season (validated_data now contains name, shop, limit_price, end_date)
+        season = Season.objects.create(
+            user=self.request.user,
+            **serializer.validated_data
+        )
+
+        # Create Items
+        SeasonItem.objects.bulk_create([
+            SeasonItem(season=season, price=Decimal(p))
+            for p in items_list
+        ])
+
+        # Assign the instance back so the ViewSet can find it
+        serializer.instance = season
+
+    def create(self, request, *args, **kwargs):
+        # 1. Validate using CreateSerializer
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # 2. Save the data
+        self.perform_create(serializer)
+
+        # 3. Return response using the ModelSerializer (SeasonSerializer)
+        # This avoids the KeyError and returns the pretty nested structure
+        headers = self.get_success_headers(serializer.data)
+        output_serializer = SeasonSerializer(serializer.instance)
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     @swagger_auto_schema(
         manual_parameters=[

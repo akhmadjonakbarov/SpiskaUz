@@ -5,6 +5,9 @@ from apps.base.models import BaseModelWithUser, BaseModelWithUserAndShop, BaseMo
 
 class Season(BaseModelWithUserAndShop):
     name = models.CharField(max_length=120)
+    limit_price = models.DecimalField(max_digits=20, decimal_places=2, default=0, null=True, blank=True)
+    end_date = models.DateTimeField(blank=True, null=True)
+    has_debt = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

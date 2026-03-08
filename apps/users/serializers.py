@@ -2,6 +2,7 @@ from django.contrib.sites.models import Site
 from rest_framework import serializers
 
 from .models import User
+from ..orders.models import Order, OrderPaymentDetail
 from ..role_manager.models import Role
 from ..shops.models import Shop
 
@@ -85,6 +86,17 @@ class VerifyOTPSerializer(serializers.Serializer):
 
 
 class CustomerSerializer(serializers.ModelSerializer):
+    debt = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('id', 'first_name', 'last_name', 'phone')
+        fields = ('id', 'first_name', 'last_name', 'phone', 'avatar', 'debt')
+
+    def get_debt(self, customer: User):
+        orders = Order.objects.select_related('payment_detail').filter(customer=customer)
+        debt = []
+        total = 0
+        for order in orders:
+            payment_detail = order.payment_detail
+            total = total + payment_detail.un_payed
+        return total

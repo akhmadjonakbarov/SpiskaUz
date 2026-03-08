@@ -4,15 +4,18 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db import transaction
 from .models import Season, SeasonItem, GameUserBalance, GameItem
+from .permissions import IsEligibleCustomer
 from .serializers import SeasonSerializer, ApplyPrizeSerializer, GameUserBalanceSerializer, SeasonCreateSerializer
 
 
 class SeasonViewSet(viewsets.ModelViewSet):
     queryset = Season.objects.all()
     serializer_class = SeasonSerializer
+    permission_classes = (IsAuthenticated, IsEligibleCustomer)
 
     def get_queryset(self):
         qr = self.queryset.order_by('-created_at')

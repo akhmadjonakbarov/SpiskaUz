@@ -85,12 +85,6 @@ class VerifyOTPSerializer(serializers.Serializer):
 
 
 class CustomerSerializer(serializers.ModelSerializer):
-    orders = serializers.SerializerMethodField()
-
     class Meta:
         model = User
-        fields = ('id', 'first_name', 'last_name', 'phone', 'orders')
-
-    def get_orders(self, obj):
-        from apps.orders.serializers import OrderSerializer
-        return OrderSerializer(obj.customer_orders.all(), many=True).data
+        fields = ('id', 'first_name', 'last_name', 'phone')

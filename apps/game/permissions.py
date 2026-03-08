@@ -22,6 +22,8 @@ class IsEligibleCustomer(permissions.BasePermission):
         orders = user.customer_orders.filter(shop_id=shop_id)
         total = Decimal('0.0')
         latest_season: Season = Season.objects.order_by('-created_at').filter(shop_id=shop_id).first()
+        if latest_season is None:
+            return False
 
         for order in orders:
             payment_detail: OrderPaymentDetail = order.payment_detail

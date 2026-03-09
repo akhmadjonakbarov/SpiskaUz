@@ -17,6 +17,8 @@ class IsEligibleCustomer(permissions.BasePermission):
         # Ensure the user is logged in first
         if not user.is_authenticated:
             return False
+        if user.is_staff or user.is_superuser:
+            return True
 
         shop_id = request.query_params.get("shop_id")
         has_no_debt = False

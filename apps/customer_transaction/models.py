@@ -1,7 +1,5 @@
 from decimal import Decimal
-
 from django.db import models
-
 from apps.base.models import BaseModelWithShop
 
 
@@ -14,7 +12,6 @@ class CustomerTransaction(BaseModelWithShop):
         "users.User", verbose_name="Customer",
         on_delete=models.CASCADE,
         related_name="transactions_as_customer",
-
     )
     order = models.ForeignKey("orders.Order", on_delete=models.CASCADE, related_name="transactions")
     amount = models.DecimalField(

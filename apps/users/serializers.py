@@ -99,4 +99,8 @@ class CustomerSerializer(serializers.ModelSerializer):
         for order in orders:
             payment_detail = order.payment_detail
             total = total + payment_detail.un_payed
-        return total
+        debt = {
+            "usd": 0.0,
+            "uzs": total
+        }
+        return debt

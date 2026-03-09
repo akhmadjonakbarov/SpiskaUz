@@ -4,6 +4,7 @@ from rest_framework import permissions
 
 from apps.game.models import Season
 from apps.orders.models import OrderPaymentDetail
+from apps.role_manager.models import Role
 
 
 class IsEligibleCustomer(permissions.BasePermission):
@@ -20,6 +21,11 @@ class IsEligibleCustomer(permissions.BasePermission):
         shop_id = request.query_params.get("shop_id")
         has_no_debt = False
         orders = user.customer_orders.filter(shop_id=shop_id)
+        role = Role.objects.filter(user=user, shop_id=shop_id).first()
+        has_role = False
+        if role:
+            has_role = True
+
         total = Decimal('0.0')
         latest_season: Season = Season.objects.order_by('-created_at').filter(shop_id=shop_id).first()
         if latest_season is None:
@@ -30,4 +36,4 @@ class IsEligibleCustomer(permissions.BasePermission):
             total += payment_detail.payed
 
         high_spender = total >= latest_season.limit_price
-        return high_spender
+        return high_spender or has_role

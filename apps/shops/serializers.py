@@ -232,6 +232,8 @@ class ShopDetailSerializer(serializers.ModelSerializer):
         role = Role.objects.filter(
             user=request.user, shop=obj
         ).first()
+        if role is None:
+            return None
         return RoleSerializer(role, many=False).data
 
     def get_has_cart_item(self, instance: Shop):

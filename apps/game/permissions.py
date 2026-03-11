@@ -14,7 +14,7 @@ class IsEligibleCustomer(permissions.BasePermission):
 
     def has_permission(self, request, view):
         user = request.user
-        # Ensure the user is logged in first
+
         if not user.is_authenticated:
             return False
         if user.is_staff or user.is_superuser:
@@ -22,12 +22,13 @@ class IsEligibleCustomer(permissions.BasePermission):
 
         shop_id = request.query_params.get("shop_id")
         has_no_debt = False
-        orders = user.customer_orders.filter(shop_id=shop_id)
-        role = Role.objects.filter(user=user, shop_id=shop_id).first()
-        has_role = False
-        if role:
-            has_role = True
 
+        role = Role.objects.filter(user=user, shop_id=shop_id).first()
+
+        if role is not None:
+            return True
+
+        orders = user.customer_orders.filter(shop_id=shop_id)
         total = Decimal('0.0')
         latest_season: Season = Season.objects.order_by('-created_at').filter(shop_id=shop_id).first()
         if latest_season is None:
@@ -38,4 +39,4 @@ class IsEligibleCustomer(permissions.BasePermission):
             total += payment_detail.payed
 
         high_spender = total >= latest_season.limit_price
-        return high_spender or has_role
+        return high_spender

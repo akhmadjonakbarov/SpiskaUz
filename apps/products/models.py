@@ -1,11 +1,9 @@
 import sys
 from decimal import Decimal
 from io import BytesIO
-
 from PIL import Image, ImageOps
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models
-
 from apps.base.models import BaseModel, BaseModelWithUser
 from apps.shops.models import Shop
 from apps.unit.models import Unit

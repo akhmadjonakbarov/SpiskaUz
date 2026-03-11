@@ -20,10 +20,10 @@ class IsEligibleCustomer(permissions.BasePermission):
         if user.is_staff or user.is_superuser:
             return True
 
-        shop_id = request.query_params.get("shop_id")
+        shop_id = request.query_params.get("shop")
         has_no_debt = False
 
-        role = Role.objects.filter(user=user, shop_id=shop_id).first()
+        role = Role.objects.filter(user=user, shop=shop_id).first()
 
         if role is not None:
             return True

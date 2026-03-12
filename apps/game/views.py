@@ -82,7 +82,7 @@ class SeasonViewSet(viewsets.ModelViewSet):
         user = request.user
 
         if user.is_staff or user.is_superuser:
-            return []
+            return Response([])
 
         shop_id = request.query_params.get("shop")
         has_no_debt = False
@@ -90,13 +90,13 @@ class SeasonViewSet(viewsets.ModelViewSet):
         role = Role.objects.filter(user=user, shop=shop_id).first()
 
         if role is not None:
-            return []
+            return Response([])
 
         orders = user.customer_orders.filter(shop_id=shop_id)
         total = Decimal('0.0')
         latest_season: Season = Season.objects.order_by('-created_at').filter(shop_id=shop_id).first()
         if latest_season is None:
-            return []
+            return Response([])
 
         for order in orders:
             payment_detail: OrderPaymentDetail = order.payment_detail
@@ -104,7 +104,7 @@ class SeasonViewSet(viewsets.ModelViewSet):
 
         high_spender = total >= latest_season.limit_price
         if not high_spender:
-            return []
+            return Response([])
         return super().list(request, *args, **kwargs)
 
     @transaction.atomic

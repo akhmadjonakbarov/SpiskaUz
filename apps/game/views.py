@@ -10,12 +10,14 @@ from django.db import transaction
 from .models import Season, SeasonItem, GameUserBalance, GameItem
 from .permissions import IsEligibleCustomer
 from .serializers import SeasonSerializer, ApplyPrizeSerializer, GameUserBalanceSerializer, SeasonCreateSerializer
+from ..orders.models import OrderPaymentDetail
+from ..role_manager.models import Role
 
 
 class SeasonViewSet(viewsets.ModelViewSet):
     queryset = Season.objects.all()
     serializer_class = SeasonSerializer
-    permission_classes = (IsAuthenticated, IsEligibleCustomer)
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         qr = self.queryset.order_by('-created_at')
@@ -77,6 +79,32 @@ class SeasonViewSet(viewsets.ModelViewSet):
         responses={200: SeasonSerializer(many=True)}
     )
     def list(self, request, *args, **kwargs):
+        user = request.user
+
+        if user.is_staff or user.is_superuser:
+            return []
+
+        shop_id = request.query_params.get("shop")
+        has_no_debt = False
+
+        role = Role.objects.filter(user=user, shop=shop_id).first()
+
+        if role is not None:
+            return []
+
+        orders = user.customer_orders.filter(shop_id=shop_id)
+        total = Decimal('0.0')
+        latest_season: Season = Season.objects.order_by('-created_at').filter(shop_id=shop_id).first()
+        if latest_season is None:
+            return []
+
+        for order in orders:
+            payment_detail: OrderPaymentDetail = order.payment_detail
+            total += payment_detail.payed
+
+        high_spender = total >= latest_season.limit_price
+        if not high_spender:
+            return []
         return super().list(request, *args, **kwargs)
 
     @transaction.atomic

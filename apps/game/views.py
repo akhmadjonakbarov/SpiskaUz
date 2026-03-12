@@ -90,7 +90,7 @@ class SeasonViewSet(viewsets.ModelViewSet):
         role = Role.objects.filter(user=user, shop=shop_id).first()
 
         if role is not None:
-            return Response([])
+            return super().list(request, *args, **kwargs)
 
         orders = user.customer_orders.filter(shop_id=shop_id)
         total = Decimal('0.0')

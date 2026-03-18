@@ -35,7 +35,7 @@ class ShopCategoryViewSet(viewsets.ModelViewSet):
 
         category = serializer.save(user=self.request.user)
 
-        output_serializer = CategorySerializer(category)
+        output_serializer = CategorySerializer(category, context={'request': request})
         return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):

@@ -22,10 +22,17 @@ class CategorySerializer(serializers.ModelSerializer):
         read_only_fields = ["can_delete"]
 
 
-class CreateCategorySerializer(serializers.Serializer):
-    name = serializers.CharField(required=True)
+class CreateCategorySerializer(serializers.ModelSerializer):
+    # This is fine to keep to ensure the shop is validated against the DB
     shop = serializers.PrimaryKeyRelatedField(queryset=Shop.objects.all())
-    image = serializers.ImageField(required=False)
+
+    class Meta:
+        model = Category
+        # Make sure 'shop' is in the fields so it gets validated
+        fields = ['name', 'shop', 'image']
+
+    # REMOVE the def create(self, validated_data) block.
+    # ModelSerializer handles it automatically when you call .save()
 
 
 class ShopContactSerializer(serializers.ModelSerializer):

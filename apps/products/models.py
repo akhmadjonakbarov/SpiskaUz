@@ -26,11 +26,10 @@ class ProductGroup(BaseModelWithUser):
 
 class Category(BaseModelWithUser):
     name = models.CharField("Name", max_length=256)
-    shops = models.ManyToManyField(
+    shop = models.ForeignKey(
         Shop,
         related_name="categories",
-        verbose_name="Shops",
-        blank=True,
+        verbose_name="Shop", on_delete=models.CASCADE
     )
     image = models.ImageField("Image", upload_to="shop-category-images/",
                               default="shop-category-images/default-image.png")

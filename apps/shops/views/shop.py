@@ -10,7 +10,7 @@ from rest_framework.response import Response
 
 from apps.currency_rate.models import CurrencyRate
 from apps.role_manager.models import Role
-from apps.shops.models import Shop,  ShopBalance
+from apps.shops.models import Shop, ShopBalance
 from apps.shops.serializers import ShopSerializer, ShopDetailSerializer
 from common.mixins import ActionPermissionMixin
 from common.paginations import PageSizePagination
@@ -154,15 +154,14 @@ class ShopViewSet(
             cash=Decimal('0.0')
         )
 
-        category = Category.objects.filter(name="Umumiy", shops=shop).first()
-        if category is None:
-            category = Category.objects.create(
+        category = Category.objects.filter(name="Umumiy").first()
+        if not category:
+            Category.objects.create(
+                shop=shop,
                 user=self.request.user,
                 can_delete=False,
                 name="Umumiy"
             )
-            category.shops.add(shop)
-            category.save()
 
         # Create CurrencyRate entry
         CurrencyRate.objects.create(

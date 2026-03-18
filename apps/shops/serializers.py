@@ -22,6 +22,12 @@ class CategorySerializer(serializers.ModelSerializer):
         read_only_fields = ["can_delete"]
 
 
+class CreateCategorySerializer(serializers.Serializer):
+    name = serializers.CharField(required=True)
+    shop = serializers.PrimaryKeyRelatedField(queryset=Shop.objects.all())
+    image = serializers.ImageField(required=False)
+
+
 class ShopContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShopContact

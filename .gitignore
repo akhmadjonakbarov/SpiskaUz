@@ -275,3 +275,11 @@ pyrightconfig.json
 .idea/
 *.sublime-project
 *.sublime-workspace
+
+# Django Migrations
+**/apps/*/migrations/*.py
+!**/apps/*/migrations/__init__.py
+
+# If you have migrations directly in apps (not nested)
+**/migrations/*.py
+!**/migrations/__init__.py

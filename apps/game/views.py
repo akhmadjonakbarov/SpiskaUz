@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db import transaction
 from .models import Season, SeasonItem, GameUserBalance, GameItem
-from .permissions import IsEligibleCustomer
+
 from .serializers import SeasonSerializer, ApplyPrizeSerializer, GameUserBalanceSerializer, SeasonCreateSerializer
 from ..orders.models import OrderPaymentDetail
 from ..role_manager.models import Role
@@ -21,7 +21,7 @@ class SeasonViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qr = self.queryset.order_by('-created_at')
-        # Filter by shop if provided in query params, otherwise return all
+
         shop_id = self.request.query_params.get('shop')
         if shop_id:
             return qr.filter(shop_id=shop_id)
@@ -54,15 +54,12 @@ class SeasonViewSet(viewsets.ModelViewSet):
         serializer.instance = season
 
     def create(self, request, *args, **kwargs):
-        # 1. Validate using CreateSerializer
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # 2. Save the data
         self.perform_create(serializer)
 
-        # 3. Return response using the ModelSerializer (SeasonSerializer)
-        # This avoids the KeyError and returns the pretty nested structure
         headers = self.get_success_headers(serializer.data)
         output_serializer = SeasonSerializer(serializer.instance)
         return Response(output_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -98,6 +95,16 @@ class SeasonViewSet(viewsets.ModelViewSet):
         if latest_season is None:
             return Response([])
 
+        has_played = GameItem.objects.filter(
+            season=latest_season,
+            game_balance__user=user
+        ).exists()
+
+        if has_played:
+            return Response(data={
+                "message": "User already played this game"
+            }, status=403)
+
         for order in orders:
             payment_detail: OrderPaymentDetail = order.payment_detail
             total += payment_detail.payed
@@ -114,8 +121,7 @@ class SeasonViewSet(viewsets.ModelViewSet):
         items_data = self.request.data.get('items', [])
 
         if items_data:
-            # Smart Update: Remove old items and replace with new ones
-            # Or you can implement logic to update specific IDs if needed
+
             season.items.all().delete()
             for item in items_data:
                 SeasonItem.objects.create(season=season, **item)
@@ -139,9 +145,12 @@ class SeasonViewSet(viewsets.ModelViewSet):
                 defaults={'balance': 0}
             )
 
-            GameItem.objects.create(season_item=season_item, game_balance=user_balance)
+            GameItem.objects.create(
+                season_item=season_item,
+                game_balance=user_balance,
+                season=season_item.season
+            )
 
-            # 3. Update balance with the SeasonItem price
             user_balance.balance += season_item.price
             user_balance.save()
 

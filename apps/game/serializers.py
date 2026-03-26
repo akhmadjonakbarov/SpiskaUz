@@ -1,4 +1,7 @@
+from decimal import Decimal
+
 from django.db import transaction
+from django.db.models import Sum
 from rest_framework import serializers
 
 from .models import GameUserBalance, GameItem
@@ -29,9 +32,31 @@ class GameItemSerializer(serializers.ModelSerializer):
 
 
 class SeasonItemSerializer(serializers.ModelSerializer):
+    user_opportunity = serializers.SerializerMethodField()
+    ticket_count = serializers.SerializerMethodField()
+
     class Meta:
         model = SeasonItem
-        fields = ['id', 'price', 'created_at']
+        fields = ['id', 'price', 'user_opportunity', 'ticket_count']
+
+    def get_user_opportunity(self, obj):
+        request = self.context.get('request')
+        shop_id = request.query_params.get('shop')
+
+        # Calculate 10% limit
+        total_spent = request.user.customer_orders.filter(shop_id=shop_id).aggregate(
+            total=Sum('payment_detail__payed'))['total'] or Decimal('0.0')
+
+        # Returns 1 if under cap, 0 if over
+        return 1 if obj.price <= (float(total_spent) * 0.10) else 0
+
+    def get_ticket_count(self, obj):
+        # Your specific "Opportunity" rules
+        price = obj.price
+        if price <= 20: return 5  # $10 and $20 get 5 tickets
+        if price <= 40: return 3  # $30 and $40 get 3 tickets
+        if price <= 70: return 2  # $50, $60, $70 get 2 tickets
+        return 1  # $80, $90, $100 get 1 ticket
 
 
 class SeasonSerializer(serializers.ModelSerializer):

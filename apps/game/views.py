@@ -1,19 +1,22 @@
 from decimal import Decimal
-
+import random
+from decimal import Decimal
+from django.db import transaction
+from rest_framework.response import Response
 from django.db.models import Sum
-from django.utils import timezone
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
+
 from django.db import transaction
 from .models import Season, SeasonItem, GameUserBalance, GameItem
 
-from .serializers import SeasonSerializer, ApplyPrizeSerializer, GameUserBalanceSerializer, SeasonCreateSerializer, PlayGameSerializer
-from ..orders.models import OrderPaymentDetail
-from ..role_manager.models import Role
+from .serializers import SeasonSerializer, SeasonCreateSerializer, get_ticket_count
+from apps.orders.models import OrderPaymentDetail
+from apps.role_manager.models import Role
 
 
 class SeasonViewSet(viewsets.ModelViewSet):
@@ -110,72 +113,67 @@ class SeasonViewSet(viewsets.ModelViewSet):
             for item in items_data:
                 SeasonItem.objects.create(season=season, **item)
 
-    @swagger_auto_schema(operation_description="Apply a prize from a specific SeasonItem to the user's balance.", request_body=ApplyPrizeSerializer, responses={200: GameUserBalanceSerializer(), 400: "Invalid Item"})
-    @action(detail=False, methods=["post"], url_path="apply-prize")
-    def apply_prize(self, request):
-        serializer = ApplyPrizeSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        season_item = serializer.validated_data["season_item_id"]
-        user = request.user
-        season = season_item.season
-
-        with transaction.atomic():
-            user_balance, created = GameUserBalance.objects.select_for_update(
-            ).get_or_create(user=user, defaults={"balance": 0})
-
-            GameItem.objects.create(
-                season_item=season_item, game_balance=user_balance, season=season_item.season)
-
-            user_balance.balance += season_item.price
-            user_balance.save()
-            season.played_users.add(user)
-
-        # 4. Return the updated balance data
-        return Response(GameUserBalanceSerializer(user_balance).data, status=status.HTTP_200_OK)
-
-    @swagger_auto_schema(operation_description="Play the game for a specific shop.", request_body=PlayGameSerializer, responses={200: SeasonSerializer()})
-    @action(detail=False, methods=["post"], url_path="play")
-    def play_game(self, request):
-        serializer = PlayGameSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        shop_id = serializer.validated_data["shop_id"]
-        user = request.user
-
-        latest_season = Season.objects.filter(
-            shop_id=shop_id).order_by("-created_at").first()
-        if latest_season is None:
-            return Response({"error": "No active season for this shop"}, status=status.HTTP_404_NOT_FOUND)
-
-        if latest_season.end_date and latest_season.end_date < timezone.now():
-            return Response({"error": "Season has ended"}, status=status.HTTP_400_BAD_REQUEST)
-
-        has_played = GameItem.objects.filter(
-            season=latest_season, game_balance__user=user).exists()
-
-        if has_played:
-            return Response({"message": "User already played this game"}, status=status.HTTP_400_BAD_REQUEST)
-
-        total = user.customer_orders.filter(shop_id=shop_id).aggregate(
-            total=Sum("payment_detail__payed"))["total"] or Decimal("0.0")
-
-        if total < latest_season.limit_price:
-            return Response({"error": f"Spending below limit. Required: {latest_season.limit_price}, Actual: {total}"}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(SeasonSerializer(latest_season, context={"request": request}).data, status=status.HTTP_200_OK)
-
     @action(detail=False, methods=["get"], url_path="last-game/(?P<shop_id>[^/.]+)")
+    @transaction.atomic
     def get_last_game(self, request, shop_id: int):
         """
-        Returns the last game played by the user.
+        Returns the last season for the shop.
+        - If user hasn't played yet: runs the prize selection, records the result, returns season with won item marked.
+        - If user already played: returns season with their previously won item marked.
         """
-        try:
-            last_game = (
-                Season.actives.all().order_by('-created_at').first()
+        user = request.user
+
+        last_season = Season.actives.filter(
+            shop_id=shop_id).order_by('-created_at').first()
+        if not last_season:
+            return Response({"detail": "No active season found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if user already played
+        existing_game_item = GameItem.objects.filter(
+            season_item__season=last_season,
+            game_balance__user=user
+        ).select_related("season_item").first()
+
+        if existing_game_item:
+            # Already played — just return with the previously won item marked
+            won_item_id = existing_game_item.season_item.id
+        else:
+            # First visit — run prize selection
+            total_spent = user.customer_orders.filter(shop_id=shop_id).aggregate(
+                total=Sum("payment_detail__payed")
+            )["total"] or Decimal("0.0")
+
+            max_prize = float(total_spent) * 0.10
+
+            eligible_items = [
+                item for item in last_season.items.all() if item.price <= max_prize]
+            if not eligible_items:
+                return Response({"detail": "You are not eligible for any prize."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Build weighted pool and pick winner
+            weighted_pool = []
+            for item in eligible_items:
+                weighted_pool.extend([item] * get_ticket_count(item.price))
+            won_item = random.choice(weighted_pool)
+
+            # Record result
+            user_balance, _ = GameUserBalance.objects.select_for_update().get_or_create(
+                user=user, defaults={"balance": Decimal("0.0")}
             )
-            serializer = SeasonSerializer(
-                last_game, context={"request": request})
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            GameItem.objects.create(
+                season_item=won_item,
+                game_balance=user_balance,
+                season=last_season
+            )
+            user_balance.balance += won_item.price
+            user_balance.save()
+            last_season.played_users.add(user)
+
+            won_item_id = won_item.id
+
+        serializer = SeasonSerializer(
+            last_season,
+            context={"request": request, "shop_id": shop_id,
+                     "won_item_id": won_item_id}
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -1,12 +1,18 @@
 from decimal import Decimal
-
 from django.db.models import Sum
 from rest_framework import serializers
-
-from .models import GameUserBalance, GameItem
-from .models import Season
-from .models import SeasonItem
+from .models import GameUserBalance, GameItem, Season, SeasonItem
 from ..shops.models import Shop
+
+
+def get_ticket_count(price):
+    if price <= 20:
+        return 5
+    if price <= 40:
+        return 3
+    if price <= 70:
+        return 2
+    return 1
 
 
 class PlayGameSerializer(serializers.Serializer):
@@ -37,32 +43,23 @@ class GameItemSerializer(serializers.ModelSerializer):
 class SeasonItemSerializer(serializers.ModelSerializer):
     user_opportunity = serializers.SerializerMethodField()
     ticket_count = serializers.SerializerMethodField()
+    is_won = serializers.SerializerMethodField()
 
     class Meta:
         model = SeasonItem
-        fields = ["id", "price", "user_opportunity", "ticket_count"]
+        fields = ["id", "price", "user_opportunity", "ticket_count", "is_won"]
 
     def get_user_opportunity(self, obj):
-        request = self.context.get("request")
-        shop_id = request.query_params.get("shop")
-
-        # Calculate 10% limit
-        total_spent = request.user.customer_orders.filter(shop_id=shop_id).aggregate(
-            total=Sum("payment_detail__payed"))["total"] or Decimal("0.0")
-
-        # Returns 1 if under cap, 0 if over
-        return 1 if obj.price <= (float(total_spent) * 0.10) else 0
+        total_spent = self.context.get("total_spent", 0.0)
+        return 1 if obj.price <= total_spent * 0.10 else 0
 
     def get_ticket_count(self, obj):
-        # Your specific "Opportunity" rules
-        price = obj.price
-        if price <= 20:
-            return 5  # $10 and $20 get 5 tickets
-        if price <= 40:
-            return 3  # $30 and $40 get 3 tickets
-        if price <= 70:
-            return 2  # $50, $60, $70 get 2 tickets
-        return 1  # $80, $90, $100 get 1 ticket
+        return get_ticket_count(obj.price)
+
+    def get_is_won(self, obj):
+        # won_item_id is injected by SeasonSerializer after prize selection
+        won_item_id = self.context.get("won_item_id")
+        return obj.id == won_item_id
 
 
 class SeasonSerializer(serializers.ModelSerializer):
@@ -75,22 +72,36 @@ class SeasonSerializer(serializers.ModelSerializer):
                   "name", "shop", "user", "items", "created_at", "is_game_played"]
         read_only_fields = ["user"]
 
+    def to_representation(self, instance):
+        request = self.context.get("request")
+        shop_id = request.query_params.get(
+            "shop") or self.context.get("shop_id")
+
+        # Compute total_spent once and pass down to child serializer
+        total_spent = request.user.customer_orders.filter(shop_id=shop_id).aggregate(
+            total=Sum("payment_detail__payed")
+        )["total"] or Decimal("0.0")
+
+        self.context["total_spent"] = float(total_spent)
+        return super().to_representation(instance)
+
     def get_is_game_played(self, season: Season):
         user = self.context.get("request").user
-        return user in season.played_users.all()
+        return GameItem.objects.filter(
+            season_item__season=season,
+            game_balance__user=user
+        ).exists()
 
 
 class SeasonCreateSerializer(serializers.Serializer):
     name = serializers.CharField(required=True)
     shop = serializers.PrimaryKeyRelatedField(queryset=Shop.objects.all())
     limit_price = serializers.IntegerField(write_only=True)
-    # Changed to DateTime to match model
     end_date = serializers.DateTimeField(write_only=True)
     has_debt = serializers.BooleanField(default=False)
-
     items = serializers.ListField(
         child=serializers.FloatField(),
         required=False,
         default=[],
-        write_only=True,  # This prevents the KeyError on response
+        write_only=True,
     )

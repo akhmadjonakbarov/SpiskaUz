@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import models
 
 from apps.base.models import BaseModelWithUserAndShop, BaseModel
@@ -27,7 +28,8 @@ class SeasonItem(BaseModel):
 class GameUserBalance(BaseModel):
     user = models.OneToOneField(
         "users.User", on_delete=models.CASCADE, related_name="user_balance")
-    balance = models.DecimalField(max_digits=10, decimal_places=2)
+    balance = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal("0.0"))
 
 
 class GameItem(BaseModel):

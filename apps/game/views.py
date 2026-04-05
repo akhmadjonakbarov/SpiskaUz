@@ -118,6 +118,7 @@ class SeasonViewSet(viewsets.ModelViewSet):
 
         season_item = serializer.validated_data["season_item_id"]
         user = request.user
+        season = season_item.season
 
         with transaction.atomic():
             user_balance, created = GameUserBalance.objects.select_for_update(
@@ -128,6 +129,7 @@ class SeasonViewSet(viewsets.ModelViewSet):
 
             user_balance.balance += season_item.price
             user_balance.save()
+            season.played_users.add(user)
 
         # 4. Return the updated balance data
         return Response(GameUserBalanceSerializer(user_balance).data, status=status.HTTP_200_OK)

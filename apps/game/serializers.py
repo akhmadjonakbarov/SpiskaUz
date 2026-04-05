@@ -14,7 +14,8 @@ class PlayGameSerializer(serializers.Serializer):
 
 
 class ApplyPrizeSerializer(serializers.Serializer):
-    season_item_id = serializers.PrimaryKeyRelatedField(queryset=SeasonItem.objects.all())
+    season_item_id = serializers.PrimaryKeyRelatedField(
+        queryset=SeasonItem.objects.all())
 
 
 class GameUserBalanceSerializer(serializers.ModelSerializer):
@@ -25,7 +26,8 @@ class GameUserBalanceSerializer(serializers.ModelSerializer):
 
 
 class GameItemSerializer(serializers.ModelSerializer):
-    price = serializers.IntegerField(source="season_item.price", read_only=True)
+    price = serializers.IntegerField(
+        source="season_item.price", read_only=True)
 
     class Meta:
         model = GameItem
@@ -45,7 +47,8 @@ class SeasonItemSerializer(serializers.ModelSerializer):
         shop_id = request.query_params.get("shop")
 
         # Calculate 10% limit
-        total_spent = request.user.customer_orders.filter(shop_id=shop_id).aggregate(total=Sum("payment_detail__payed"))["total"] or Decimal("0.0")
+        total_spent = request.user.customer_orders.filter(shop_id=shop_id).aggregate(
+            total=Sum("payment_detail__payed"))["total"] or Decimal("0.0")
 
         # Returns 1 if under cap, 0 if over
         return 1 if obj.price <= (float(total_spent) * 0.10) else 0
@@ -64,18 +67,25 @@ class SeasonItemSerializer(serializers.ModelSerializer):
 
 class SeasonSerializer(serializers.ModelSerializer):
     items = SeasonItemSerializer(many=True, required=False)
+    is_game_played = serializers.SerializerMethodField()
 
     class Meta:
         model = Season
-        fields = ["id", "end_date", "has_debt", "limit_price", "name", "shop", "user", "items", "created_at"]
+        fields = ["id", "end_date", "limit_price",
+                  "name", "shop", "user", "items", "created_at", "is_game_played"]
         read_only_fields = ["user"]
+
+    def get_is_game_played(self, season: Season):
+        user = self.context.get("request").user
+        return user in season.played_users.all()
 
 
 class SeasonCreateSerializer(serializers.Serializer):
     name = serializers.CharField(required=True)
     shop = serializers.PrimaryKeyRelatedField(queryset=Shop.objects.all())
     limit_price = serializers.IntegerField(write_only=True)
-    end_date = serializers.DateTimeField(write_only=True)  # Changed to DateTime to match model
+    # Changed to DateTime to match model
+    end_date = serializers.DateTimeField(write_only=True)
     has_debt = serializers.BooleanField(default=False)
 
     items = serializers.ListField(

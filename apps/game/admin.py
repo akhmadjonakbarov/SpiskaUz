@@ -11,7 +11,7 @@ from .models import Season, SeasonItem, GameUserBalance, GameItem
 class SeasonItemInline(TabularInline):
     model = SeasonItem
     extra = 1
-    fields = ["price", "is_active"]  # Assumes is_active exists in BaseModel
+    fields = ["price"]
 
 
 class GameItemInline(TabularInline):
@@ -45,7 +45,8 @@ class GameUserBalanceAdmin(ModelAdmin):
     list_display = ["id", "user", "balance", "created_at"]
     list_filter = ["created_at"]
     search_fields = ["user__get_full_name", "user__phone"]
-    readonly_fields = ["balance"]  # Prevent manual balance manipulation for safety
+    # Prevent manual balance manipulation for safety
+    readonly_fields = ["balance"]
     inlines = [GameItemInline]
 
 

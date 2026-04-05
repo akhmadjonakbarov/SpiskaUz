@@ -151,9 +151,9 @@ class SalaryTransactionViewSet(viewsets.ModelViewSet):
             salary_balance = role.balance_as_salary
 
             total_salary = (
-                    salary_balance.personal_salary +
-                    salary_balance.balance +
-                    salary_balance.global_salary
+                salary_balance.personal_salary +
+                salary_balance.balance +
+                salary_balance.global_salary
             )
 
             if amount > total_salary:

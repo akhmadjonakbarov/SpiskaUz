@@ -9,8 +9,9 @@ class Season(BaseModelWithUserAndShop):
     limit_price = models.IntegerField(null=True, blank=True)
     end_date = models.DateTimeField(blank=True, null=True)
     played_users = models.ManyToManyField(
-        "users.User",  related_name="played_seasons",
+        "users.User", related_name="played_seasons",
     )
+    has_debt = models.BooleanField(default=False, null=True, blank=True)
 
     def __str__(self):
         return self.name

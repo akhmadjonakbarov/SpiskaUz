@@ -70,7 +70,9 @@ class SeasonViewSet(viewsets.ModelViewSet):
 
         return Response(output_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-    @swagger_auto_schema(manual_parameters=[openapi.Parameter("shop", openapi.IN_QUERY, description="Filter seasons by Shop ID", type=openapi.TYPE_INTEGER)], responses={200: SeasonSerializer(many=True)})
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter("shop", openapi.IN_QUERY, description="Filter seasons by Shop ID",
+                          type=openapi.TYPE_INTEGER)], responses={200: SeasonSerializer(many=True)})
     def list(self, request, *args, **kwargs):
         user = request.user
 
@@ -153,7 +155,7 @@ class SeasonViewSet(viewsets.ModelViewSet):
             eligible_items = [
                 item for item in last_season.items.all() if item.price <= max_prize]
             if not eligible_items:
-                return Response({"detail": "You are not eligible for any prize."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response([], status=status.HTTP_400_BAD_REQUEST)
 
             # Build weighted pool and pick winner
             weighted_pool = []

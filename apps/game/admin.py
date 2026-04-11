@@ -27,7 +27,7 @@ class GameItemInline(TabularInline):
 
 @admin.register(Season)
 class SeasonAdmin(ModelAdmin):
-    list_display = ["id", "name", "shop", "user", "created_at"]
+    list_display = ["id", "name", "has_debt", "shop", "user", "created_at"]
     list_filter = ["shop", "user"]
     search_fields = ["name", "shop__name"]
     inlines = [SeasonItemInline]

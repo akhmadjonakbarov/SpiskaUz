@@ -55,14 +55,19 @@ class SeasonViewSet(viewsets.ModelViewSet):
         serializer.instance = season
 
     def create(self, request, *args, **kwargs):
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         self.perform_create(serializer)
 
         headers = self.get_success_headers(serializer.data)
-        output_serializer = SeasonSerializer(serializer.instance)
+
+        # FIX: Pass the context here!
+        output_serializer = SeasonSerializer(
+            serializer.instance,
+            context={'request': request}
+        )
+
         return Response(output_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     @swagger_auto_schema(manual_parameters=[openapi.Parameter("shop", openapi.IN_QUERY, description="Filter seasons by Shop ID", type=openapi.TYPE_INTEGER)], responses={200: SeasonSerializer(many=True)})

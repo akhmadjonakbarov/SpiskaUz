@@ -1,13 +1,9 @@
 from decimal import Decimal
-
 from django.core.validators import MinValueValidator
 from django.db import models
-
 from apps.base.models import BaseModelWithUserAndShop, BaseModel, PriceAndQtyMixinWithPercentage
-
 from apps.currency_rate.models import CurrencyRate
 from apps.orders.models import Order
-
 from apps.promocodes.models import PromoCode
 from apps.supplier.models import Supplier
 from constants.currency_choices import CURRENCY_CHOICES

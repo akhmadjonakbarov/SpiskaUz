@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django.db import models
+from django.utils import timezone
 
 from apps.base.models import BaseModelWithUserAndShop, BaseModel
 
@@ -12,6 +13,12 @@ class Season(BaseModelWithUserAndShop):
         "users.User", related_name="played_seasons",
     )
     has_debt = models.BooleanField(default=False, null=True, blank=True)
+
+    @property
+    def is_expired(self):
+        if self.end_date:
+            return timezone.now() > self.end_date
+        return False
 
     def __str__(self):
         return self.name

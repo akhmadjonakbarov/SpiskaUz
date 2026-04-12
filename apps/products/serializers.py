@@ -57,6 +57,8 @@ class ProductSerializer(serializers.ModelSerializer):
         data['sale_price'] = Convertor.to_float(instance.sale_price)
         return data
 
+    
+
     def get_is_favorite(self, obj):
         request = self.context.get("request")
 

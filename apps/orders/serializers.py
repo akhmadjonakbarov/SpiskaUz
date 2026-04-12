@@ -32,7 +32,6 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def get_total_price(self, order: Order):
-
         from apps.document.models import DocumentItemBalance
         total_price = Decimal('0.0')
 

@@ -80,7 +80,6 @@ class SeasonViewSet(viewsets.ModelViewSet):
             return Response([])
 
         shop_id = request.query_params.get("shop")
-        has_no_debt = False
 
         role = Role.objects.filter(user=user, shop=shop_id).first()
 
@@ -123,17 +122,16 @@ class SeasonViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="last-game/(?P<shop_id>[^/.]+)")
     @transaction.atomic
     def get_last_game(self, request, shop_id: int):
-        """
-        Returns the last season for the shop.
-        - If user hasn't played yet: runs the prize selection, records the result, returns season with won item marked.
-        - If user already played: returns season with their previously won item marked.
-        """
+
         user = request.user
 
-        last_season = Season.actives.filter(
+        last_season: Season = Season.actives.filter(
             shop_id=shop_id).order_by('-created_at').first()
         if not last_season:
-            return Response({"detail": "No active season found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response([], status=status.HTTP_200_OK)
+
+        if last_season.is_expired:
+            return Response([], status=status.HTTP_200_OK)
 
         # Check if user already played
         existing_game_item = GameItem.objects.filter(
@@ -155,7 +153,7 @@ class SeasonViewSet(viewsets.ModelViewSet):
             eligible_items = [
                 item for item in last_season.items.all() if item.price <= max_prize]
             if not eligible_items:
-                return Response([], status=status.HTTP_400_BAD_REQUEST)
+                return Response([], status=status.HTTP_200_OK)
 
             # Build weighted pool and pick winner
             weighted_pool = []

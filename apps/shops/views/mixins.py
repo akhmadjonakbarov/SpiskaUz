@@ -341,11 +341,14 @@ class OrderActionMixin:
         operation_summary="List shop orders",
         operation_description="Get paginated list of orders for a shop with filtering",
         manual_parameters=[
+            # Inside manual_parameters:
             openapi.Parameter(
                 "status",
                 openapi.IN_QUERY,
                 description="Order status (new, processing, done, canceled)",
-                type=openapi.TYPE_STRING,
+                type=openapi.TYPE_ARRAY,  # Change to ARRAY
+                items=openapi.Items(type=openapi.TYPE_STRING),  # Define array items
+                collection_format='multi',  # This enables ?status=new&status=done
             ),
             openapi.Parameter(
                 "exclude",
@@ -397,7 +400,7 @@ class OrderActionMixin:
         url_path="orders",
     )
     def orders(self, request, pk):
-        exclude = request.query_params.get("exclude")
+        exclude_list = request.query_params.getlist("exclude")
         queryset = (
             Order.objects
             .select_related("shop", "customer", "admin")
@@ -405,14 +408,9 @@ class OrderActionMixin:
             .filter(shop_id=pk)
             .order_by("-created_at")
         )
-        if exclude is not None:
-            queryset = (
-                Order.objects
-                .select_related("shop", "customer", "admin")
-                .prefetch_related("items").exclude(status=exclude)
-                .filter(shop_id=pk)
-                .order_by("-created_at")
-            )
+        if exclude_list:
+            # Use __in for the exclusion list
+            queryset = queryset.exclude(status__in=exclude_list)
 
         filtered_qs = OrderFilter(request.GET, queryset=queryset).qs
 

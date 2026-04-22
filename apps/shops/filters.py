@@ -1,12 +1,16 @@
-import django_filters
-
 from apps.document.models import Document
 from apps.orders.models import Order
 from apps.shops.models import ShopBalanceTransaction
+import django_filters
+from django_filters import rest_framework as filters
+
+
+class CharInFilter(filters.BaseInFilter, filters.CharFilter):
+    pass
 
 
 class OrderFilter(django_filters.FilterSet):
-    status = django_filters.CharFilter(field_name="status")
+    status = CharInFilter(field_name="status", lookup_expr="in")
     customer = django_filters.CharFilter(field_name="customer_id")
     from_date = django_filters.DateFilter(
         field_name="created_at",

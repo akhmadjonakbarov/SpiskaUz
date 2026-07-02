@@ -41,12 +41,16 @@ class OrderSerializer(serializers.ModelSerializer):
                 product=order_item.product, shop=order.shop
             ).first()
 
-            if order_item.product.currency_type.lower() in 'usd':
-                converted_price = Convertor.to_decimal(balance.sale_price) * Convertor.to_decimal(
-                    balance.currency_rate_value)
-                total_price = total_price + converted_price * Convertor.to_decimal(order_item.amount)
+            if balance is not None:
+                if order_item.product.currency_type.lower() in 'usd':
+                    converted_price = Convertor.to_decimal(balance.sale_price) * Convertor.to_decimal(
+                        balance.currency_rate_value)
+                    total_price = total_price + converted_price * Convertor.to_decimal(order_item.amount)
+                else:
+                    total_price = total_price + Convertor.to_decimal(balance.sale_price) * Convertor.to_decimal(
+                        order_item.amount)
             else:
-                total_price = total_price + Convertor.to_decimal(balance.sale_price) * Convertor.to_decimal(
+                total_price = total_price + Convertor.to_decimal(order_item.product.sale_price) * Convertor.to_decimal(
                     order_item.amount)
         return total_price
 
